@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { StatusBadge } from '@/src/components/StatusBadge';
 import SummaryChart from '@/src/components/SummaryChart';
 import { Button } from '@/components/ui/button';
@@ -8,8 +8,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Activity, CheckCircle2, UploadCloud, FileBox, Filter } from 'lucide-react';
+import { Plus, Activity, CheckCircle2, UploadCloud, FileBox, Filter, FileText } from 'lucide-react';
 import { Case } from '@/src/types';
+import { supabase } from '@/src/lib/supabase';
 
 interface DentistDashboardProps {
   navigateTo: (page: { name: 'dashboard' } | { name: 'case_details'; caseId: string }) => void;
@@ -22,13 +23,75 @@ export default function DentistDashboard({ navigateTo, cases, setCases }: Dentis
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
   
   const [uploadState, setUploadState] = useState<'idle' | 'analyzing' | 'warning'>('idle');
+  
+  const [patientName, setPatientName] = useState('');
+  const [treatmentType, setTreatmentType] = useState('');
+  const [urgency, setUrgency] = useState<Case['urgency']>('NORMAL');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
 
   const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleSubmitCase = async () => {
+    if (!patientName.trim() || !treatmentType || !selectedFile) {
+      alert('Please fill out patient name, treatment type, and select a scan file.');
+      return;
+    }
+    
     setUploadState('analyzing');
-    // Mock the delay of analyzing the STL file
-    setTimeout(() => {
-      setUploadState('warning');
-    }, 2000);
+    
+    try {
+      // 1. Upload to Supabase Storage
+      const fileExt = selectedFile.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+      
+      const { data, error } = await supabase.storage
+        .from('scans')
+        .upload(fileName, selectedFile);
+        
+      if (error) {
+        console.error('Storage upload error:', error);
+        alert('Failed to upload file. Please ensure the Supabase scans bucket exists and RLS allows public uploads.');
+        setUploadState('idle');
+        return;
+      }
+      
+      // 2. Generate a local mock case and prepend it
+      const newCase: Case = {
+        id: `case-${Date.now().toString().slice(-4)}`,
+        patientName,
+        dentistId: 'u1',
+        labId: 'lab1', // Defaults to Advance Dental Export
+        status: 'PENDING',
+        urgency,
+        requestedTreatment: treatmentType,
+        material: 'Zirconia (Default)',
+        createdAt: new Date().toISOString(),
+        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // +7 days
+      };
+      
+      setCases(prev => [newCase, ...prev]);
+      setIsCreateModalOpen(false);
+      
+      // Reset form
+      setPatientName('');
+      setTreatmentType('');
+      setUrgency('NORMAL');
+      setSelectedFile(null);
+      setUploadState('idle');
+      
+    } catch (err) {
+      console.error('Submission error:', err);
+      setUploadState('idle');
+    }
   };
 
   const activeCasesCount = cases.filter(c => c.status !== 'DELIVERED').length;
@@ -151,7 +214,13 @@ export default function DentistDashboard({ navigateTo, cases, setCases }: Dentis
       <Dialog open={isCreateModalOpen} onOpenChange={(open) => {
         setIsCreateModalOpen(open);
         if (!open) {
-          setTimeout(() => setUploadState('idle'), 300);
+          setTimeout(() => {
+            setUploadState('idle');
+            setSelectedFile(null);
+            setPatientName('');
+            setTreatmentType('');
+            setUrgency('NORMAL');
+          }, 300);
         }
       }}>
         <DialogTrigger render={<Button className="fixed bottom-6 right-6 md:bottom-10 md:right-10 h-14 w-14 rounded-full shadow-xl bg-blue-600 hover:bg-blue-700 p-0 z-50 focus:outline-none" />}>
@@ -167,27 +236,32 @@ export default function DentistDashboard({ navigateTo, cases, setCases }: Dentis
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="patientName">Patient Name</Label>
-              <Input id="patientName" placeholder="e.g. John Doe" />
+              <Input 
+                id="patientName" 
+                placeholder="e.g. John Doe" 
+                value={patientName}
+                onChange={(e) => setPatientName(e.target.value)}
+              />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="treatment">Treatment Type</Label>
-                <Select>
+                <Select value={treatmentType} onValueChange={setTreatmentType}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="crown">Zirconia Crown</SelectItem>
-                    <SelectItem value="bridge">Fixed Bridge</SelectItem>
-                    <SelectItem value="nightguard">Nightguard</SelectItem>
-                    <SelectItem value="implant">Implant Abutment</SelectItem>
-                    <SelectItem value="veneer">Porcelain Veneer</SelectItem>
+                    <SelectItem value="Zirconia Crown">Zirconia Crown</SelectItem>
+                    <SelectItem value="Fixed Bridge">Fixed Bridge</SelectItem>
+                    <SelectItem value="Nightguard">Nightguard</SelectItem>
+                    <SelectItem value="Implant Abutment">Implant Abutment</SelectItem>
+                    <SelectItem value="Porcelain Veneer">Porcelain Veneer</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="urgency">Urgency</Label>
-                <Select>
+                <Select value={urgency} onValueChange={(val: any) => setUrgency(val)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select urgency" />
                   </SelectTrigger>
@@ -203,21 +277,45 @@ export default function DentistDashboard({ navigateTo, cases, setCases }: Dentis
             
             <div className="mt-4">
               <Label className="mb-2 block">Upload Scans (STL/PLY)</Label>
-              {uploadState === 'idle' && (
+              <input 
+                type="file" 
+                accept=".stl,.ply" 
+                className="hidden" 
+                ref={fileInputRef} 
+                onChange={handleFileChange} 
+              />
+              {uploadState === 'idle' && !selectedFile && (
                 <div 
                   onClick={handleUploadClick}
                   className="border-2 border-dashed border-border rounded-lg p-8 flex flex-col items-center justify-center text-center bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
                 >
                   <UploadCloud className="h-10 w-10 text-muted-foreground mb-3" />
-                  <p className="text-sm font-medium text-foreground">Drag & Drop STL Files Here</p>
+                  <p className="text-sm font-medium text-foreground">Drag & Drop STL/PLY Files Here</p>
                   <p className="text-xs text-muted-foreground mt-1">or click to browse from your computer</p>
+                </div>
+              )}
+
+              {uploadState === 'idle' && selectedFile && (
+                <div 
+                  onClick={handleUploadClick}
+                  className="border-2 border-primary/50 rounded-lg p-6 flex items-center gap-4 bg-primary/5 cursor-pointer hover:bg-primary/10 transition-colors"
+                >
+                  <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                    <FileText className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{selectedFile.name}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB • Ready to upload
+                    </p>
+                  </div>
                 </div>
               )}
               
               {uploadState === 'analyzing' && (
                 <div className="border border-border rounded-lg p-8 flex flex-col items-center justify-center text-center bg-muted/20">
                   <Activity className="h-10 w-10 text-primary mb-3 animate-pulse" />
-                  <p className="text-sm font-medium text-foreground">Analyzing STL Geometry...</p>
+                  <p className="text-sm font-medium text-foreground">Uploading and Analyzing Scans...</p>
                   <div className="w-full max-w-xs bg-muted rounded-full h-1.5 mt-4 overflow-hidden">
                     <div className="bg-primary h-1.5 rounded-full animate-[progress_2s_ease-in-out_infinite]" style={{ width: '60%' }}></div>
                   </div>
@@ -245,8 +343,13 @@ export default function DentistDashboard({ navigateTo, cases, setCases }: Dentis
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>Cancel</Button>
-            <Button type="submit" disabled={uploadState === 'analyzing'} className="bg-blue-600 hover:bg-blue-700" onClick={() => setIsCreateModalOpen(false)}>
-              {uploadState === 'warning' ? 'Proceed Anyway' : 'Submit Case'}
+            <Button 
+              type="submit" 
+              disabled={uploadState === 'analyzing' || !patientName || !treatmentType || !selectedFile} 
+              className="bg-blue-600 hover:bg-blue-700" 
+              onClick={handleSubmitCase}
+            >
+              Submit Case
             </Button>
           </DialogFooter>
         </DialogContent>
