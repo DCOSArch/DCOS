@@ -1,0 +1,257 @@
+import React, { useState } from 'react';
+import { StatusBadge } from '@/src/components/StatusBadge';
+import SummaryChart from '@/src/components/SummaryChart';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, Activity, CheckCircle2, UploadCloud, FileBox, Filter } from 'lucide-react';
+import { Case } from '@/src/types';
+
+interface DentistDashboardProps {
+  navigateTo: (page: { name: 'dashboard' } | { name: 'case_details'; caseId: string }) => void;
+  cases: Case[];
+  setCases: React.Dispatch<React.SetStateAction<Case[]>>;
+}
+
+export default function DentistDashboard({ navigateTo, cases, setCases }: DentistDashboardProps) {
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [filterStatus, setFilterStatus] = useState<string>('ALL');
+  
+  const [uploadState, setUploadState] = useState<'idle' | 'analyzing' | 'warning'>('idle');
+
+  const handleUploadClick = () => {
+    setUploadState('analyzing');
+    // Mock the delay of analyzing the STL file
+    setTimeout(() => {
+      setUploadState('warning');
+    }, 2000);
+  };
+
+  const activeCasesCount = cases.filter(c => c.status !== 'DELIVERED').length;
+  const completedCasesCount = cases.filter(c => c.status === 'DELIVERED').length;
+
+  const filteredCases = cases.filter(c => {
+    if (filterStatus !== 'ALL' && c.status !== filterStatus) return false;
+    return true;
+  });
+
+  return (
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out relative">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Dentist Dashboard</h1>
+          <p className="text-muted-foreground mt-1">Manage your patients' lab cases and track progress.</p>
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 items-stretch mb-6">
+        <SummaryChart cases={cases} />
+        <Card className="flex flex-col justify-center h-full">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Cases</CardTitle>
+            <Activity className="h-4 w-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{activeCasesCount}</div>
+            <p className="text-xs text-muted-foreground mt-1">Currently in production</p>
+          </CardContent>
+        </Card>
+        <Card className="flex flex-col justify-center h-full">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Completed</CardTitle>
+            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{completedCasesCount}</div>
+            <p className="text-xs text-muted-foreground mt-1">Delivered this month</p>
+          </CardContent>
+        </Card>
+        <Card className="flex flex-col justify-center h-full bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100 dark:from-blue-950/40 dark:to-indigo-950/40 dark:border-blue-900">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-blue-900 dark:text-blue-200">Action Required</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-blue-800 dark:text-blue-300">You have no cases requiring immediate attention. Great job!</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="shadow-sm border-border">
+        <CardHeader className="flex flex-row items-center justify-between pb-4">
+          <div>
+            <CardTitle>Recent Case Submissions</CardTitle>
+            <CardDescription>View and track your patients' restorations.</CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-muted-foreground" />
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-[140px] h-8 text-xs">
+                <SelectValue placeholder="All Statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Statuses</SelectItem>
+                <SelectItem value="PENDING">Pending</SelectItem>
+                <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                <SelectItem value="QUALITY_CHECK">QC Hold</SelectItem>
+                <SelectItem value="DISPATCHED">Dispatched</SelectItem>
+                <SelectItem value="DELIVERED">Delivered</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border border-border">
+            <Table>
+              <TableHeader className="bg-muted/50">
+                <TableRow>
+                  <TableHead className="w-[100px]">Case ID</TableHead>
+                  <TableHead>Patient</TableHead>
+                  <TableHead>Treatment</TableHead>
+                  <TableHead>Due Date</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredCases.map((caseItem) => (
+                  <TableRow key={caseItem.id} className="hover:bg-muted/50 transition-colors">
+                    <TableCell className="font-mono text-xs font-medium text-muted-foreground">{caseItem.id.toUpperCase()}</TableCell>
+                    <TableCell className="font-medium text-foreground">{caseItem.patientName}</TableCell>
+                    <TableCell className="text-muted-foreground">{caseItem.requestedTreatment}</TableCell>
+                    <TableCell className="text-muted-foreground">{new Date(caseItem.dueDate).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-2 items-center">
+                        <StatusBadge status={caseItem.status} />
+                        {caseItem.urgency === 'URGENT' && <span className="w-2 h-2 rounded-full bg-red-500"></span>}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => navigateTo({ name: 'case_details', caseId: caseItem.id })}
+                        className="text-primary hover:text-primary/80 hover:bg-primary/10"
+                      >
+                        <FileBox className="mr-2 h-4 w-4" />
+                        View
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Dialog open={isCreateModalOpen} onOpenChange={(open) => {
+        setIsCreateModalOpen(open);
+        if (!open) {
+          setTimeout(() => setUploadState('idle'), 300);
+        }
+      }}>
+        <DialogTrigger render={<Button className="fixed bottom-6 right-6 md:bottom-10 md:right-10 h-14 w-14 rounded-full shadow-xl bg-blue-600 hover:bg-blue-700 p-0 z-50 focus:outline-none" />}>
+             <Plus className="h-6 w-6" />
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[550px]">
+          <DialogHeader>
+            <DialogTitle>Create New Lab Case</DialogTitle>
+            <DialogDescription>
+              Submit a new prescription to the dental laboratory.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="patientName">Patient Name</Label>
+              <Input id="patientName" placeholder="e.g. John Doe" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="treatment">Treatment Type</Label>
+                <Select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="crown">Zirconia Crown</SelectItem>
+                    <SelectItem value="bridge">Fixed Bridge</SelectItem>
+                    <SelectItem value="nightguard">Nightguard</SelectItem>
+                    <SelectItem value="implant">Implant Abutment</SelectItem>
+                    <SelectItem value="veneer">Porcelain Veneer</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="urgency">Urgency</Label>
+                <Select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select urgency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="LOW">Low</SelectItem>
+                    <SelectItem value="NORMAL">Normal</SelectItem>
+                    <SelectItem value="HIGH">High</SelectItem>
+                    <SelectItem value="URGENT">Urgent</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div className="mt-4">
+              <Label className="mb-2 block">Upload Scans (STL/PLY)</Label>
+              {uploadState === 'idle' && (
+                <div 
+                  onClick={handleUploadClick}
+                  className="border-2 border-dashed border-border rounded-lg p-8 flex flex-col items-center justify-center text-center bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
+                >
+                  <UploadCloud className="h-10 w-10 text-muted-foreground mb-3" />
+                  <p className="text-sm font-medium text-foreground">Drag & Drop STL Files Here</p>
+                  <p className="text-xs text-muted-foreground mt-1">or click to browse from your computer</p>
+                </div>
+              )}
+              
+              {uploadState === 'analyzing' && (
+                <div className="border border-border rounded-lg p-8 flex flex-col items-center justify-center text-center bg-muted/20">
+                  <Activity className="h-10 w-10 text-primary mb-3 animate-pulse" />
+                  <p className="text-sm font-medium text-foreground">Analyzing STL Geometry...</p>
+                  <div className="w-full max-w-xs bg-muted rounded-full h-1.5 mt-4 overflow-hidden">
+                    <div className="bg-primary h-1.5 rounded-full animate-[progress_2s_ease-in-out_infinite]" style={{ width: '60%' }}></div>
+                  </div>
+                </div>
+              )}
+
+              {uploadState === 'warning' && (
+                <div className="border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/20 rounded-lg p-6">
+                  <div className="flex gap-3">
+                    <div className="shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+                        <Activity className="h-5 w-5 text-amber-600 dark:text-amber-500" />
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold text-amber-900 dark:text-amber-200">Pre-Flight Analysis Warning</h4>
+                      <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">
+                        Less than 1.5mm occlusal clearance detected on Tooth #14. This may result in a thin crown that is prone to fracture.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>Cancel</Button>
+            <Button type="submit" disabled={uploadState === 'analyzing'} className="bg-blue-600 hover:bg-blue-700" onClick={() => setIsCreateModalOpen(false)}>
+              {uploadState === 'warning' ? 'Proceed Anyway' : 'Submit Case'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+    </div>
+  );
+}
