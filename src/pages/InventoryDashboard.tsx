@@ -1,7 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, Package } from 'lucide-react';
+import { AlertCircle, Package, ShoppingCart } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { InventoryItem } from '@/src/types';
 
 interface InventoryDashboardProps {
@@ -30,6 +31,9 @@ export default function InventoryDashboard({ inventory }: InventoryDashboardProp
               <p className="text-sm text-red-600/80 dark:text-red-400 mt-1">
                 Only {item.quantity} {item.unit} remaining (Threshold: {item.threshold})
               </p>
+              <Button size="sm" className="mt-3 bg-red-600 hover:bg-red-700 text-white" onClick={() => alert(`Ordering ${item.name}...`)}>
+                <ShoppingCart className="w-4 h-4 mr-2" /> Order Now
+              </Button>
             </CardContent>
           </Card>
         ))}
@@ -49,6 +53,7 @@ export default function InventoryDashboard({ inventory }: InventoryDashboardProp
                   <TableHead>Category</TableHead>
                   <TableHead className="text-center">Quantity</TableHead>
                   <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -65,6 +70,13 @@ export default function InventoryDashboard({ inventory }: InventoryDashboardProp
                         <Badge variant={isLow ? "destructive" : "secondary"} className={!isLow ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400" : ""}>
                           {isLow ? 'Reorder Needed' : 'In Stock'}
                         </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {isLow && (
+                          <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => alert(`Ordering ${item.name}...`)}>
+                            Order
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   )

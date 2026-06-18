@@ -3,7 +3,7 @@ import { User, Case } from '@/src/types';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
-import { ArrowLeftRight, Stethoscope, Sun, Moon, Search, Bell } from 'lucide-react';
+import { ArrowLeftRight, Stethoscope, Sun, Moon, Search, Bell, LogOut } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuSeparator, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { mockCases } from '@/src/mockData';
 import { StatusBadge } from '@/src/components/StatusBadge';
@@ -137,12 +137,12 @@ export default function Navbar({ currentUser, onToggleUser, navigateTo, isDarkMo
             {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </Button>
 
-          <Button variant="outline" size="sm" onClick={onToggleUser} className="hidden lg:flex items-center gap-2">
-            <ArrowLeftRight className="w-4 h-4" />
-            Switch to {currentUser.role === 'DENTIST' ? 'Lab View' : 'Dentist View'}
+          <Button variant="outline" size="sm" onClick={() => window.location.reload()} className="hidden lg:flex items-center gap-2 text-destructive border-destructive/20 hover:bg-destructive/10">
+            <LogOut className="w-4 h-4" />
+            Log Out
           </Button>
-          <Button variant="ghost" size="icon" onClick={onToggleUser} className="flex lg:hidden">
-            <ArrowLeftRight className="w-5 h-5" />
+          <Button variant="ghost" size="icon" onClick={() => window.location.reload()} className="flex lg:hidden text-destructive hover:text-destructive hover:bg-destructive/10">
+            <LogOut className="w-5 h-5" />
           </Button>
           
           <div className="flex items-center gap-3 pl-2 md:pl-4 border-l border-border">

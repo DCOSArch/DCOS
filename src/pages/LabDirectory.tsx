@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, Star, Clock, DollarSign, Mail, Phone } from 'lucide-react';
+import { Search, Star, Clock, DollarSign, Mail, Phone, Plus } from 'lucide-react';
 import { mockLabProfiles } from '@/src/mockData';
 
 export default function LabDirectory() {
@@ -21,6 +21,10 @@ export default function LabDirectory() {
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Laboratory Directory</h1>
           <p className="text-muted-foreground mt-1 text-sm">Discover and connect with top-rated dental laboratories.</p>
         </div>
+        <Button className="flex items-center gap-2" variant="default" onClick={() => alert('Add Lab functionality coming soon!')}>
+          <Plus className="w-4 h-4" />
+          Add Lab
+        </Button>
       </div>
 
       <div className="relative max-w-md">

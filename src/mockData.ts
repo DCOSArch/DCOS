@@ -1,14 +1,14 @@
 import { User, Case, TimelineEvent, LabProfile, InventoryItem } from '@/src/types';
 
 export const mockUsers: User[] = [
-  { id: 'u1', name: 'Dr. Sarah Smith', role: 'DENTIST', avatarUrl: 'https://i.pravatar.cc/150?u=u1' },
-  { id: 'u2', name: 'Precision Dental Lab', role: 'LAB_ADMIN', labId: 'lab1', avatarUrl: 'https://i.pravatar.cc/150?u=u2' },
+  { id: 'u1', name: 'Dr. Maneesh Vishnoi', role: 'DENTIST', avatarUrl: 'https://i.pravatar.cc/150?u=u1' },
+  { id: 'u2', name: 'Advance Dental Export', role: 'LAB_ADMIN', labId: 'lab1', avatarUrl: 'https://i.pravatar.cc/150?u=u2' },
 ];
 
 export const mockCases: Case[] = [
   {
     id: 'c1',
-    patientName: 'John Doe',
+    patientName: 'Rahul Sharma',
     dentistId: 'u1',
     labId: 'lab1',
     status: 'IN_PROGRESS',
@@ -20,7 +20,7 @@ export const mockCases: Case[] = [
   },
   {
     id: 'c2',
-    patientName: 'Jane Smith',
+    patientName: 'Priya Singh',
     dentistId: 'u1',
     labId: 'lab1',
     status: 'QUALITY_CHECK',
@@ -32,7 +32,7 @@ export const mockCases: Case[] = [
   },
   {
     id: 'c3',
-    patientName: 'Mike Johnson',
+    patientName: 'Amit Patel',
     dentistId: 'u1',
     labId: 'lab1',
     status: 'PENDING',
@@ -44,7 +44,7 @@ export const mockCases: Case[] = [
   },
   {
     id: 'c4',
-    patientName: 'Alice Williams',
+    patientName: 'Neha Gupta',
     dentistId: 'u1',
     labId: 'lab1',
     status: 'DELIVERED',
@@ -158,7 +158,7 @@ export const mockTimelineEvents: TimelineEvent[] = [
 export const mockLabProfiles: LabProfile[] = [
   {
     id: 'lab1',
-    name: 'Precision Dental Lab',
+    name: 'Advance Dental Export',
     rating: 4.8,
     reviewsCount: 124,
     services: ['Crown & Bridge', 'Implants', 'Removables', 'Orthodontics'],
@@ -169,7 +169,7 @@ export const mockLabProfiles: LabProfile[] = [
   },
   {
     id: 'lab2',
-    name: 'Apex Aesthetics Laboratory',
+    name: 'Kanpur Dental Lab',
     rating: 4.9,
     reviewsCount: 89,
     services: ['High-End Ceramics', 'Veneers', 'Digital Smile Design'],
@@ -180,7 +180,7 @@ export const mockLabProfiles: LabProfile[] = [
   },
   {
     id: 'lab3',
-    name: 'Swift Milling Center',
+    name: 'Vaishali Dental Lab',
     rating: 4.5,
     reviewsCount: 210,
     services: ['Zirconia Copings', 'Custom Abutments', 'Surgical Guides'],

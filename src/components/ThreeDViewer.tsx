@@ -2,23 +2,23 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Center, Environment } from '@react-three/drei';
 import { useState, useEffect } from 'react';
 import * as THREE from 'three';
-import { STLLoader } from 'three-stdlib';
+import { STLLoader, PLYLoader } from 'three-stdlib';
 import { Upload, Maximize2, Minimize2, MousePointer2, X } from 'lucide-react';
 
-function DentalModel({ url }: { url: string | null }) {
+function DentalModel({ data }: { data: {url: string, type: 'stl' | 'ply'} | null }) {
   const [geometry, setGeometry] = useState<THREE.BufferGeometry | null>(null);
 
   useEffect(() => {
-    if (url) {
-      const loader = new STLLoader();
-      loader.load(url, (geo) => {
+    if (data?.url) {
+      const loader = data.type === 'ply' ? new PLYLoader() : new STLLoader();
+      loader.load(data.url, (geo) => {
         geo.computeVertexNormals();
         setGeometry(geo);
       });
     }
-  }, [url]);
+  }, [data]);
 
-  if (!url) {
+  if (!data) {
     // A more realistic default procedural placeholder if they haven't uploaded an STL yet
     return (
       <group>
@@ -44,14 +44,15 @@ function DentalModel({ url }: { url: string | null }) {
 }
 
 export function ThreeDViewer() {
-  const [stlUrl, setStlUrl] = useState<string | null>(null);
+  const [modelData, setModelData] = useState<{url: string, type: 'stl' | 'ply'} | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const url = URL.createObjectURL(file);
-      setStlUrl(url);
+      const isPly = file.name.toLowerCase().endsWith('.ply');
+      setModelData({ url, type: isPly ? 'ply' : 'stl' });
     }
   };
 
@@ -64,8 +65,8 @@ export function ThreeDViewer() {
       <div className="absolute top-4 left-4 z-20 flex gap-2">
         <label className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800/90 hover:bg-zinc-700/90 text-zinc-100 text-sm font-medium rounded-md cursor-pointer transition-colors border border-zinc-700 shadow-sm backdrop-blur-sm">
           <Upload className="w-4 h-4" />
-          <span className="hidden sm:inline">Load STL</span>
-          <input type="file" accept=".stl" className="hidden" onChange={handleFileUpload} />
+          <span className="hidden sm:inline">Load STL/PLY</span>
+          <input type="file" accept=".stl,.ply" className="hidden" onChange={handleFileUpload} />
         </label>
       </div>
 
@@ -104,7 +105,7 @@ export function ThreeDViewer() {
         <directionalLight position={[-10, -10, -5]} intensity={0.5} />
         
         <Center>
-          <DentalModel url={stlUrl} />
+          <DentalModel data={modelData} />
         </Center>
         
         <Environment preset="city" />

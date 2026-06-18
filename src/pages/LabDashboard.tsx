@@ -173,17 +173,19 @@ export default function LabDashboard({ navigateTo, cases, setCases, inventory, s
                           onClick={() => navigateTo({ name: 'case_details', caseId: caseItem.id })}
                           className="cursor-move hover:shadow-md transition-all border-border hover:border-primary opacity-100"
                         >
-                          <CardContent className="p-4 bg-background">
+                          <CardContent className="p-3 bg-background">
                             <div className="flex justify-between items-start mb-2">
-                              <span className="font-mono text-xs text-muted-foreground font-medium">#{caseItem.id.toUpperCase()}</span>
+                              <span className="font-mono text-[10px] text-muted-foreground font-medium">#{caseItem.id.toUpperCase()}</span>
                               <div className="flex gap-1">
                                 {caseItem.urgency === 'URGENT' && <span className="w-2 h-2 rounded-full bg-red-500 mt-1"></span>}
                                 {caseItem.urgency === 'HIGH' && <span className="w-2 h-2 rounded-full bg-orange-500 mt-1"></span>}
                                 <StatusBadge status={caseItem.status} />
                               </div>
                             </div>
-                            <h4 className="font-semibold text-foreground">{caseItem.patientName}</h4>
-                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2 leading-relaxed">{caseItem.requestedTreatment}</p>
+                            <h4 className="font-semibold text-sm text-foreground">{caseItem.patientName}</h4>
+                            <div className="mt-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50 rounded px-2 py-1.5">
+                              <p className="text-xs font-medium text-blue-800 dark:text-blue-300 leading-tight">{caseItem.requestedTreatment}</p>
+                            </div>
                             
                             <div className="mt-4 pt-3 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
                               <span className="font-medium text-foreground flex items-center gap-1">
