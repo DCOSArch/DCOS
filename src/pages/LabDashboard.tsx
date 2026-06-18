@@ -171,28 +171,28 @@ export default function LabDashboard({ navigateTo, cases, setCases, inventory, s
                           draggable
                           onDragStart={(e) => handleDragStart(e, caseItem.id)}
                           onClick={() => navigateTo({ name: 'case_details', caseId: caseItem.id })}
-                          className="cursor-move hover:shadow-md transition-all border-border hover:border-primary opacity-100"
+                          className="cursor-move hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 border-border hover:border-primary/50 opacity-100 overflow-hidden"
                         >
-                          <CardContent className="p-3 bg-background">
-                            <div className="flex justify-between items-start mb-2">
-                              <span className="font-mono text-[10px] text-muted-foreground font-medium">#{caseItem.id.toUpperCase()}</span>
-                              <div className="flex gap-1">
-                                {caseItem.urgency === 'URGENT' && <span className="w-2 h-2 rounded-full bg-red-500 mt-1"></span>}
-                                {caseItem.urgency === 'HIGH' && <span className="w-2 h-2 rounded-full bg-orange-500 mt-1"></span>}
+                          <CardContent className="p-2 bg-background">
+                            <div className="flex justify-between items-center mb-1.5">
+                              <span className="font-mono text-[9px] text-muted-foreground font-medium">#{caseItem.id.toUpperCase()}</span>
+                              <div className="flex gap-1 items-center scale-[0.85] origin-right">
+                                {caseItem.urgency === 'URGENT' && <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>}
+                                {caseItem.urgency === 'HIGH' && <span className="w-1.5 h-1.5 rounded-full bg-orange-500"></span>}
                                 <StatusBadge status={caseItem.status} />
                               </div>
                             </div>
-                            <h4 className="font-semibold text-sm text-foreground">{caseItem.patientName}</h4>
-                            <div className="mt-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50 rounded px-2 py-1.5">
-                              <p className="text-xs font-medium text-blue-800 dark:text-blue-300 leading-tight">{caseItem.requestedTreatment}</p>
+                            <h4 className="font-semibold text-xs text-foreground truncate">{caseItem.patientName}</h4>
+                            <div className="mt-1.5 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100/50 dark:border-blue-900/30 rounded px-1.5 py-1">
+                              <p className="text-[10px] font-medium text-blue-800 dark:text-blue-300 leading-none truncate">{caseItem.requestedTreatment}</p>
                             </div>
                             
-                            <div className="mt-4 pt-3 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
-                              <span className="font-medium text-foreground flex items-center gap-1">
+                            <div className="mt-2 pt-1.5 border-t border-border/50 flex items-center justify-between text-[10px] text-muted-foreground">
+                              <span className="font-medium text-foreground truncate max-w-[100px]">
                                 {dentist?.name || 'Unknown Dr.'}
                               </span>
-                              <div className="flex items-center gap-1 bg-destructive/10 text-destructive font-medium px-2 py-1 rounded">
-                                <Clock className="w-3 h-3" />
+                              <div className="flex items-center gap-1 text-destructive font-medium">
+                                <Clock className="w-2.5 h-2.5" />
                                 {new Date(caseItem.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                               </div>
                             </div>
