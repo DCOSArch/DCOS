@@ -10,18 +10,20 @@ import LabDashboard from '@/src/pages/LabDashboard';
 import CaseDetails from '@/src/pages/CaseDetails';
 import LabDirectory from '@/src/pages/LabDirectory';
 import InventoryDashboard from '@/src/pages/InventoryDashboard';
+import Login from '@/src/pages/Login';
 import { mockUsers, mockCases as initialCases, mockInventory as initialInventory } from '@/src/mockData';
-import { Case, InventoryItem } from '@/src/types';
+import { Case, InventoryItem, User } from '@/src/types';
 
 export type CurrentPage = 
+  | { name: 'login' }
   | { name: 'dashboard' } 
   | { name: 'case_details'; caseId: string }
   | { name: 'lab_directory' }
   | { name: 'inventory' };
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState(mockUsers[0]);
-  const [currentPage, setCurrentPage] = useState<CurrentPage>({ name: 'dashboard' });
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentPage, setCurrentPage] = useState<CurrentPage>({ name: 'login' });
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [cases, setCases] = useState<Case[]>(initialCases);
   const [inventory, setInventory] = useState<InventoryItem[]>(initialInventory);
@@ -43,7 +45,18 @@ export default function App() {
     return () => clearInterval(interval);
   }, [cases]);
 
+  const handleLogin = (user: User) => {
+    setCurrentUser(user);
+    setCurrentPage({ name: 'dashboard' });
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    setCurrentPage({ name: 'login' });
+  };
+
   const toggleUser = () => {
+    if (!currentUser) return;
     setCurrentUser(currentUser.id === mockUsers[0].id ? mockUsers[1] : mockUsers[0]);
     setCurrentPage({ name: 'dashboard' });
   };
@@ -52,33 +65,39 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans transition-colors duration-200">
-      <Navbar 
-        currentUser={currentUser} 
-        onToggleUser={toggleUser} 
-        navigateTo={(page) => setCurrentPage(page as any)} 
-        isDarkMode={isDarkMode}
-        toggleDarkMode={toggleDarkMode}
-        cases={cases}
-      />
+      {currentPage.name !== 'login' && currentUser && (
+        <Navbar 
+          currentUser={currentUser} 
+          onToggleUser={toggleUser} 
+          navigateTo={(page) => setCurrentPage(page as any)} 
+          isDarkMode={isDarkMode}
+          toggleDarkMode={toggleDarkMode}
+          cases={cases}
+          onLogout={handleLogout}
+        />
+      )}
       
       <main className="flex-1 p-6 lg:p-8 max-w-7xl mx-auto w-full relative">
-        {currentPage.name === 'dashboard' && currentUser.role === 'DENTIST' && (
+        {currentPage.name === 'login' && (
+          <Login onLogin={handleLogin} />
+        )}
+        {currentPage.name === 'dashboard' && currentUser?.role === 'DENTIST' && (
            <DentistDashboard navigateTo={(page) => setCurrentPage(page as any)} cases={cases} setCases={setCases} />
         )}
-        {currentPage.name === 'dashboard' && currentUser.role === 'LAB_ADMIN' && (
+        {currentPage.name === 'dashboard' && currentUser?.role === 'LAB_ADMIN' && (
            <LabDashboard navigateTo={(page) => setCurrentPage(page as any)} cases={cases} setCases={setCases} inventory={inventory} setInventory={setInventory} />
         )}
-        {currentPage.name === 'case_details' && (
+        {currentPage.name === 'case_details' && currentUser && (
            <CaseDetails 
              caseId={currentPage.caseId} 
              currentUser={currentUser} 
              goBack={() => setCurrentPage({ name: 'dashboard' })} 
            />
         )}
-        {currentPage.name === 'lab_directory' && currentUser.role === 'DENTIST' && (
+        {currentPage.name === 'lab_directory' && currentUser?.role === 'DENTIST' && (
            <LabDirectory />
         )}
-        {currentPage.name === 'inventory' && currentUser.role === 'LAB_ADMIN' && (
+        {currentPage.name === 'inventory' && currentUser?.role === 'LAB_ADMIN' && (
            <InventoryDashboard inventory={inventory} />
         )}
       </main>

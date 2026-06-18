@@ -15,9 +15,10 @@ interface NavbarProps {
   isDarkMode: boolean;
   toggleDarkMode: () => void;
   cases: Case[];
+  onLogout: () => void;
 }
 
-export default function Navbar({ currentUser, onToggleUser, navigateTo, isDarkMode, toggleDarkMode, cases }: NavbarProps) {
+export default function Navbar({ currentUser, onToggleUser, navigateTo, isDarkMode, toggleDarkMode, cases, onLogout }: NavbarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showResults, setShowResults] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -137,11 +138,11 @@ export default function Navbar({ currentUser, onToggleUser, navigateTo, isDarkMo
             {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </Button>
 
-          <Button variant="outline" size="sm" onClick={() => window.location.reload()} className="hidden lg:flex items-center gap-2 text-destructive border-destructive/20 hover:bg-destructive/10">
+          <Button variant="outline" size="sm" onClick={onLogout} className="hidden lg:flex items-center gap-2 text-destructive border-destructive/20 hover:bg-destructive/10">
             <LogOut className="w-4 h-4" />
             Log Out
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => window.location.reload()} className="flex lg:hidden text-destructive hover:text-destructive hover:bg-destructive/10">
+          <Button variant="ghost" size="icon" onClick={onLogout} className="flex lg:hidden text-destructive hover:text-destructive hover:bg-destructive/10">
             <LogOut className="w-5 h-5" />
           </Button>
           
