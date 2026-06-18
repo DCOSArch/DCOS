@@ -3,16 +3,40 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, Star, Clock, DollarSign, Mail, Phone, Plus } from 'lucide-react';
+import { Search, Star, Clock, DollarSign, Mail, Phone, Plus, X } from 'lucide-react';
 import { mockLabProfiles } from '@/src/mockData';
 
 export default function LabDirectory() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [labs, setLabs] = useState(mockLabProfiles);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newLabName, setNewLabName] = useState('');
 
-  const filteredLabs = mockLabProfiles.filter(lab => 
+  const filteredLabs = labs.filter(lab => 
     lab.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     lab.services.some(s => s.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  const handleAddLab = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newLabName.trim()) return;
+    
+    const newLab = {
+      id: `lab-${Date.now()}`,
+      name: newLabName,
+      rating: 5.0,
+      reviewsCount: 0,
+      services: ['General Dentistry', 'Crowns'],
+      pricing: '$$',
+      turnaroundTime: '5-7 Business Days',
+      contactEmail: 'contact@' + newLabName.toLowerCase().replace(/\s+/g, '') + '.com',
+      contactPhone: '(555) 000-0000'
+    };
+    
+    setLabs([newLab, ...labs]);
+    setNewLabName('');
+    setShowAddModal(false);
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
@@ -21,7 +45,7 @@ export default function LabDirectory() {
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Laboratory Directory</h1>
           <p className="text-muted-foreground mt-1 text-sm">Discover and connect with top-rated dental laboratories.</p>
         </div>
-        <Button className="flex items-center gap-2" variant="default" onClick={() => alert('Add Lab functionality coming soon!')}>
+        <Button className="flex items-center gap-2" variant="default" onClick={() => setShowAddModal(true)}>
           <Plus className="w-4 h-4" />
           Add Lab
         </Button>
@@ -86,6 +110,40 @@ export default function LabDirectory() {
           </div>
         )}
       </div>
+
+      {/* Add Lab Modal overlay */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <Card className="w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
+            <form onSubmit={handleAddLab}>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Register New Laboratory</CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">Add a new lab to the directory ecosystem.</p>
+                </div>
+                <Button type="button" variant="ghost" size="icon" onClick={() => setShowAddModal(false)} className="-mr-2">
+                  <X className="w-4 h-4" />
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4 pt-4 border-t border-border">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Laboratory Name</label>
+                  <Input 
+                    placeholder="e.g. Apex Dental Systems" 
+                    value={newLabName}
+                    onChange={(e) => setNewLabName(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+              </CardContent>
+              <CardFooter className="flex justify-end gap-2 border-t border-border bg-muted/30 pt-4 rounded-b-xl">
+                <Button type="button" variant="outline" onClick={() => setShowAddModal(false)}>Cancel</Button>
+                <Button type="submit" disabled={!newLabName.trim()}>Add Lab</Button>
+              </CardFooter>
+            </form>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
