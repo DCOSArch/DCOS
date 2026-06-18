@@ -92,6 +92,7 @@ export default function App() {
              caseId={currentPage.caseId} 
              currentUser={currentUser} 
              goBack={() => setCurrentPage({ name: 'dashboard' })} 
+             cases={cases}
            />
         )}
         {currentPage.name === 'lab_directory' && currentUser?.role === 'DENTIST' && (

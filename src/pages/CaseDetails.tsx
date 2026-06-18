@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User } from '@/src/types';
+import { User, Case } from '@/src/types';
 import { mockCases, mockTimelineEvents, mockUsers } from '@/src/mockData';
 import { StatusBadge } from '@/src/components/StatusBadge';
 import { Button } from '@/components/ui/button';
@@ -15,13 +15,14 @@ interface CaseDetailsProps {
   caseId: string;
   currentUser: User;
   goBack: () => void;
+  cases: Case[];
 }
 
-export default function CaseDetails({ caseId, currentUser, goBack }: CaseDetailsProps) {
+export default function CaseDetails({ caseId, currentUser, goBack, cases }: CaseDetailsProps) {
   const [showPatientLinkModal, setShowPatientLinkModal] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
-  const caseItem = mockCases.find(c => c.id === caseId);
+  const caseItem = cases.find(c => c.id === caseId);
   const dentist = mockUsers.find(u => u.id === caseItem?.dentistId);
   const lab = mockUsers.find(u => u.id === caseItem?.labId);
   
