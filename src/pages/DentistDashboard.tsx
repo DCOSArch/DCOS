@@ -64,18 +64,43 @@ export default function DentistDashboard({ navigateTo, cases, setCases }: Dentis
         return;
       }
       
-      // 2. Generate a local mock case and prepend it
+      // 2. Insert the case into the Supabase 'cases' table
+      const dbCase = {
+        patient_name: patientName,
+        // Using the hardcoded UUIDs from seed.sql for Phase 1 mapping
+        dentist_id: '11111111-1111-1111-1111-111111111111', 
+        lab_id: '33333333-3333-3333-3333-333333333333',
+        status: 'PENDING',
+        urgency,
+        requested_treatment: treatmentType,
+        material: 'Zirconia (Default)',
+        due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+      };
+
+      const { data: insertedCase, error: insertError } = await supabase
+        .from('cases')
+        .insert([dbCase])
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error('DB Insert Error:', insertError);
+        // We'll still proceed to add it to the local UI state so it doesn't block the user, 
+        // but log the error if DB connection fails.
+      }
+      
+      // 3. Generate a local mock case and prepend it to update the UI immediately
       const newCase: Case = {
-        id: `case-${Date.now().toString().slice(-4)}`,
+        id: insertedCase ? insertedCase.id : `case-${Date.now().toString().slice(-4)}`,
         patientName,
-        dentistId: 'u1',
-        labId: 'lab1', // Defaults to Advance Dental Export
+        dentistId: 'u1', // Keeps local mock mapping intact for UI relations
+        labId: 'lab1', 
         status: 'PENDING',
         urgency,
         requestedTreatment: treatmentType,
         material: 'Zirconia (Default)',
         createdAt: new Date().toISOString(),
-        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // +7 days
+        dueDate: dbCase.due_date
       };
       
       setCases(prev => [newCase, ...prev]);
