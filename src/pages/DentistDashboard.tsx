@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { StatusBadge } from '@/src/components/StatusBadge';
 import SummaryChart from '@/src/components/SummaryChart';
 import { Button } from '@/components/ui/button';
@@ -10,16 +10,18 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Activity, CheckCircle2, UploadCloud, FileBox, Filter, FileText, Box, Building2 } from 'lucide-react';
-import { Case } from '@/src/types';
+import { Case, User, DoctorInventoryItem } from '@/src/types';
 import { supabase } from '@/src/lib/supabase';
-import { mockDoctorInventory, mockLabProfiles } from '@/src/mockData';
+import { mockLabProfiles } from '@/src/mockData'; // Keeping lab profiles mock for simplicity for now
+
 interface DentistDashboardProps {
   navigateTo: (page: { name: 'dashboard' } | { name: 'case_details'; caseId: string }) => void;
   cases: Case[];
   setCases: React.Dispatch<React.SetStateAction<Case[]>>;
+  currentUser: User;
 }
 
-export default function DentistDashboard({ navigateTo, cases, setCases }: DentistDashboardProps) {
+export default function DentistDashboard({ navigateTo, cases, setCases, currentUser }: DentistDashboardProps) {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
   
@@ -30,6 +32,31 @@ export default function DentistDashboard({ navigateTo, cases, setCases }: Dentis
   const [urgency, setUrgency] = useState<Case['urgency']>('NORMAL');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [inventory, setInventory] = useState<DoctorInventoryItem[]>([]);
+
+  useEffect(() => {
+    const fetchInventory = async () => {
+      const { data } = await supabase
+        .from('doctor_inventory')
+        .select('*')
+        .eq('dentist_id', currentUser.id);
+      
+      if (data) {
+        setInventory(data.map((item: any) => ({
+          id: item.id,
+          dentistId: item.dentist_id,
+          labId: item.lab_id,
+          materialName: item.material_name,
+          totalUnits: item.total_units,
+          remainingUnits: item.remaining_units,
+          lockedPrice: item.locked_price
+        })));
+      }
+    };
+    
+    fetchInventory();
+  }, [currentUser.id]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -65,16 +92,20 @@ export default function DentistDashboard({ navigateTo, cases, setCases }: Dentis
         return;
       }
       
+      // We will pick a lab from mockLabProfiles for now since we haven't implemented a lab picker
+      const targetLabId = mockLabProfiles[0].id; // Fallback
+      // Actually, let's look if there's a lab ID we can use. Assuming we use 'lab1' or the first one.
+      const targetDbLabId = '33333333-3333-3333-3333-333333333333'; // Real DB seed ID
+      
       // 2. Insert the case into the Supabase 'cases' table
       const dbCase = {
         patient_name: patientName,
-        // Using the hardcoded UUIDs from seed.sql for Phase 1 mapping
-        dentist_id: '11111111-1111-1111-1111-111111111111', 
-        lab_id: '33333333-3333-3333-3333-333333333333',
+        dentist_id: currentUser.id, 
+        lab_id: targetDbLabId,
         status: 'PENDING',
         urgency,
         requested_treatment: treatmentType,
-        material: 'Zirconia (Default)',
+        material: 'Zirconia HT', // Match the inventory name to trigger deduction
         due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
       };
 
@@ -86,20 +117,36 @@ export default function DentistDashboard({ navigateTo, cases, setCases }: Dentis
 
       if (insertError) {
         console.error('DB Insert Error:', insertError);
-        // We'll still proceed to add it to the local UI state so it doesn't block the user, 
-        // but log the error if DB connection fails.
+        alert('Error inserting case: ' + insertError.message);
+      } else {
+        // Refetch inventory to reflect deduction
+        const { data: invData } = await supabase
+          .from('doctor_inventory')
+          .select('*')
+          .eq('dentist_id', currentUser.id);
+        
+        if (invData) {
+          setInventory(invData.map((item: any) => ({
+            id: item.id,
+            dentistId: item.dentist_id,
+            labId: item.lab_id,
+            materialName: item.material_name,
+            totalUnits: item.total_units,
+            remainingUnits: item.remaining_units,
+            lockedPrice: item.locked_price
+          })));
+        }
       }
       
-      // 3. Generate a local mock case and prepend it to update the UI immediately
       const newCase: Case = {
         id: insertedCase ? insertedCase.id : `case-${Date.now().toString().slice(-4)}`,
         patientName,
-        dentistId: 'u1', // Keeps local mock mapping intact for UI relations
-        labId: 'lab1', 
+        dentistId: currentUser.id, 
+        labId: targetDbLabId, 
         status: 'PENDING',
         urgency,
         requestedTreatment: treatmentType,
-        material: 'Zirconia (Default)',
+        material: 'Zirconia HT',
         createdAt: new Date().toISOString(),
         dueDate: dbCase.due_date
       };
@@ -181,7 +228,12 @@ export default function DentistDashboard({ navigateTo, cases, setCases }: Dentis
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {mockDoctorInventory.map(item => {
+            {inventory.length === 0 ? (
+              <div className="col-span-full py-8 text-center text-muted-foreground">
+                <p>No active bulk inventory found.</p>
+                <p className="text-sm mt-1">Purchase materials from a lab partner to lock in pricing.</p>
+              </div>
+            ) : inventory.map(item => {
               const lab = mockLabProfiles.find(l => l.id === item.labId);
               const percentage = (item.remainingUnits / item.totalUnits) * 100;
               return (

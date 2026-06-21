@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { User, Case } from '@/src/types';
+import { useState, useEffect } from 'react';
+import { User, Case, ChatMessage } from '@/src/types';
 import { mockCases, mockTimelineEvents, mockUsers, mockOrderChats } from '@/src/mockData';
 import { StatusBadge } from '@/src/components/StatusBadge';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Calendar, FileText, User as UserIcon, Building2, Download, Box, Link2, Eye, Layers, Send, Lock } from 'lucide-react';
 import { ThreeDViewer } from '@/src/components/ThreeDViewer';
+import { supabase } from '@/src/lib/supabase';
 
 interface CaseDetailsProps {
   caseId: string;
@@ -22,13 +23,82 @@ export default function CaseDetails({ caseId, currentUser, goBack, cases }: Case
   const [showPatientLinkModal, setShowPatientLinkModal] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [newMessage, setNewMessage] = useState('');
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [chatId, setChatId] = useState<string | null>(null);
 
   const caseItem = cases.find(c => c.id === caseId);
   const dentist = mockUsers.find(u => u.id === caseItem?.dentistId);
   const lab = mockUsers.find(u => u.id === caseItem?.labId);
   
-  const orderChat = mockOrderChats.find(chat => chat.caseId === caseId);
   const isChatUnlocked = caseItem?.status !== 'PENDING' && caseItem?.status !== 'REJECTED';
+
+  useEffect(() => {
+    if (!isChatUnlocked) return;
+
+    const fetchChat = async () => {
+      // 1. Get the chat ID for this case
+      const { data: chatData } = await supabase
+        .from('order_chats')
+        .select('id')
+        .eq('case_id', caseId)
+        .single();
+
+      if (chatData) {
+        setChatId(chatData.id);
+        // 2. Fetch existing messages
+        const { data: messageData } = await supabase
+          .from('chat_messages')
+          .select('*')
+          .eq('chat_id', chatData.id)
+          .order('created_at', { ascending: true });
+        
+        if (messageData) {
+          setMessages(messageData.map((m: any) => ({
+            id: m.id,
+            chatId: m.chat_id,
+            senderId: m.sender_id,
+            content: m.content,
+            timestamp: m.created_at
+          })));
+        }
+
+        // 3. Subscribe to real-time new messages
+        const subscription = supabase
+          .channel(`chat_${chatData.id}`)
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `chat_id=eq.${chatData.id}` }, payload => {
+            const newMsg = payload.new;
+            setMessages(prev => [...prev, {
+              id: newMsg.id,
+              chatId: newMsg.chat_id,
+              senderId: newMsg.sender_id,
+              content: newMsg.content,
+              timestamp: newMsg.created_at
+            }]);
+          })
+          .subscribe();
+
+        return () => {
+          subscription.unsubscribe();
+        };
+      }
+    };
+
+    fetchChat();
+  }, [caseId, isChatUnlocked]);
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !chatId) return;
+
+    const content = newMessage;
+    setNewMessage(''); // optimistic clear
+
+    await supabase.from('chat_messages').insert({
+      chat_id: chatId,
+      sender_id: currentUser.id,
+      content: content
+    });
+  };
   
   // Timeline Filtering based on role
   const timeline = mockTimelineEvents
@@ -206,23 +276,23 @@ export default function CaseDetails({ caseId, currentUser, goBack, cases }: Case
                     Secure communication will be enabled once the lab confirms this order.
                   </p>
                 </div>
-              ) : !orderChat || orderChat.messages.length === 0 ? (
+              ) : messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center space-y-3 opacity-80">
                   <p className="text-sm font-medium text-foreground">No messages yet</p>
                   <p className="text-xs text-muted-foreground">Start the conversation with the {currentUser.role === 'DENTIST' ? 'lab' : 'dentist'}.</p>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {orderChat.messages.map(msg => {
+                  {messages.map(msg => {
                     const isMe = msg.senderId === currentUser.id;
-                    const sender = mockUsers.find(u => u.id === msg.senderId);
+                    const senderName = isMe ? 'You' : 'Participant'; // Simplified for now since we aren't fetching all users
                     return (
                       <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                         <div className={`px-3 py-2 rounded-2xl max-w-[85%] text-sm ${isMe ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-muted text-foreground rounded-bl-sm'}`}>
                           {msg.content}
                         </div>
                         <span className="text-[10px] text-muted-foreground mt-1 mx-1">
-                          {sender?.name} • {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {senderName} • {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
                     );
@@ -232,7 +302,7 @@ export default function CaseDetails({ caseId, currentUser, goBack, cases }: Case
             </CardContent>
             {isChatUnlocked && (
               <CardFooter className="border-t border-border p-3 bg-muted/30">
-                <form className="flex w-full items-center gap-2" onSubmit={(e) => { e.preventDefault(); /* mock send */ setNewMessage(''); }}>
+                <form className="flex w-full items-center gap-2" onSubmit={handleSendMessage}>
                   <Input 
                     placeholder="Type your message..." 
                     value={newMessage}
