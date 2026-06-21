@@ -1,146 +1,204 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, Star, Clock, DollarSign, Mail, Phone, Plus, X } from 'lucide-react';
-import { mockLabProfiles } from '@/src/mockData';
+import { Search, Star, Clock, DollarSign, Plus, X, Lock } from 'lucide-react';
+import { supabase } from '@/src/lib/supabase';
+
+// Define the Lab profile type matching DB schema
+interface LabProfile {
+  id: string;
+  name: string;
+  rating: number;
+  reviews_count: number;
+  services: string[];
+  pricing: string;
+  turnaround_time: string;
+  contact_email: string | null;
+  contact_phone: string | null;
+}
 
 export default function LabDirectory() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [labs, setLabs] = useState(mockLabProfiles);
+  const [labs, setLabs] = useState<LabProfile[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newLabName, setNewLabName] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchLabs();
+  }, []);
+
+  const fetchLabs = async () => {
+    setIsLoading(true);
+    const { data, error } = await supabase
+      .from('lab_profiles')
+      .select('*')
+      .order('rating', { ascending: false });
+      
+    if (data) {
+      setLabs(data);
+    } else if (error) {
+      console.error("Error fetching labs:", error);
+    }
+    setIsLoading(false);
+  };
 
   const filteredLabs = labs.filter(lab => 
     lab.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    lab.services.some(s => s.toLowerCase().includes(searchTerm.toLowerCase()))
+    (lab.services && lab.services.some(s => s.toLowerCase().includes(searchTerm.toLowerCase())))
   );
 
-  const handleAddLab = (e: React.FormEvent) => {
+  const handleAddLab = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newLabName.trim()) return;
     
-    const newLab = {
-      id: `lab-${Date.now()}`,
+    // Perform real insert
+    const newLabData = {
       name: newLabName,
-      rating: 5.0,
-      reviewsCount: 0,
-      services: ['General Dentistry', 'Crowns'],
+      rating: 5.0, // Default for new
+      reviews_count: 0,
+      services: ['General Dentistry', 'Crowns'], // Defaults
       pricing: '$$',
-      turnaroundTime: '5-7 Business Days',
-      contactEmail: 'contact@' + newLabName.toLowerCase().replace(/\s+/g, '') + '.com',
-      contactPhone: '(555) 000-0000'
+      turnaround_time: '5-7 Business Days',
+      contact_email: 'contact@' + newLabName.toLowerCase().replace(/\s+/g, '') + '.com',
+      contact_phone: '(555) 000-0000'
     };
-    
-    setLabs([newLab, ...labs]);
-    setNewLabName('');
-    setShowAddModal(false);
+
+    const { data, error } = await supabase
+      .from('lab_profiles')
+      .insert([newLabData])
+      .select()
+      .single();
+
+    if (data) {
+      setLabs([data, ...labs]);
+      setNewLabName('');
+      setShowAddModal(false);
+    } else if (error) {
+      console.error("Error inserting lab:", error);
+      alert("Failed to add lab.");
+    }
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
+    <div className="space-y-6 max-w-6xl mx-auto animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Laboratory Directory</h1>
-          <p className="text-muted-foreground mt-1 text-sm">Discover and connect with top-rated dental laboratories.</p>
+          <p className="text-muted-foreground mt-1 text-sm md:text-base">Discover and connect with top-rated dental laboratories.</p>
         </div>
-        <Button className="flex items-center gap-2" variant="default" onClick={() => setShowAddModal(true)}>
-          <Plus className="w-4 h-4" />
-          Add Lab
+        <Button onClick={() => setShowAddModal(true)} className="gap-2 shadow-sm">
+          <Plus className="w-4 h-4" /> Add Lab
         </Button>
       </div>
 
       <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input 
           placeholder="Search labs by name or service..." 
-          className="pl-9"
+          className="pl-9 bg-background shadow-sm border-muted"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 items-stretch">
-        {filteredLabs.map(lab => (
-          <Card key={lab.id} className="flex flex-col h-full hover:shadow-md transition-shadow">
-            <CardHeader>
-              <CardTitle className="text-xl flex justify-between items-start">
-                <span className="font-semibold text-foreground">{lab.name}</span>
-                <div className="flex items-center gap-1 text-sm font-medium text-amber-500 bg-amber-50 dark:bg-amber-950/30 px-2 py-0.5 rounded-full">
-                  <Star className="h-3.5 w-3.5 fill-current" />
-                  {lab.rating} ({lab.reviewsCount})
+      {isLoading ? (
+        <div className="text-center py-12 text-muted-foreground">Loading laboratories...</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredLabs.map(lab => (
+            <Card key={lab.id} className="flex flex-col h-full overflow-hidden hover:shadow-lg transition-all duration-300 border border-muted group hover:border-primary/20 bg-card">
+              <CardHeader className="pb-3 border-b border-border/50 bg-muted/20">
+                <div className="flex justify-between items-start gap-2">
+                  <CardTitle className="text-lg leading-tight group-hover:text-primary transition-colors">{lab.name}</CardTitle>
+                  <div className="flex items-center gap-1 bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-500 px-2 py-0.5 rounded-full text-xs font-semibold shrink-0">
+                    <Star className="w-3 h-3 fill-current" />
+                    <span>{lab.rating} <span className="font-normal opacity-70">({lab.reviews_count || 0})</span></span>
+                  </div>
                 </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex-1 space-y-4">
-              <div>
-                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Services</h4>
-                <div className="flex flex-wrap gap-1.5">
-                  {lab.services.map(service => (
-                    <Badge key={service} variant="secondary" className="font-normal">{service}</Badge>
-                  ))}
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-y-4 gap-x-2 pt-2 border-t border-border">
-                <div>
-                  <h4 className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1"><Clock className="h-3 w-3" /> Turnaround</h4>
-                  <p className="text-sm font-medium">{lab.turnaroundTime}</p>
-                </div>
-                <div>
-                  <h4 className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1"><DollarSign className="h-3 w-3" /> Pricing</h4>
-                  <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">{lab.pricing}</p>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="flex-col items-stretch gap-3 bg-muted/30 pt-4 rounded-b-xl border-t border-border">
-              <div className="flex justify-between items-center text-xs text-muted-foreground w-full px-1">
-                <span className="flex items-center gap-1 font-medium"><Star className="h-3 w-3 text-amber-500" /> Secure Chat Unlocks After Order</span>
-              </div>
-              <Button className="w-full" variant="outline">View Full Profile</Button>
-            </CardFooter>
-          </Card>
-        ))}
-        
-        {filteredLabs.length === 0 && (
-          <div className="col-span-full py-12 text-center border-2 border-dashed border-border rounded-xl">
-            <p className="text-muted-foreground">No laboratories found matching your search.</p>
-          </div>
-        )}
-      </div>
-
-      {/* Add Lab Modal overlay */}
-      {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <Card className="w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
-            <form onSubmit={handleAddLab}>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle>Register New Laboratory</CardTitle>
-                  <p className="text-sm text-muted-foreground mt-1">Add a new lab to the directory ecosystem.</p>
-                </div>
-                <Button type="button" variant="ghost" size="icon" onClick={() => setShowAddModal(false)} className="-mr-2">
-                  <X className="w-4 h-4" />
-                </Button>
               </CardHeader>
-              <CardContent className="space-y-4 pt-4 border-t border-border">
+              
+              <CardContent className="flex-1 pt-4 pb-2 flex flex-col gap-4">
+                <div>
+                  <div className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase mb-2">Services</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {lab.services && lab.services.map((service, idx) => (
+                      <Badge key={idx} variant="secondary" className="bg-muted/50 text-xs font-medium text-foreground hover:bg-muted">
+                        {service}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 mt-auto pt-4 border-t border-border/50">
+                  <div className="flex flex-col gap-1">
+                    <div className="text-[10px] text-muted-foreground flex items-center gap-1">
+                      <Clock className="w-3 h-3" /> Turnaround
+                    </div>
+                    <div className="text-sm font-medium">{lab.turnaround_time}</div>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <div className="text-[10px] text-muted-foreground flex items-center gap-1">
+                      <DollarSign className="w-3 h-3" /> Pricing
+                    </div>
+                    <div className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{lab.pricing}</div>
+                  </div>
+                </div>
+              </CardContent>
+              
+              <CardFooter className="pt-0 flex flex-col gap-3">
+                <div className="w-full bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-md p-2 flex items-center gap-2 text-amber-800 dark:text-amber-400">
+                  <Lock className="w-3.5 h-3.5 shrink-0" />
+                  <span className="text-[10px] font-medium leading-tight">Secure Chat Unlocks After Order</span>
+                </div>
+                <Button variant="outline" className="w-full text-sm font-medium hover:bg-primary hover:text-primary-foreground transition-colors">
+                  View Full Profile
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+          
+          {filteredLabs.length === 0 && (
+            <div className="col-span-full py-12 text-center text-muted-foreground bg-muted/20 rounded-lg border border-dashed border-border">
+              <p className="font-medium text-foreground">No laboratories found</p>
+              <p className="text-sm mt-1">Try adjusting your search terms</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Add Lab Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-card w-full max-w-md rounded-xl shadow-2xl border border-border overflow-hidden animate-in zoom-in-95">
+            <div className="flex justify-between items-center p-4 border-b border-border bg-muted/30">
+              <h2 className="text-lg font-semibold">Add New Laboratory</h2>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => setShowAddModal(false)}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            <form onSubmit={handleAddLab} className="p-6">
+              <div className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Laboratory Name</label>
                   <Input 
-                    placeholder="e.g. Apex Dental Systems" 
                     value={newLabName}
                     onChange={(e) => setNewLabName(e.target.value)}
+                    placeholder="e.g. Precision Dental Arts"
+                    required
                     autoFocus
                   />
+                  <p className="text-xs text-muted-foreground">Additional details will be set to defaults and can be edited later.</p>
                 </div>
-              </CardContent>
-              <CardFooter className="flex justify-end gap-2 border-t border-border bg-muted/30 pt-4 rounded-b-xl">
+              </div>
+              <div className="mt-8 flex justify-end gap-3">
                 <Button type="button" variant="outline" onClick={() => setShowAddModal(false)}>Cancel</Button>
-                <Button type="submit" disabled={!newLabName.trim()}>Add Lab</Button>
-              </CardFooter>
+                <Button type="submit">Add Lab</Button>
+              </div>
             </form>
-          </Card>
+          </div>
         </div>
       )}
     </div>

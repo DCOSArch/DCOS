@@ -27,7 +27,37 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [currentPage, setCurrentPage] = useState<CurrentPage>({ name: 'login' });
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [cases, setCases] = useState<Case[]>(initialCases);
+  const [cases, setCases] = useState<Case[]>([]);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    
+    const fetchCases = async () => {
+      const { data, error } = await supabase
+        .from('cases')
+        .select('*')
+        .eq(currentUser.role === 'DENTIST' ? 'dentist_id' : 'lab_id', currentUser.id)
+        .order('created_at', { ascending: false });
+
+      if (data) {
+        const mappedCases: Case[] = data.map((dbCase: any) => ({
+          id: dbCase.id,
+          patientName: dbCase.patient_name,
+          dentistId: dbCase.dentist_id,
+          labId: dbCase.lab_id,
+          status: dbCase.status,
+          urgency: dbCase.urgency,
+          requestedTreatment: dbCase.requested_treatment,
+          material: dbCase.material,
+          createdAt: dbCase.created_at,
+          dueDate: dbCase.due_date,
+        }));
+        setCases(mappedCases);
+      }
+    };
+
+    fetchCases();
+  }, [currentUser]);
   const [inventory, setInventory] = useState<InventoryItem[]>(initialInventory);
 
   useEffect(() => {
