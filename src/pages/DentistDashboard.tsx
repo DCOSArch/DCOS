@@ -34,16 +34,19 @@ export default function DentistDashboard({ navigateTo, cases, setCases, currentU
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [inventory, setInventory] = useState<DoctorInventoryItem[]>([]);
+  const [availableLabs, setAvailableLabs] = useState<{id: string, name: string}[]>([]);
+  const [selectedLabId, setSelectedLabId] = useState<string>('');
 
   useEffect(() => {
-    const fetchInventory = async () => {
-      const { data } = await supabase
+    const fetchData = async () => {
+      // Fetch Inventory
+      const { data: invData } = await supabase
         .from('doctor_inventory')
         .select('*')
         .eq('dentist_id', currentUser.id);
       
-      if (data) {
-        setInventory(data.map((item: any) => ({
+      if (invData) {
+        setInventory(invData.map((item: any) => ({
           id: item.id,
           dentistId: item.dentist_id,
           labId: item.lab_id,
@@ -53,9 +56,19 @@ export default function DentistDashboard({ navigateTo, cases, setCases, currentU
           lockedPrice: item.locked_price
         })));
       }
+
+      // Fetch Labs
+      const { data: labsData } = await supabase
+        .from('lab_profiles')
+        .select('id, name')
+        .order('name');
+      
+      if (labsData) {
+        setAvailableLabs(labsData);
+      }
     };
     
-    fetchInventory();
+    fetchData();
   }, [currentUser.id]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -69,8 +82,8 @@ export default function DentistDashboard({ navigateTo, cases, setCases, currentU
   };
 
   const handleSubmitCase = async () => {
-    if (!patientName.trim() || !treatmentType || !selectedFile) {
-      alert('Please fill out patient name, treatment type, and select a scan file.');
+    if (!patientName.trim() || !treatmentType || !selectedFile || !selectedLabId) {
+      alert('Please fill out patient name, treatment type, select a lab, and select a scan file.');
       return;
     }
     
@@ -92,20 +105,16 @@ export default function DentistDashboard({ navigateTo, cases, setCases, currentU
         return;
       }
       
-      // We will pick a lab from mockLabProfiles for now since we haven't implemented a lab picker
-      const targetLabId = mockLabProfiles[0].id; // Fallback
-      // Actually, let's look if there's a lab ID we can use. Assuming we use 'lab1' or the first one.
-      const targetDbLabId = '33333333-3333-3333-3333-333333333333'; // Real DB seed ID
-      
       // 2. Insert the case into the Supabase 'cases' table
       const dbCase = {
         patient_name: patientName,
         dentist_id: currentUser.id, 
-        lab_id: targetDbLabId,
+        lab_id: selectedLabId,
         status: 'PENDING',
         urgency,
         requested_treatment: treatmentType,
         material: 'Zirconia HT', // Match the inventory name to trigger deduction
+        scan_url: data.path, // Store the file path
         due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
       };
 
@@ -364,6 +373,19 @@ export default function DentistDashboard({ navigateTo, cases, setCases, currentU
                 value={patientName}
                 onChange={(e) => setPatientName(e.target.value)}
               />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="lab">Assign to Laboratory</Label>
+              <Select value={selectedLabId} onValueChange={setSelectedLabId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a laboratory" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableLabs.map(lab => (
+                    <SelectItem key={lab.id} value={lab.id}>{lab.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">

@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, Star, Clock, DollarSign, Plus, X, Lock } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Search, Star, Clock, DollarSign, Plus, X, Lock, Mail, Phone, MapPin } from 'lucide-react';
 import { supabase } from '@/src/lib/supabase';
 
 // Define the Lab profile type matching DB schema
@@ -25,6 +26,7 @@ export default function LabDirectory() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [newLabName, setNewLabName] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedLab, setSelectedLab] = useState<LabProfile | null>(null);
 
   useEffect(() => {
     fetchLabs();
@@ -153,7 +155,11 @@ export default function LabDirectory() {
                   <Lock className="w-3.5 h-3.5 shrink-0" />
                   <span className="text-[10px] font-medium leading-tight">Secure Chat Unlocks After Order</span>
                 </div>
-                <Button variant="outline" className="w-full text-sm font-medium hover:bg-primary hover:text-primary-foreground transition-colors">
+                <Button 
+                  variant="outline" 
+                  className="w-full text-sm font-medium hover:bg-primary hover:text-primary-foreground transition-colors"
+                  onClick={() => setSelectedLab(lab)}
+                >
                   View Full Profile
                 </Button>
               </CardFooter>
@@ -169,38 +175,81 @@ export default function LabDirectory() {
         </div>
       )}
 
-      {/* Add Lab Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-card w-full max-w-md rounded-xl shadow-2xl border border-border overflow-hidden animate-in zoom-in-95">
-            <div className="flex justify-between items-center p-4 border-b border-border bg-muted/30">
-              <h2 className="text-lg font-semibold">Add New Laboratory</h2>
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => setShowAddModal(false)}>
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-            <form onSubmit={handleAddLab} className="p-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Laboratory Name</label>
-                  <Input 
-                    value={newLabName}
-                    onChange={(e) => setNewLabName(e.target.value)}
-                    placeholder="e.g. Precision Dental Arts"
-                    required
-                    autoFocus
-                  />
-                  <p className="text-xs text-muted-foreground">Additional details will be set to defaults and can be edited later.</p>
+      {/* Lab Profile Modal */}
+      {selectedLab && (
+        <Dialog open={!!selectedLab} onOpenChange={(open) => !open && setSelectedLab(null)}>
+          <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden bg-card">
+            <div className="bg-muted/30 p-6 border-b border-border">
+              <div className="flex justify-between items-start gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-foreground">{selectedLab.name}</h2>
+                  <div className="flex items-center gap-2 mt-2">
+                    <div className="flex items-center gap-1 bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-500 px-2 py-0.5 rounded-full text-xs font-semibold">
+                      <Star className="w-3.5 h-3.5 fill-current" />
+                      <span>{selectedLab.rating}</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">({selectedLab.reviews_count || 0} reviews)</span>
+                  </div>
                 </div>
               </div>
-              <div className="mt-8 flex justify-end gap-3">
-                <Button type="button" variant="outline" onClick={() => setShowAddModal(false)}>Cancel</Button>
-                <Button type="submit">Add Lab</Button>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Contact Information</h3>
+                <div className="grid gap-3">
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <Mail className="w-4 h-4 text-primary" />
+                    </div>
+                    <span className="font-medium text-foreground">{selectedLab.contact_email || 'Not provided'}</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <Phone className="w-4 h-4 text-primary" />
+                    </div>
+                    <span className="font-medium text-foreground">{selectedLab.contact_phone || 'Not provided'}</span>
+                  </div>
+                </div>
               </div>
-            </form>
-          </div>
-        </div>
+
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border">
+                <div className="space-y-1">
+                  <h3 className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5" /> Turnaround Time
+                  </h3>
+                  <p className="text-sm font-medium">{selectedLab.turnaround_time}</p>
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                    <DollarSign className="w-3.5 h-3.5" /> Pricing Tier
+                  </h3>
+                  <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">{selectedLab.pricing}</p>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-border">
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Available Services</h3>
+                <div className="flex flex-wrap gap-2">
+                  {selectedLab.services && selectedLab.services.map((service, idx) => (
+                    <Badge key={idx} variant="secondary" className="px-3 py-1 bg-muted/50 text-sm font-medium">
+                      {service}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            <DialogFooter className="p-4 border-t border-border bg-muted/10 sm:justify-between">
+              <p className="text-xs text-muted-foreground text-left py-2">
+                Use the Dentist Dashboard to place an order and unlock secure chat.
+              </p>
+              <Button onClick={() => setSelectedLab(null)}>Close Profile</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
+
     </div>
   );
 }
