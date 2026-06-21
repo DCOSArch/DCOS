@@ -96,8 +96,7 @@ export default function LabDirectory() {
             </CardContent>
             <CardFooter className="flex-col items-stretch gap-3 bg-muted/30 pt-4 rounded-b-xl border-t border-border">
               <div className="flex justify-between items-center text-xs text-muted-foreground w-full px-1">
-                <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> {lab.contactEmail}</span>
-                <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {lab.contactPhone}</span>
+                <span className="flex items-center gap-1 font-medium"><Star className="h-3 w-3 text-amber-500" /> Secure Chat Unlocks After Order</span>
               </div>
               <Button className="w-full" variant="outline">View Full Profile</Button>
             </CardFooter>

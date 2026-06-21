@@ -8,10 +8,11 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Activity, CheckCircle2, UploadCloud, FileBox, Filter, FileText } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Plus, Activity, CheckCircle2, UploadCloud, FileBox, Filter, FileText, Box, Building2 } from 'lucide-react';
 import { Case } from '@/src/types';
 import { supabase } from '@/src/lib/supabase';
-
+import { mockDoctorInventory, mockLabProfiles } from '@/src/mockData';
 interface DentistDashboardProps {
   navigateTo: (page: { name: 'dashboard' } | { name: 'case_details'; caseId: string }) => void;
   cases: Case[];
@@ -167,6 +168,50 @@ export default function DentistDashboard({ navigateTo, cases, setCases }: Dentis
           </CardContent>
         </Card>
       </div>
+
+      <Card className="shadow-sm border-border mb-6">
+        <CardHeader className="flex flex-row items-center justify-between pb-4">
+          <div>
+            <CardTitle className="text-lg flex items-center gap-2"><Box className="w-5 h-5 text-primary"/> Virtual Inventory (Bulk Orders)</CardTitle>
+            <CardDescription>Track your pre-purchased materials with partner labs.</CardDescription>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => navigateTo({ name: 'dashboard' })}>
+            Purchase More
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {mockDoctorInventory.map(item => {
+              const lab = mockLabProfiles.find(l => l.id === item.labId);
+              const percentage = (item.remainingUnits / item.totalUnits) * 100;
+              return (
+                <div key={item.id} className="border border-border rounded-lg p-4 bg-muted/20 flex flex-col gap-3">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="font-semibold text-foreground">{item.materialName}</h4>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5"><Building2 className="w-3 h-3" /> {lab?.name}</p>
+                    </div>
+                    <Badge variant="secondary" className="text-xs font-mono">{item.lockedPrice}/unit</Badge>
+                  </div>
+                  
+                  <div className="space-y-1.5 mt-2">
+                    <div className="flex justify-between text-xs font-medium">
+                      <span>{item.remainingUnits} units left</span>
+                      <span className="text-muted-foreground">of {item.totalUnits}</span>
+                    </div>
+                    <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full rounded-full ${percentage < 20 ? 'bg-red-500' : percentage < 50 ? 'bg-amber-500' : 'bg-emerald-500'}`} 
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
 
       <Card className="shadow-sm border-border">
         <CardHeader className="flex flex-row items-center justify-between pb-4">

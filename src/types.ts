@@ -53,3 +53,27 @@ export interface InventoryItem {
   threshold: number;
   unit: string;
 }
+
+export interface DoctorInventoryItem {
+  id: string;
+  dentistId: string;
+  labId: string;
+  materialName: string;
+  totalUnits: number;
+  remainingUnits: number;
+  lockedPrice: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  chatId: string;
+  senderId: string;
+  content: string;
+  timestamp: string;
+}
+
+export interface OrderChat {
+  id: string;
+  caseId: string;
+  messages: ChatMessage[];
+}

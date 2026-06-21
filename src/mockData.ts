@@ -1,5 +1,4 @@
-import { User, Case, TimelineEvent, LabProfile, InventoryItem } from '@/src/types';
-
+import { User, Case, TimelineEvent, LabProfile, InventoryItem, DoctorInventoryItem, OrderChat } from '@/src/types';
 export const mockUsers: User[] = [
   { id: 'u1', name: 'Dr. Maneesh Vishnoi', role: 'DENTIST', avatarUrl: 'https://i.pravatar.cc/150?u=u1' },
   { id: 'u2', name: 'Advance Dental Export', role: 'LAB_ADMIN', labId: 'lab1', avatarUrl: 'https://i.pravatar.cc/150?u=u2' },
@@ -196,5 +195,40 @@ export const mockInventory: InventoryItem[] = [
   { id: 'inv2', labId: 'lab1', name: 'E.max CAD Shade A1', category: 'Blocks', quantity: 2, threshold: 10, unit: 'blocks' },
   { id: 'inv3', labId: 'lab1', name: 'Clear Aligner Resin 1kg', category: '3D Printing', quantity: 8, threshold: 3, unit: 'bottles' },
   { id: 'inv4', labId: 'lab1', name: 'Alginate Impression Material', category: 'Supplies', quantity: 24, threshold: 10, unit: 'bags' },
+];
+
+export const mockDoctorInventory: DoctorInventoryItem[] = [
+  {
+    id: 'di1',
+    dentistId: 'u1',
+    labId: 'lab1',
+    materialName: 'Zirconia HT',
+    totalUnits: 100,
+    remainingUnits: 96,
+    lockedPrice: '$45.00'
+  }
+];
+
+export const mockOrderChats: OrderChat[] = [
+  {
+    id: 'chat1',
+    caseId: 'c1',
+    messages: [
+      {
+        id: 'm1',
+        chatId: 'chat1',
+        senderId: 'u1',
+        content: 'Hi, can we ensure the margins on tooth 14 are slightly chamfered?',
+        timestamp: '2026-06-11T09:00:00Z'
+      },
+      {
+        id: 'm2',
+        chatId: 'chat1',
+        senderId: 'u2',
+        content: 'Absolutely. We will make a note for the designer. The digital scan looks good.',
+        timestamp: '2026-06-11T09:15:00Z'
+      }
+    ]
+  }
 ];
 

@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { User, Case } from '@/src/types';
-import { mockCases, mockTimelineEvents, mockUsers } from '@/src/mockData';
+import { mockCases, mockTimelineEvents, mockUsers, mockOrderChats } from '@/src/mockData';
 import { StatusBadge } from '@/src/components/StatusBadge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Calendar, FileText, User as UserIcon, Building2, Download, Box, Link2, Eye, Layers } from 'lucide-react';
+import { ArrowLeft, Calendar, FileText, User as UserIcon, Building2, Download, Box, Link2, Eye, Layers, Send, Lock } from 'lucide-react';
 import { ThreeDViewer } from '@/src/components/ThreeDViewer';
 
 interface CaseDetailsProps {
@@ -21,10 +21,14 @@ interface CaseDetailsProps {
 export default function CaseDetails({ caseId, currentUser, goBack, cases }: CaseDetailsProps) {
   const [showPatientLinkModal, setShowPatientLinkModal] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+  const [newMessage, setNewMessage] = useState('');
 
   const caseItem = cases.find(c => c.id === caseId);
   const dentist = mockUsers.find(u => u.id === caseItem?.dentistId);
   const lab = mockUsers.find(u => u.id === caseItem?.labId);
+  
+  const orderChat = mockOrderChats.find(chat => chat.caseId === caseId);
+  const isChatUnlocked = caseItem?.status !== 'PENDING' && caseItem?.status !== 'REJECTED';
   
   // Timeline Filtering based on role
   const timeline = mockTimelineEvents
@@ -181,6 +185,66 @@ export default function CaseDetails({ caseId, currentUser, goBack, cases }: Case
                 </div>
               )}
             </CardContent>
+          </Card>
+
+          {/* Chat Integration Card */}
+          <Card className="flex flex-col h-[500px] shadow-sm border-border">
+            <CardHeader className="border-b border-border bg-muted/30 py-4">
+              <CardTitle className="text-lg flex items-center justify-between">
+                Order Chat
+                {!isChatUnlocked && <Lock className="w-4 h-4 text-muted-foreground" />}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1 p-4 overflow-y-auto bg-background/50">
+              {!isChatUnlocked ? (
+                <div className="flex flex-col items-center justify-center h-full text-center space-y-3 opacity-80">
+                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                    <Lock className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                  <p className="text-sm font-medium text-foreground">Chat Locked</p>
+                  <p className="text-xs text-muted-foreground max-w-[200px]">
+                    Secure communication will be enabled once the lab confirms this order.
+                  </p>
+                </div>
+              ) : !orderChat || orderChat.messages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-center space-y-3 opacity-80">
+                  <p className="text-sm font-medium text-foreground">No messages yet</p>
+                  <p className="text-xs text-muted-foreground">Start the conversation with the {currentUser.role === 'DENTIST' ? 'lab' : 'dentist'}.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {orderChat.messages.map(msg => {
+                    const isMe = msg.senderId === currentUser.id;
+                    const sender = mockUsers.find(u => u.id === msg.senderId);
+                    return (
+                      <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                        <div className={`px-3 py-2 rounded-2xl max-w-[85%] text-sm ${isMe ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-muted text-foreground rounded-bl-sm'}`}>
+                          {msg.content}
+                        </div>
+                        <span className="text-[10px] text-muted-foreground mt-1 mx-1">
+                          {sender?.name} • {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+            {isChatUnlocked && (
+              <CardFooter className="border-t border-border p-3 bg-muted/30">
+                <form className="flex w-full items-center gap-2" onSubmit={(e) => { e.preventDefault(); /* mock send */ setNewMessage(''); }}>
+                  <Input 
+                    placeholder="Type your message..." 
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    className="flex-1 bg-background"
+                  />
+                  <Button type="submit" size="icon" disabled={!newMessage.trim()}>
+                    <Send className="w-4 h-4" />
+                  </Button>
+                </form>
+              </CardFooter>
+            )}
           </Card>
         </div>
       </div>
