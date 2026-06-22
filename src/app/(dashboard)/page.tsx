@@ -51,9 +51,9 @@ export default async function DashboardRoot() {
   if (userProfile?.role === 'LAB_ADMIN') {
     // Fetch inventory for LabDashboard
     const { data: inventoryData } = await supabase
-      .from('inventory')
+      .from('inventory_items') // Changed from 'inventory' to match schema
       .select('*')
-      .eq('lab_id', userProfile.id) // Assuming lab admin is associated with their user ID for now
+      .eq('lab_id', userProfile.lab_id || userProfile.id)
 
     const mappedInventory = inventoryData?.map(i => ({
       id: i.id,
@@ -63,12 +63,20 @@ export default async function DashboardRoot() {
       quantity: i.quantity,
       unit: i.unit,
       threshold: i.threshold,
-      lastRestocked: i.last_restocked
+      lastRestocked: i.created_at
     })) || []
+    
+    // Fetch Dentists to map names
+    const { data: dentistsData } = await supabase
+      .from('users')
+      .select('*')
+      .eq('role', 'DENTIST');
 
-    return <LabDashboard initialCases={mappedCases} initialInventory={mappedInventory} />
+    return <LabDashboard initialCases={mappedCases} initialInventory={mappedInventory} availableDentists={dentistsData || []} />
   }
 
   // Default to Dentist view
-  return <DentistDashboard initialCases={mappedCases} currentUser={userProfile} />
+  const { data: labProfiles } = await supabase.from('lab_profiles').select('*');
+  
+  return <DentistDashboard initialCases={mappedCases} currentUser={userProfile} availableLabs={labProfiles || []} />
 }

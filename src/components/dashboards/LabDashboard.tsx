@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { mockUsers } from '@/mockData';
 import { StatusBadge } from '@/components/StatusBadge';
 import SummaryChart from '@/components/SummaryChart';
 import { Button } from '@/components/ui/button';
@@ -15,13 +14,15 @@ import { Label } from '@/components/ui/label';
 import { UploadCloud } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 interface LabDashboardProps {
   initialCases: Case[];
   initialInventory: InventoryItem[];
+  availableDentists: { id: string; name: string }[];
 }
 
-export default function LabDashboard({ initialCases, initialInventory }: LabDashboardProps) {
+export default function LabDashboard({ initialCases, initialInventory, availableDentists }: LabDashboardProps) {
   const router = useRouter();
   const supabase = createClient();
   const [cases, setCases] = useState<Case[]>(initialCases);
@@ -40,6 +41,18 @@ export default function LabDashboard({ initialCases, initialInventory }: LabDash
 
   const activeCasesCount = cases.filter(c => c.status !== 'DELIVERED').length;
   const completedCasesCount = cases.filter(c => c.status === 'DELIVERED').length;
+
+  useEffect(() => {
+    const channel = supabase.channel('lab_cases')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cases' }, payload => {
+        router.refresh();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [router, supabase]);
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
     setDraggedCaseId(id);
@@ -177,7 +190,7 @@ export default function LabDashboard({ initialCases, initialInventory }: LabDash
                     </div>
                   ) : (
                     columnCases.map(caseItem => {
-                      const dentist = mockUsers.find(u => u.id === caseItem.dentistId);
+                      const dentist = availableDentists.find(u => u.id === caseItem.dentistId);
                       return (
                         <Card 
                           key={caseItem.id} 

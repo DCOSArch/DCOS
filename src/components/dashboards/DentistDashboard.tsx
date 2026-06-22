@@ -14,15 +14,15 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Activity, CheckCircle2, UploadCloud, FileBox, Filter, FileText, Box, Building2 } from 'lucide-react';
 import { Case, User, DoctorInventoryItem } from '@/types';
 import { createClient } from '@/lib/supabase/client';
-import { mockLabProfiles } from '@/mockData'; // Keeping lab profiles mock for simplicity for now
 import { useRouter } from 'next/navigation';
 
 interface DentistDashboardProps {
   initialCases: Case[];
   currentUser: User;
+  availableLabs: { id: string; name: string }[];
 }
 
-export default function DentistDashboard({ initialCases, currentUser }: DentistDashboardProps) {
+export default function DentistDashboard({ initialCases, currentUser, availableLabs }: DentistDashboardProps) {
   const router = useRouter();
   const supabase = createClient();
   const [cases, setCases] = useState<Case[]>(initialCases);
@@ -38,7 +38,6 @@ export default function DentistDashboard({ initialCases, currentUser }: DentistD
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [inventory, setInventory] = useState<DoctorInventoryItem[]>([]);
-  const [availableLabs, setAvailableLabs] = useState<{id: string, name: string}[]>([]);
   const [selectedLabId, setSelectedLabId] = useState<string>('');
 
   useEffect(() => {
@@ -60,20 +59,21 @@ export default function DentistDashboard({ initialCases, currentUser }: DentistD
           lockedPrice: item.locked_price
         })));
       }
-
-      // Fetch Labs
-      const { data: labsData } = await supabase
-        .from('lab_profiles')
-        .select('id, name')
-        .order('name');
-      
-      if (labsData) {
-        setAvailableLabs(labsData);
-      }
     };
     
     fetchData();
-  }, [currentUser.id]);
+
+    // Subscribe to cases
+    const channel = supabase.channel('dentist_cases')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cases', filter: `dentist_id=eq.${currentUser.id}` }, payload => {
+        router.refresh();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentUser.id, router, supabase]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -164,7 +164,7 @@ export default function DentistDashboard({ initialCases, currentUser }: DentistD
         dueDate: dbCase.due_date
       };
       
-      setCases(prev => [newCase, ...prev]);
+      router.refresh();
       setIsCreateModalOpen(false);
       
       // Reset form
@@ -247,7 +247,7 @@ export default function DentistDashboard({ initialCases, currentUser }: DentistD
                 <p className="text-sm mt-1">Purchase materials from a lab partner to lock in pricing.</p>
               </div>
             ) : inventory.map(item => {
-              const lab = mockLabProfiles.find(l => l.id === item.labId);
+              const lab = availableLabs.find(l => l.id === item.labId);
               const percentage = (item.remainingUnits / item.totalUnits) * 100;
               return (
                 <div key={item.id} className="border border-border rounded-lg p-4 bg-muted/20 flex flex-col gap-3">
