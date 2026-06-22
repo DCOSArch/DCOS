@@ -1,123 +1,198 @@
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Center, Environment } from '@react-three/drei';
-import { useState, useEffect } from 'react';
+'use client';
+
+import React, { useRef, useState, useEffect } from 'react';
+import { Canvas, useLoader } from '@react-three/fiber';
+import { OrbitControls, Stage, Html } from '@react-three/drei';
+import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import * as THREE from 'three';
-import { STLLoader, PLYLoader } from 'three-stdlib';
-import { Upload, Maximize2, Minimize2, MousePointer2, X } from 'lucide-react';
+import { MapPin, CheckCircle2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-function DentalModel({ data }: { data: {url: string, type: 'stl' | 'ply'} | null }) {
-  const [geometry, setGeometry] = useState<THREE.BufferGeometry | null>(null);
-
-  useEffect(() => {
-    if (data?.url) {
-      const loader = data.type === 'ply' ? new PLYLoader() : new STLLoader();
-      loader.load(data.url, (geo) => {
-        geo.computeVertexNormals();
-        setGeometry(geo);
-      });
-    }
-  }, [data]);
-
-  if (!data) {
-    // A more realistic default procedural placeholder if they haven't uploaded an STL yet
-    return (
-      <group>
-         <mesh position={[0, -0.5, 0]}>
-           <cylinderGeometry args={[1, 0.8, 1.2, 32]} />
-           <meshStandardMaterial color="#e5e7eb" roughness={0.3} metalness={0.1} />
-         </mesh>
-         <mesh position={[0, 0.3, 0]}>
-           <sphereGeometry args={[1.05, 32, 32, 0, Math.PI * 2, 0, Math.PI / 2]} />
-           <meshStandardMaterial color="#e5e7eb" roughness={0.3} metalness={0.1} />
-         </mesh>
-      </group>
-    );
-  }
-
-  if (!geometry) return null;
-
-  return (
-    <mesh geometry={geometry}>
-      <meshStandardMaterial color="#f3f4f6" roughness={0.3} metalness={0.2} />
-    </mesh>
-  );
+interface Annotation {
+  id: string;
+  position: [number, number, number];
+  normal: [number, number, number] | null;
+  text: string;
+  isResolved: boolean;
 }
 
-export function ThreeDViewer() {
-  const [modelData, setModelData] = useState<{url: string, type: 'stl' | 'ply'} | null>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+interface ThreeDViewerProps {
+  stlUrl?: string; // Expects a signed URL from Cloudflare R2
+  initialAnnotations?: Annotation[];
+  onAddAnnotation?: (anno: Omit<Annotation, 'id'>) => Promise<Annotation>;
+  onResolveAnnotation?: (id: string) => Promise<void>;
+  isReadOnly?: boolean;
+}
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      const isPly = file.name.toLowerCase().endsWith('.ply');
-      setModelData({ url, type: isPly ? 'ply' : 'stl' });
+const STLModel = ({ url, onMeshClick }: { url: string; onMeshClick: (e: any) => void }) => {
+  const geometry = useLoader(STLLoader, url);
+  return (
+    <mesh 
+      geometry={geometry} 
+      onClick={onMeshClick}
+      castShadow 
+      receiveShadow
+    >
+      {/* Standard dental model material - slightly glossy, off-white/bone color */}
+      <meshStandardMaterial 
+        color="#e6e1d6" 
+        roughness={0.4} 
+        metalness={0.1} 
+        side={THREE.DoubleSide} 
+      />
+    </mesh>
+  );
+};
+
+export default function ThreeDViewer({ 
+  stlUrl, 
+  initialAnnotations = [], 
+  onAddAnnotation,
+  onResolveAnnotation,
+  isReadOnly = false 
+}: ThreeDViewerProps) {
+  const [annotations, setAnnotations] = useState<Annotation[]>(initialAnnotations);
+  const [isAddingMode, setIsAddingMode] = useState(false);
+  const [tempPin, setTempPin] = useState<{ position: [number, number, number], normal: [number, number, number] } | null>(null);
+  const [pinText, setPinText] = useState('');
+
+  useEffect(() => {
+    setAnnotations(initialAnnotations);
+  }, [initialAnnotations]);
+
+  const handlePointerDown = (e: any) => {
+    if (!isAddingMode || isReadOnly) return;
+    
+    // Stop event propagation to avoid OrbitControls interference during click
+    e.stopPropagation();
+
+    const { point, face } = e;
+    setTempPin({
+      position: [point.x, point.y, point.z],
+      normal: face ? [face.normal.x, face.normal.y, face.normal.z] : null
+    });
+  };
+
+  const submitAnnotation = async () => {
+    if (!tempPin || !pinText.trim() || !onAddAnnotation) return;
+    
+    try {
+      const newAnno = await onAddAnnotation({
+        position: tempPin.position,
+        normal: tempPin.normal,
+        text: pinText,
+        isResolved: false
+      });
+      setAnnotations([...annotations, newAnno]);
+      setTempPin(null);
+      setPinText('');
+      setIsAddingMode(false);
+    } catch (error) {
+      console.error("Failed to add annotation", error);
     }
   };
 
-  const toggleFullscreen = () => {
-    setIsFullscreen(!isFullscreen);
+  const resolveAnnotation = async (id: string) => {
+    if (!onResolveAnnotation || isReadOnly) return;
+    try {
+      await onResolveAnnotation(id);
+      setAnnotations(annotations.map(a => a.id === id ? { ...a, isResolved: true } : a));
+    } catch (error) {
+      console.error("Failed to resolve annotation", error);
+    }
   };
 
   return (
-    <div className={isFullscreen ? "fixed inset-0 z-[100] bg-[#111827] flex flex-col" : "w-full h-full relative"}>
-      <div className="absolute top-4 left-4 z-20 flex gap-2">
-        <label className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800/90 hover:bg-zinc-700/90 text-zinc-100 text-sm font-medium rounded-md cursor-pointer transition-colors border border-zinc-700 shadow-sm backdrop-blur-sm">
-          <Upload className="w-4 h-4" />
-          <span className="hidden sm:inline">Load STL/PLY</span>
-          <input type="file" accept=".stl,.ply" className="hidden" onChange={handleFileUpload} />
-        </label>
-      </div>
-
-      <div className="absolute top-4 right-4 z-20">
-        <button 
-          onClick={toggleFullscreen}
-          className="flex items-center justify-center w-8 h-8 bg-zinc-800/90 hover:bg-zinc-700/90 text-zinc-100 rounded-md transition-colors border border-zinc-700 shadow-sm backdrop-blur-sm"
-          title={isFullscreen ? "Close Fullscreen" : "Toggle Fullscreen"}
-        >
-          {isFullscreen ? <X className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-        </button>
-      </div>
-
-      {isFullscreen && (
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 px-6 py-2.5 bg-zinc-900/60 backdrop-blur-md rounded-full border border-zinc-700/50 shadow-2xl flex flex-wrap justify-center items-center gap-4 sm:gap-6 pointer-events-none">
-           <div className="flex items-center gap-2 text-zinc-300 text-xs font-medium">
-             <MousePointer2 className="w-3.5 h-3.5" />
-             Left Click Rotate
-           </div>
-           <div className="w-px h-3.5 bg-zinc-700"></div>
-           <div className="flex items-center gap-1.5 text-zinc-300 text-xs font-medium">
-             <span className="font-mono px-1.5 py-0.5 bg-zinc-800/80 rounded border border-zinc-700/50">Right Click</span> 
-             Pan
-           </div>
-           <div className="w-px h-3.5 bg-zinc-700"></div>
-           <div className="flex items-center gap-1.5 text-zinc-300 text-xs font-medium">
-             <span className="font-mono px-1.5 py-0.5 bg-zinc-800/80 rounded border border-zinc-700/50">Scroll</span> 
-             Zoom
-           </div>
+    <div className="relative w-full h-full bg-slate-900 rounded-lg overflow-hidden group">
+      
+      {!isReadOnly && (
+        <div className="absolute top-4 right-4 z-10 flex gap-2">
+          <Button 
+            variant={isAddingMode ? "destructive" : "secondary"} 
+            size="sm" 
+            onClick={() => {
+              setIsAddingMode(!isAddingMode);
+              setTempPin(null);
+            }}
+            className="shadow-md transition-colors"
+          >
+            {isAddingMode ? "Cancel Pin" : "Drop Annotation Pin"}
+          </Button>
         </div>
       )}
 
-      <Canvas shadows camera={{ position: [0, 0, 6], fov: 45 }} className="w-full h-full outline-none">
-        <ambientLight intensity={0.5} />
-        <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} castShadow />
-        <directionalLight position={[-10, -10, -5]} intensity={0.5} />
-        
-        <Center>
-          <DentalModel data={modelData} />
-        </Center>
-        
-        <Environment preset="city" />
-        <OrbitControls 
-          enableDamping 
-          dampingFactor={0.05} 
-          enablePan={true} 
-          enableRotate={true} 
-          enableZoom={true}
-          makeDefault
-        />
-      </Canvas>
+      {stlUrl ? (
+        <Canvas shadows camera={{ position: [0, 0, 100], fov: 50 }}>
+          <Stage environment="city" intensity={0.5} adjustCamera>
+            <STLModel url={stlUrl} onMeshClick={handlePointerDown} />
+          </Stage>
+          
+          <OrbitControls 
+            makeDefault 
+            enableDamping 
+            dampingFactor={0.1} 
+            // Disable rotation if we are about to click to add a pin to prevent drag-sliding
+            enabled={!isAddingMode || tempPin !== null} 
+          />
+
+          {/* Render Saved Annotations */}
+          {annotations.filter(a => !a.isResolved).map((anno) => (
+            <Html key={anno.id} position={anno.position} center distanceFactor={15}>
+              <div className="flex flex-col items-center">
+                <MapPin className="text-red-500 w-6 h-6 -mb-1 animate-bounce shadow-sm" style={{ filter: 'drop-shadow(0px 2px 2px rgba(0,0,0,0.5))' }} />
+                <div className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 rounded shadow-lg text-sm min-w-[150px] border border-slate-200 dark:border-slate-700">
+                  <p className="font-medium mb-2">{anno.text}</p>
+                  {!isReadOnly && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full h-7 text-xs flex items-center justify-center gap-1 hover:bg-emerald-50 hover:text-emerald-600 border-slate-200"
+                      onClick={(e) => { e.stopPropagation(); resolveAnnotation(anno.id); }}
+                    >
+                      <CheckCircle2 className="w-3 h-3" /> Resolve
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </Html>
+          ))}
+
+          {/* Render Temporary Pin Input Box */}
+          {tempPin && (
+            <Html position={tempPin.position} center distanceFactor={15}>
+              <div className="bg-white dark:bg-slate-800 p-3 rounded-lg shadow-xl w-64 border border-slate-200 dark:border-slate-700">
+                <p className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">New Annotation</p>
+                <textarea 
+                  autoFocus
+                  className="w-full text-sm p-2 border rounded resize-none focus:ring-2 focus:ring-blue-500 outline-none dark:bg-slate-900 dark:border-slate-700 dark:text-white"
+                  placeholder="E.g., Margin unclear here..."
+                  rows={3}
+                  value={pinText}
+                  onChange={(e) => setPinText(e.target.value)}
+                  onKeyDown={(e) => {
+                    e.stopPropagation(); // Prevent orbit controls from jumping
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      submitAnnotation();
+                    }
+                  }}
+                  onPointerDown={(e) => e.stopPropagation()} // Keep textarea clickable
+                />
+                <div className="flex justify-end gap-2 mt-2">
+                  <Button variant="ghost" size="sm" onClick={() => setTempPin(null)} className="h-7 text-xs">Cancel</Button>
+                  <Button size="sm" onClick={submitAnnotation} disabled={!pinText.trim()} className="h-7 text-xs">Save Pin</Button>
+                </div>
+              </div>
+            </Html>
+          )}
+
+        </Canvas>
+      ) : (
+        <div className="w-full h-full flex flex-col items-center justify-center text-slate-500">
+          <div className="w-16 h-16 rounded-full border-4 border-slate-700 border-t-blue-500 animate-spin mb-4"></div>
+          <p>Loading 3D Engine...</p>
+        </div>
+      )}
     </div>
   );
 }

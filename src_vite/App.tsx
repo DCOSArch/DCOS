@@ -36,7 +36,7 @@ export default function App() {
       const { data, error } = await supabase
         .from('cases')
         .select('*')
-        .eq(currentUser.role === 'DENTIST' ? 'dentist_id' : 'lab_id', currentUser.id)
+        .eq(currentUser.role === 'DENTIST' ? 'dentist_id' : 'lab_id', currentUser.role === 'DENTIST' ? currentUser.id : currentUser.labId)
         .order('created_at', { ascending: false });
 
       if (data) {
@@ -58,7 +58,31 @@ export default function App() {
 
     fetchCases();
   }, [currentUser]);
-  const [inventory, setInventory] = useState<InventoryItem[]>(initialInventory);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+
+  useEffect(() => {
+    if (currentUser?.role === 'LAB_ADMIN' && currentUser.labId) {
+      const fetchInventory = async () => {
+        const { data } = await supabase
+          .from('inventory_items')
+          .select('*')
+          .eq('lab_id', currentUser.labId);
+          
+        if (data) {
+          setInventory(data.map((item: any) => ({
+            id: item.id,
+            labId: item.lab_id,
+            name: item.name,
+            category: item.category,
+            quantity: item.quantity,
+            threshold: item.threshold,
+            unit: item.unit
+          })));
+        }
+      };
+      fetchInventory();
+    }
+  }, [currentUser]);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -146,13 +170,14 @@ export default function App() {
              currentUser={currentUser} 
              goBack={() => setCurrentPage({ name: 'dashboard' })} 
              cases={cases}
+             setCases={setCases}
            />
         )}
         {currentPage.name === 'lab_directory' && currentUser?.role === 'DENTIST' && (
            <LabDirectory />
         )}
         {currentPage.name === 'inventory' && currentUser?.role === 'LAB_ADMIN' && (
-           <InventoryDashboard inventory={inventory} />
+           <InventoryDashboard inventory={inventory} currentUser={currentUser} />
         )}
       </main>
     </div>

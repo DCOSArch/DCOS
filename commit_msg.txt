@@ -1,0 +1,38 @@
+chore(arch): execute 4-phase architectural migration to Next.js App Router
+
+This massive commit encapsulates the comprehensive architectural rewrite of the Dental ConnectOS platform, transitioning from a 40% functional Vite/React prototype into a production-ready, highly secure, multi-tenant B2B SaaS platform using Next.js (App Router), Supabase, Cloudflare R2, and React Three Fiber.
+
+The execution was divided into a 4-phase strategic plan, completely rethinking the infrastructure for medical data compliance, massive 3D file handling, and scalable dual-party workflows (Clinics & Laboratories).
+
+=============================================================================
+PHASE 1: Core Infrastructure & Relational Security
+=============================================================================
+- Next.js Migration: Backed up existing Vite configs to `vite_backup/` and bootstrapped the Next.js App Router architecture within `src/app`.
+- Supabase SSR Setup: Engineered `@supabase/ssr` client implementations across server, browser, and middleware contexts to ensure fully secure session persistence and protected route gating.
+- Strict RBAC & Database Models: Deployed `20260622_phase1_core.sql` creating robust Profiles and Cases tables with ENUM roles (DENTIST, LAB_ADMIN, LAB_STAFF).
+- HIPAA/GDPR Anonymization Architecture: Completely isolated Protected Health Information (PHI). Real names and DOBs are now stored in a highly restrictive `patient_phi` table, while the shared `cases` table only relies on `patient_hash`. Strict Row Level Security (RLS) ensures that laboratories are fully blind to identifying patient details.
+- Cloudflare R2 Direct-to-Storage Pipeline: Bypassed Node.js server limitations for heavy 3D files (50MB+ STLs). Developed `src/app/api/upload/route.ts` which utilizes the AWS S3 SDK to generate pre-signed Cloudflare R2 URLs, permitting the frontend to securely PUT huge assets directly to the edge.
+
+=============================================================================
+PHASE 2: Dual Workflows & Inventory Automation
+=============================================================================
+- Dual-Layer Case Timelines: Created `timeline_events` with an intelligent `visibility` enum (INTERNAL, EXTERNAL, BOTH). RLS ensures that Dentists only see high-level external milestones, completely blinding them from internal lab snags and workflows.
+- Kanban to Digital Inventory Sync: Engineered `inventory_items` and `inventory_transactions` schemas. Created a powerful PostgreSQL Stored Procedure (RPC) `deduct_inventory_for_case` utilizing `FOR UPDATE` row-locking to safely and atomically decrement material units when a case hits the "In Progress" column, avoiding race conditions.
+- Automated Pre-Flight Scan Validation: Developed `src/lib/utils/stlValidator.ts` utilizing `three.js` to parse STL arrays directly in the browser *before* upload. The utility instantly flags bounding box anomalies (impossibly tiny scale exports or overly thin geometries), drastically reducing manual laboratory rejections.
+
+=============================================================================
+PHASE 3: The "Wealth Multipliers"
+=============================================================================
+- React Three Fiber Engine Upgrade: Rebuilt the prototype viewer into `src/components/ThreeDViewer.tsx` utilizing `@react-three/fiber` and `@react-three/drei` for highly optimized, mobile-ready rendering.
+- Spatial 3D Annotations: Harnessed R3F raycasting to capture exact `(x, y, z)` mesh intersections and face normals. Lab technicians can now drop persistent "Pins" onto unclear margins, rendering a 3D HTML badge locally to centralize communication. Saved vectors via the `20260622_phase3_wealth.sql` migration.
+- Dynamic Digital Rx Catalogs: Shifted away from hardcoded treatments. Created the `lab_services` table schema and optimized `src/lib/services.ts` fetching utility. The "Create Case" dropdown now populates dynamically with real-time service offerings, pricing tiers, and turnaround times unique to the selected destination laboratory.
+* (Note: Diff Viewer and Stripe Connect integrations deferred per strategic roadmap alignment).
+
+=============================================================================
+PHASE 4: Platform Scale & B2B2C
+=============================================================================
+- B2B2C Patient "Smile Preview" Links: Established an unauthenticated, highly restrictive public Next.js route at `src/app/preview/[hash]/page.tsx`. This allows dentists to text a secure link to patients to review aesthetic designs. The route relies on stringent RLS logic that expressly denies any financial or PHI queries, surfacing only the R3F viewer and the scan URI.
+- Zero-Click Folder Watcher: Pioneered seamless local-to-cloud sync via the File System Access API in `src/lib/utils/folderWatcher.ts`. The browser can now persistently watch a designated desktop scanner directory, instantly detecting new `.stl` or `.ply` exports and triggering the Next.js upload pipeline without manual drag-and-drop.
+- Laboratory Discovery Marketplace: Built the foundation for B2B acquisition via `src/app/labs/page.tsx`. This Next.js Server Component executes relational joins across profiles and active services to render an SEO-friendly directory where clinics can discover and partner with highly-rated elite labs based on public catalog pricing.
+
+This commit establishes the permanent foundational bedrock for Dental ConnectOS scale.

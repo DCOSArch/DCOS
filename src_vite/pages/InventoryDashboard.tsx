@@ -3,13 +3,41 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { AlertCircle, Package, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { InventoryItem } from '@/src/types';
+import { InventoryItem, DoctorInventoryItem } from '@/src/types';
+import { supabase } from '@/src/lib/supabase';
+import { useState, useEffect } from 'react';
 
 interface InventoryDashboardProps {
   inventory: InventoryItem[];
+  currentUser: any;
 }
 
-export default function InventoryDashboard({ inventory }: InventoryDashboardProps) {
+export default function InventoryDashboard({ inventory, currentUser }: InventoryDashboardProps) {
+  const [doctorAllocations, setDoctorAllocations] = useState<DoctorInventoryItem[]>([]);
+
+  useEffect(() => {
+    if (currentUser?.labId) {
+      const fetchAllocations = async () => {
+        const { data } = await supabase
+          .from('doctor_inventory')
+          .select('*')
+          .eq('lab_id', currentUser.labId);
+          
+        if (data) {
+          setDoctorAllocations(data.map((item: any) => ({
+            id: item.id,
+            dentistId: item.dentist_id,
+            labId: item.lab_id,
+            materialName: item.material_name,
+            totalUnits: item.total_units,
+            remainingUnits: item.remaining_units,
+            lockedPrice: item.locked_price
+          })));
+        }
+      };
+      fetchAllocations();
+    }
+  }, [currentUser]);
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -81,6 +109,45 @@ export default function InventoryDashboard({ inventory }: InventoryDashboardProp
                     </TableRow>
                   )
                 })}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-sm border-border">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Package className="h-5 w-5" /> Partner Clinic Allocations (Bulk Orders)</CardTitle>
+          <CardDescription>View inventory blocks pre-purchased by dentists.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border border-border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Material Name</TableHead>
+                  <TableHead className="text-center">Remaining / Total</TableHead>
+                  <TableHead className="text-right">Locked Price</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {doctorAllocations.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center py-6 text-muted-foreground">
+                      No partner clinic allocations found.
+                    </TableCell>
+                  </TableRow>
+                ) : doctorAllocations.map((item) => (
+                  <TableRow key={item.id} className="hover:bg-muted/50">
+                    <TableCell className="font-medium text-foreground">{item.materialName}</TableCell>
+                    <TableCell className="text-center font-mono">
+                      {item.remainingUnits} / {item.totalUnits}
+                    </TableCell>
+                    <TableCell className="text-right font-medium text-emerald-600 dark:text-emerald-400">
+                      {item.lockedPrice}/unit
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </div>

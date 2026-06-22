@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { UploadCloud } from 'lucide-react';
+import { supabase } from '@/src/lib/supabase';
 
 interface LabDashboardProps {
   navigateTo: (page: { name: 'dashboard' } | { name: 'case_details'; caseId: string }) => void;
@@ -64,6 +65,14 @@ export default function LabDashboard({ navigateTo, cases, setCases, inventory, s
       }
 
       setCases(prev => prev.map(c => c.id === draggedCaseId ? { ...c, status: statusId } : c));
+      
+      // Update in Supabase
+      supabase.from('cases').update({ status: statusId }).eq('id', draggedCaseId).then(({ error }) => {
+        if (error) {
+          console.error("Error updating case status:", error);
+          alert("Failed to update case status in database.");
+        }
+      });
     }
     setDraggedCaseId(null);
   };

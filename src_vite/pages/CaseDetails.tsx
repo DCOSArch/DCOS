@@ -17,14 +17,16 @@ interface CaseDetailsProps {
   currentUser: User;
   goBack: () => void;
   cases: Case[];
+  setCases: React.Dispatch<React.SetStateAction<Case[]>>;
 }
 
-export default function CaseDetails({ caseId, currentUser, goBack, cases }: CaseDetailsProps) {
+export default function CaseDetails({ caseId, currentUser, goBack, cases, setCases }: CaseDetailsProps) {
   const [showPatientLinkModal, setShowPatientLinkModal] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [newMessage, setNewMessage] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [chatId, setChatId] = useState<string | null>(null);
+  const [dbTimeline, setDbTimeline] = useState<any[]>([]);
 
   const caseItem = cases.find(c => c.id === caseId);
   const dentist = mockUsers.find(u => u.id === caseItem?.dentistId);
@@ -86,6 +88,32 @@ export default function CaseDetails({ caseId, currentUser, goBack, cases }: Case
     fetchChat();
   }, [caseId, isChatUnlocked]);
 
+  useEffect(() => {
+    const fetchTimeline = async () => {
+      const { data } = await supabase
+        .from('timeline_events')
+        .select('*')
+        .eq('case_id', caseId)
+        .order('timestamp', { ascending: false });
+      
+      if (data) {
+        setDbTimeline(data);
+      }
+    };
+    fetchTimeline();
+    
+    // Subscribe to new timeline events
+    const timelineSub = supabase.channel(`timeline_${caseId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'timeline_events', filter: `case_id=eq.${caseId}` }, payload => {
+        setDbTimeline(prev => [payload.new, ...prev]);
+      })
+      .subscribe();
+      
+    return () => {
+      timelineSub.unsubscribe();
+    };
+  }, [caseId]);
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !chatId) return;
@@ -100,9 +128,37 @@ export default function CaseDetails({ caseId, currentUser, goBack, cases }: Case
     });
   };
   
+  const handleStatusUpdate = async (newStatus: string) => {
+    // 1. Update cases state
+    setCases(prev => prev.map(c => c.id === caseId ? { ...c, status: newStatus as any } : c));
+    
+    // 2. Update Supabase cases table
+    const { error: updateError } = await supabase.from('cases').update({ status: newStatus }).eq('id', caseId);
+    if (updateError) {
+      console.error("Error updating case:", updateError);
+      return;
+    }
+
+    // 3. Push a timeline event
+    await supabase.from('timeline_events').insert({
+      case_id: caseId,
+      status_update: `Status changed to ${newStatus}`,
+      notes: `Lab updated case status to ${newStatus}`,
+      visibility: 'BOTH'
+    });
+  };
+
   // Timeline Filtering based on role
-  const timeline = mockTimelineEvents
-    .filter(t => t.caseId === caseId)
+  const combinedTimeline = [...mockTimelineEvents.filter(t => t.caseId === caseId), ...dbTimeline.map(t => ({
+    id: t.id,
+    caseId: t.case_id,
+    statusUpdate: t.status_update,
+    notes: t.notes,
+    timestamp: t.timestamp,
+    visibility: t.visibility
+  }))];
+  
+  const timeline = combinedTimeline
     .filter(t => {
       if (currentUser.role === 'DENTIST') {
         return t.visibility === 'EXTERNAL' || t.visibility === 'BOTH';
@@ -149,7 +205,7 @@ export default function CaseDetails({ caseId, currentUser, goBack, cases }: Case
           {currentUser.role === 'LAB_ADMIN' && caseItem.status !== 'DELIVERED' && (
             <div className="flex items-center gap-2 bg-background rounded-lg p-1.5 shadow-sm border border-border">
               <span className="text-sm font-medium text-muted-foreground pl-2 hidden sm:inline">Update Status:</span>
-              <Select defaultValue={caseItem.status}>
+              <Select defaultValue={caseItem.status} onValueChange={handleStatusUpdate}>
                 <SelectTrigger className="w-[160px] border-none shadow-none h-8 bg-muted/50 focus:ring-0">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>

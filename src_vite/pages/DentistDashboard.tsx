@@ -151,7 +151,7 @@ export default function DentistDashboard({ navigateTo, cases, setCases, currentU
         id: insertedCase ? insertedCase.id : `case-${Date.now().toString().slice(-4)}`,
         patientName,
         dentistId: currentUser.id, 
-        labId: targetDbLabId, 
+        labId: selectedLabId, 
         status: 'PENDING',
         urgency,
         requestedTreatment: treatmentType,
