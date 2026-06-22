@@ -106,7 +106,7 @@ export default function Login() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="role">Role</Label>
-                    <Select value={role} onValueChange={(val: Role) => setRole(val)}>
+                    <Select value={role} onValueChange={(val) => { if (val) setRole(val as Role) }}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select your role" />
                       </SelectTrigger>
