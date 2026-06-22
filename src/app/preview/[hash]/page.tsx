@@ -1,5 +1,5 @@
-import { createClient } from '@/src/lib/supabase/server';
-import ThreeDViewer from '@/src/components/ThreeDViewer';
+import { createClient } from '@/lib/supabase/server';
+import ThreeDViewer from '@/components/ThreeDViewer';
 import { notFound } from 'next/navigation';
 
 export const metadata = {
