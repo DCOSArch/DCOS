@@ -53,7 +53,7 @@ export default function ThreeDViewer({
 }: ThreeDViewerProps) {
   const [annotations, setAnnotations] = useState<Annotation[]>(initialAnnotations);
   const [isAddingMode, setIsAddingMode] = useState(false);
-  const [tempPin, setTempPin] = useState<{ position: [number, number, number], normal: [number, number, number] } | null>(null);
+  const [tempPin, setTempPin] = useState<{ position: [number, number, number], normal: [number, number, number] | null } | null>(null);
   const [pinText, setPinText] = useState('');
 
   useEffect(() => {

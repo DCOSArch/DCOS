@@ -1,1 +1,0 @@
-(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,52937,e=>{"use strict";e.i(43476);e.i(71645);let t=Error("Cannot find module '@react-three/fiber'");throw t.code="MODULE_NOT_FOUND",t}]);

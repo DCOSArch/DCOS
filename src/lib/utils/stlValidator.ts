@@ -1,6 +1,6 @@
 // Client-side STL parsing utility for Automated Pre-Flight Scan Validation
 import * as THREE from 'three';
-import { STLLoader } from 'three/examples/jsm/loaders/STLLoader';
+import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 
 export interface ValidationResult {
   isValid: boolean;
