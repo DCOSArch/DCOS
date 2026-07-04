@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { User, Case, ChatMessage } from '@/types';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
@@ -9,10 +10,20 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Calendar, FileText, User as UserIcon, Building2, Download, Box, Link2, Eye, Layers, Send, Lock, ScanLine } from 'lucide-react';
-import ThreeDViewer from '@/components/ThreeDViewer';
+import { ArrowLeft, Calendar, FileText, User as UserIcon, Building2, Download, Box, Link2, Send, Lock } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+
+// ThreeDViewer uses WebGL/canvas APIs — must be loaded client-side only
+const ThreeDViewer = dynamic(() => import('@/components/ThreeDViewer'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex flex-col items-center justify-center text-slate-500 gap-3">
+      <div className="w-10 h-10 rounded-full border-2 border-slate-700 border-t-blue-500 animate-spin" />
+      <p className="text-xs text-slate-500">Initialising 3D engine...</p>
+    </div>
+  ),
+});
 
 interface CaseDetailsProps {
   initialCase: Case;
