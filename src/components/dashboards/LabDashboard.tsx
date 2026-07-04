@@ -308,7 +308,7 @@ export default function LabDashboard({ initialCases, initialInventory, available
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="dentist">Prescribing Dentist</Label>
-                  <Select value={selectedDentistId} onValueChange={setSelectedDentistId}>
+                  <Select value={selectedDentistId} onValueChange={(val) => setSelectedDentistId(val || '')}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select dentist" />
                     </SelectTrigger>
