@@ -5,8 +5,24 @@ import { Canvas, useLoader } from '@react-three/fiber';
 import { OrbitControls, Stage, Html } from '@react-three/drei';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import * as THREE from 'three';
-import { MapPin, CheckCircle2 } from 'lucide-react';
+import { MapPin, CheckCircle2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+
+class ErrorBoundary extends React.Component<{ fallback: React.ReactNode; children: React.ReactNode }, { hasError: boolean }> {
+  constructor(props: { fallback: React.ReactNode; children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true };
+  }
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback;
+    }
+    return this.props.children;
+  }
+}
 
 interface Annotation {
   id: string;
@@ -54,10 +70,22 @@ export default function ThreeDViewerInner({
   const [isAddingMode, setIsAddingMode] = useState(false);
   const [tempPin, setTempPin] = useState<{ position: [number, number, number]; normal: [number, number, number] | null } | null>(null);
   const [pinText, setPinText] = useState('');
+  const [activeUrl, setActiveUrl] = useState<string | undefined>(stlUrl);
 
   useEffect(() => {
     setAnnotations(initialAnnotations);
   }, [initialAnnotations]);
+
+  useEffect(() => {
+    setActiveUrl(stlUrl);
+  }, [stlUrl]);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setActiveUrl(URL.createObjectURL(file));
+    }
+  };
 
   const handlePointerDown = (e: any) => {
     if (!isAddingMode || isReadOnly) return;
@@ -101,6 +129,11 @@ export default function ThreeDViewerInner({
     <div className="relative w-full h-full bg-slate-900 rounded-lg overflow-hidden group">
       {!isReadOnly && (
         <div className="absolute top-4 right-4 z-10 flex gap-2">
+          <label className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800/90 hover:bg-zinc-700/90 text-zinc-100 text-sm font-medium rounded-md cursor-pointer transition-colors border border-zinc-700 shadow-sm backdrop-blur-sm">
+            <Upload className="w-4 h-4" />
+            <span className="hidden sm:inline">Load STL</span>
+            <input type="file" accept=".stl" className="hidden" onChange={handleFileUpload} />
+          </label>
           <Button
             variant={isAddingMode ? 'destructive' : 'secondary'}
             size="sm"
@@ -112,10 +145,22 @@ export default function ThreeDViewerInner({
         </div>
       )}
 
-      <Canvas shadows camera={{ position: [0, 0, 100], fov: 50 }}>
-        <Stage environment="city" intensity={0.5} adjustCamera>
-          <STLModel url={stlUrl} onMeshClick={handlePointerDown} />
-        </Stage>
+      {activeUrl ? (
+      <ErrorBoundary fallback={
+        <div className="w-full h-full flex flex-col items-center justify-center text-slate-500 gap-3">
+          <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center">
+            <svg className="w-8 h-8 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <p className="text-sm font-medium text-slate-400">Failed to load 3D scan</p>
+          <p className="text-xs text-slate-600">The scan file is missing or invalid. Use the Load STL button to preview a local file.</p>
+        </div>
+      }>
+        <Canvas shadows camera={{ position: [0, 0, 100], fov: 50 }}>
+          <Stage environment="city" intensity={0.5} adjustCamera>
+            <STLModel url={activeUrl} onMeshClick={handlePointerDown} />
+          </Stage>
 
         <OrbitControls
           makeDefault
@@ -170,6 +215,18 @@ export default function ThreeDViewerInner({
           </Html>
         )}
       </Canvas>
+      </ErrorBoundary>
+      ) : (
+        <div className="w-full h-full flex flex-col items-center justify-center text-slate-500 gap-3">
+          <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center">
+            <svg className="w-8 h-8 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+            </svg>
+          </div>
+          <p className="text-sm font-medium text-slate-400">No 3D scan uploaded</p>
+          <p className="text-xs text-slate-600">Upload an STL file to preview the scan locally.</p>
+        </div>
+      )}
     </div>
   );
 }
