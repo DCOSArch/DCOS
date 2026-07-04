@@ -201,7 +201,7 @@ export default function LabDashboard({ initialCases, initialInventory, available
                         >
                           <CardContent className="p-2 bg-background">
                             <div className="flex justify-between items-center mb-1.5">
-                              <span className="font-mono text-[9px] text-muted-foreground font-medium">#{caseItem.id.substring(0, 8).toUpperCase()}</span>
+                              <span className="font-mono text-[9px] text-muted-foreground font-medium">#{caseItem.id.slice(-8).toUpperCase()}</span>
                               <div className="flex gap-1 items-center scale-[0.85] origin-right">
                                 {caseItem.urgency === 'URGENT' && <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>}
                                 {caseItem.urgency === 'HIGH' && <span className="w-1.5 h-1.5 rounded-full bg-orange-500"></span>}

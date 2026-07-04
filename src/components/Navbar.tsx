@@ -133,7 +133,7 @@ export default function Navbar({ currentUser, cases }: NavbarProps) {
                     >
                       <div>
                         <p className="text-sm font-medium text-foreground">{c.patientName}</p>
-                        <p className="text-xs text-muted-foreground">ID: #{c.id.substring(0, 8).toUpperCase()}</p>
+                        <p className="text-xs text-muted-foreground">ID: #{c.id.slice(-8).toUpperCase()}</p>
                       </div>
                       <StatusBadge status={c.status} />
                     </div>
@@ -162,7 +162,7 @@ export default function Navbar({ currentUser, cases }: NavbarProps) {
                       <span className="font-semibold text-sm">{c.patientName}</span>
                       <StatusBadge status={c.status} />
                     </div>
-                    <span className="text-xs text-muted-foreground">Case #{c.id.substring(0, 8).toUpperCase()} was updated.</span>
+                    <span className="text-xs text-muted-foreground">Case #{c.id.slice(-8).toUpperCase()} was updated.</span>
                   </DropdownMenuItem>
                 ))}
               </div>
