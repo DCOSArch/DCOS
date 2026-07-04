@@ -190,7 +190,7 @@ export default function CaseDetailsClient({ initialCase, currentUser }: CaseDeta
             <StatusBadge status={caseItem.status} />
           </div>
           <p className="text-muted-foreground text-sm flex items-center gap-2 mt-1">
-            <span className="font-mono">#{caseItem.id.toUpperCase()}</span>
+            <span className="font-mono">#{caseItem.id.substring(0, 8).toUpperCase()}</span>
             <span>•</span>
             <span>Created {new Date(caseItem.createdAt).toLocaleDateString()}</span>
           </p>

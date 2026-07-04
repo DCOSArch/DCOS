@@ -1,4 +1,5 @@
 # Agent Changelog
+* 2026-07-04 - Truncated Case UUID displays in dashboards, case detail view, navbar, and notifications to first 8 characters for a cleaner, compact UI.
 * 2026-07-04 - Fixed auth client initialization by restoring the Supabase Anon Key in `.env.local`.
 * 2026-07-04 - Created dummy login credentials for Dentist, Lab Admin, and Lab Staff.
 * 2026-07-04 - Fixed B2B database RLS policies to use `public.users` instead of the empty `public.profiles` table.

@@ -317,7 +317,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
               <TableBody>
                 {filteredCases.map((caseItem) => (
                   <TableRow key={caseItem.id} className="hover:bg-muted/50 transition-colors">
-                    <TableCell className="font-mono text-xs font-medium text-muted-foreground">{caseItem.id.toUpperCase()}</TableCell>
+                    <TableCell className="font-mono text-xs font-medium text-muted-foreground">{caseItem.id.substring(0, 8).toUpperCase()}</TableCell>
                     <TableCell className="font-medium text-foreground">{caseItem.patientName}</TableCell>
                     <TableCell className="text-muted-foreground">{caseItem.requestedTreatment}</TableCell>
                     <TableCell className="text-muted-foreground">{new Date(caseItem.dueDate).toLocaleDateString()}</TableCell>
