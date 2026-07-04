@@ -337,7 +337,7 @@ export default function LabDashboard({ initialCases, initialInventory, available
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="urgency">Urgency</Label>
-                <Select value={urgency} onValueChange={(val: Urgency) => setUrgency(val)}>
+                <Select value={urgency} onValueChange={(val) => setUrgency((val as Urgency) || 'NORMAL')}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select urgency" />
                   </SelectTrigger>

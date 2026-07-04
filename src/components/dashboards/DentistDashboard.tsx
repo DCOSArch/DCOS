@@ -422,7 +422,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="urgency">Urgency</Label>
-                <Select value={urgency} onValueChange={(val: any) => setUrgency(val)}>
+                <Select value={urgency} onValueChange={(val) => setUrgency((val as Urgency) || 'NORMAL')}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select urgency" />
                   </SelectTrigger>
