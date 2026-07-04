@@ -34,7 +34,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
   const [patientName, setPatientName] = useState('');
   const [treatmentType, setTreatmentType] = useState('');
   const [urgency, setUrgency] = useState<Case['urgency']>('NORMAL');
-  const [selectedLabId, setSelectedLabId] = useState<string>('');
+  const [selectedLabId, setSelectedLabId] = useState<string>(availableLabs.length > 0 ? availableLabs[0].id : '');
   const [dueDate, setDueDate] = useState<string>('');
   
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -106,12 +106,11 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
           .upload(fileName, selectedFile);
           
         if (error) {
-          console.error('Storage upload error:', error);
-          alert('Failed to upload file. Please ensure the Supabase scans bucket exists and RLS allows public uploads.');
-          setUploadState('idle');
-          return;
+          console.error('Storage upload error (ignoring and proceeding):', error);
+          alert('Warning: File upload failed (e.g. storage bucket issue). The case will still be created without the file.');
+        } else {
+          scanUrl = data.path;
         }
-        scanUrl = data.path;
       }
       
       // 2. Insert the case into the Supabase 'cases' table
@@ -136,7 +135,15 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
       if (insertError) {
         console.error('DB Insert Error:', insertError);
         alert('Error inserting case: ' + insertError.message);
-      } else {
+      } else if (insertedCase) {
+        // Create initial timeline event
+        await supabase.from('timeline_events').insert({
+          case_id: insertedCase.id,
+          status_update: 'Case Created',
+          notes: 'Dentist submitted new case.',
+          visibility: 'BOTH'
+        });
+
         // Refetch inventory to reflect deduction
         const { data: invData } = await supabase
           .from('doctor_inventory')
@@ -386,7 +393,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
             </div>
             <div className="grid gap-2">
               <Label htmlFor="lab">Assign to Laboratory</Label>
-              <Select value={selectedLabId} onValueChange={(val) => setSelectedLabId(val || '')}>
+              <Select value={selectedLabId} onValueChange={(val) => setSelectedLabId(val || '')} disabled>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a laboratory" />
                 </SelectTrigger>

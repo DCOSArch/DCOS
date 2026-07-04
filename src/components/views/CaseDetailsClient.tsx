@@ -74,11 +74,22 @@ export default function CaseDetailsClient({ initialCase, currentUser }: CaseDeta
 
     const fetchChat = async () => {
       // 1. Get the chat ID for this case
-      const { data: chatData } = await supabase
+      let { data: chatData } = await supabase
         .from('order_chats')
         .select('id')
         .eq('case_id', caseItem.id)
         .single();
+        
+      if (!chatData) {
+        // Auto-initialize chat room if it doesn't exist
+        const { data: newChat } = await supabase
+          .from('order_chats')
+          .insert({ case_id: caseItem.id })
+          .select('id')
+          .single();
+          
+        chatData = newChat;
+      }
 
       if (chatData) {
         setChatId(chatData.id);
