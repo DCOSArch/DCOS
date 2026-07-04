@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { User, Case, ChatMessage } from '@/types';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -32,8 +32,13 @@ interface CaseDetailsProps {
 
 export default function CaseDetailsClient({ initialCase, currentUser }: CaseDetailsProps) {
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
+  
+  // Real-time synchronization
   const [caseItem, setCaseItem] = useState<Case>(initialCase);
+  useEffect(() => {
+    setCaseItem(initialCase);
+  }, [initialCase]);
   const [showPatientLinkModal, setShowPatientLinkModal] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [newMessage, setNewMessage] = useState('');
@@ -71,6 +76,8 @@ export default function CaseDetailsClient({ initialCase, currentUser }: CaseDeta
 
   useEffect(() => {
     if (!isChatUnlocked) return;
+
+    let subscription: ReturnType<typeof supabase.channel> | null = null;
 
     const fetchChat = async () => {
       // 1. Get the chat ID for this case
@@ -111,7 +118,7 @@ export default function CaseDetailsClient({ initialCase, currentUser }: CaseDeta
         }
 
         // 3. Subscribe to real-time new messages
-        const subscription = supabase
+        subscription = supabase
           .channel(`chat_${chatData.id}`)
           .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `chat_id=eq.${chatData.id}` }, payload => {
             const newMsg = payload.new;
@@ -128,15 +135,18 @@ export default function CaseDetailsClient({ initialCase, currentUser }: CaseDeta
             });
           })
           .subscribe();
-
-        return () => {
-          subscription.unsubscribe();
-        };
       }
     };
 
     fetchChat();
-  }, [caseItem.id, isChatUnlocked]);
+
+    // The cleanup function is returned synchronously by useEffect
+    return () => {
+      if (subscription) {
+        supabase.removeChannel(subscription);
+      }
+    };
+  }, [caseItem.id, isChatUnlocked, supabase]);
 
   useEffect(() => {
     const fetchTimeline = async () => {

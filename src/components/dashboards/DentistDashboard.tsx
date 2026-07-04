@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { StatusBadge } from '@/components/StatusBadge';
 import SummaryChart from '@/components/SummaryChart';
 import { Button } from '@/components/ui/button';
@@ -24,8 +24,13 @@ interface DentistDashboardProps {
 
 export default function DentistDashboard({ initialCases, currentUser, availableLabs }: DentistDashboardProps) {
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const [cases, setCases] = useState<Case[]>(initialCases);
+  
+  // Sync initialCases with cases when router.refresh() happens
+  useEffect(() => {
+    setCases(initialCases);
+  }, [initialCases]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
   

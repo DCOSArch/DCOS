@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { UploadCloud } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 interface LabDashboardProps {
   initialCases: Case[];
@@ -24,8 +24,13 @@ interface LabDashboardProps {
 
 export default function LabDashboard({ initialCases, initialInventory, availableDentists }: LabDashboardProps) {
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const [cases, setCases] = useState<Case[]>(initialCases);
+  
+  // Sync initialCases with cases when router.refresh() happens
+  useEffect(() => {
+    setCases(initialCases);
+  }, [initialCases]);
   const [inventory, setInventory] = useState<InventoryItem[]>(initialInventory);
   const [filterUrgency, setFilterUrgency] = useState<string>('ALL');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
