@@ -3161,3 +3161,13 @@
 {"at":"2026-07-04T16:57:20.171Z","tick":845,"phase":"health","action":"tick_start"}
 {"at":"2026-07-04T16:57:20.187Z","tick":845,"phase":"inbox","action":"scan_complete","detail":{"healthy":3,"stalled":0,"dead":0}}
 {"at":"2026-07-04T16:57:20.219Z","tick":845,"phase":"log","action":"tick_complete","detail":{"durationMs":46,"workFound":0,"dispatched":0,"errors":0}}
+{"at":"2026-07-04T16:57:50.218Z","tick":846,"phase":"health","action":"tick_start"}
+{"at":"2026-07-04T16:57:50.274Z","tick":846,"phase":"inbox","action":"scan_complete","detail":{"healthy":3,"stalled":0,"dead":0}}
+{"at":"2026-07-04T16:57:50.693Z","tick":846,"phase":"log","action":"tick_complete","detail":{"durationMs":446,"workFound":0,"dispatched":0,"errors":0}}
+{"at":"2026-07-04T16:58:20.220Z","tick":847,"phase":"health","action":"tick_start"}
+{"at":"2026-07-04T16:58:20.248Z","tick":847,"phase":"inbox","action":"scan_complete","detail":{"healthy":3,"stalled":0,"dead":0}}
+{"at":"2026-07-04T16:58:20.603Z","tick":0,"phase":"dispatch","action":"context_pack_written","detail":{"taskId":"next-antigravity","file":".autoclaw/orchestrator/sprints/next-antigravity.context.md","degraded":true,"codeHits":0,"kgHits":6}}
+{"at":"2026-07-04T16:58:20.769Z","tick":0,"phase":"dispatch","action":"work_dispatched","detail":{"taskId":"next-antigravity","vendor":"antigravity"}}
+{"at":"2026-07-04T16:58:21.067Z","tick":0,"phase":"dispatch","action":"context_pack_written","detail":{"taskId":"next-claude-code","file":".autoclaw/orchestrator/sprints/next-claude-code.context.md","degraded":true,"codeHits":0,"kgHits":6}}
+{"at":"2026-07-04T16:58:21.250Z","tick":0,"phase":"dispatch","action":"work_dispatched","detail":{"taskId":"next-claude-code","vendor":"claude-code"}}
+{"at":"2026-07-04T16:58:21.289Z","tick":847,"phase":"log","action":"tick_complete","detail":{"durationMs":1067,"workFound":2,"dispatched":2,"errors":0}}
