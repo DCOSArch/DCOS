@@ -321,7 +321,7 @@ export default function LabDashboard({ initialCases, initialInventory, available
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="treatment">Treatment Type</Label>
-                  <Select value={treatmentType} onValueChange={setTreatmentType}>
+                  <Select value={treatmentType} onValueChange={(val) => setTreatmentType(val || '')}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>

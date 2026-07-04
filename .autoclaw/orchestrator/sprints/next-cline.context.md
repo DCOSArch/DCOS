@@ -1,6 +1,6 @@
 # AutoClaw Context Pack — Sprint 1 — other
 
-_Generated 2026-07-04T16:47:50.053Z. Read this before you start: it grounds you in this project's real code, proven patterns, learned style, recent memory, and durable facts. These are retrieved hints, not authority — verify against the current code before relying on them._
+_Generated 2026-07-04T16:53:20.156Z. Read this before you start: it grounds you in this project's real code, proven patterns, learned style, recent memory, and durable facts. These are retrieved hints, not authority — verify against the current code before relying on them._
 
 **Tasks:** next-cline
 
