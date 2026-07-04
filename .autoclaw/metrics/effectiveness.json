@@ -1,0 +1,115 @@
+{
+  "version": 1,
+  "matrix": {
+    "generatedAt": "2026-07-03T18:50:25.302Z",
+    "totalSessions": 555,
+    "byTool": [
+      {
+        "tool": "Cline / Roo",
+        "project": "(all)",
+        "projectLabel": "(all)",
+        "sessions": 21,
+        "shipped": 4,
+        "discarded": 0,
+        "keptSignals": 4,
+        "estTokens": 3251058,
+        "shipRate": 0.19047619047619047,
+        "keptPerSession": 0.19047619047619047,
+        "tokensPerKept": 812764.5
+      },
+      {
+        "tool": "Gemini CLI",
+        "project": "(all)",
+        "projectLabel": "(all)",
+        "sessions": 526,
+        "shipped": 5,
+        "discarded": 0,
+        "keptSignals": 5,
+        "estTokens": 6145814,
+        "shipRate": 0.009505703422053232,
+        "keptPerSession": 0.009505703422053232,
+        "tokensPerKept": 1229162.8
+      },
+      {
+        "tool": "Claude Code",
+        "project": "(all)",
+        "projectLabel": "(all)",
+        "sessions": 7,
+        "shipped": 0,
+        "discarded": 0,
+        "keptSignals": 0,
+        "estTokens": 20452,
+        "shipRate": 0,
+        "keptPerSession": 0,
+        "tokensPerKept": 20452
+      },
+      {
+        "tool": "AutoClaw Orchestrator",
+        "project": "(all)",
+        "projectLabel": "(all)",
+        "sessions": 1,
+        "shipped": 0,
+        "discarded": 0,
+        "keptSignals": 0,
+        "estTokens": 2,
+        "shipRate": 0,
+        "keptPerSession": 0,
+        "tokensPerKept": 2
+      }
+    ],
+    "byToolProject": [
+      {
+        "tool": "Cline / Roo",
+        "project": "C:/Users/bentn/OneDrive/Desktop/DEs",
+        "projectLabel": "DEs",
+        "sessions": 21,
+        "shipped": 4,
+        "discarded": 0,
+        "keptSignals": 4,
+        "estTokens": 3251058,
+        "shipRate": 0.19047619047619047,
+        "keptPerSession": 0.19047619047619047,
+        "tokensPerKept": 812764.5
+      },
+      {
+        "tool": "Gemini CLI",
+        "project": "C:/Users/bentn/OneDrive/Desktop/DEs",
+        "projectLabel": "DEs",
+        "sessions": 526,
+        "shipped": 5,
+        "discarded": 0,
+        "keptSignals": 5,
+        "estTokens": 6145814,
+        "shipRate": 0.009505703422053232,
+        "keptPerSession": 0.009505703422053232,
+        "tokensPerKept": 1229162.8
+      },
+      {
+        "tool": "Claude Code",
+        "project": "C:/Users/bentn/OneDrive/Desktop/DEs",
+        "projectLabel": "DEs",
+        "sessions": 7,
+        "shipped": 0,
+        "discarded": 0,
+        "keptSignals": 0,
+        "estTokens": 20452,
+        "shipRate": 0,
+        "keptPerSession": 0,
+        "tokensPerKept": 20452
+      },
+      {
+        "tool": "AutoClaw Orchestrator",
+        "project": "C:/Users/bentn/OneDrive/Desktop/DEs",
+        "projectLabel": "DEs",
+        "sessions": 1,
+        "shipped": 0,
+        "discarded": 0,
+        "keptSignals": 0,
+        "estTokens": 2,
+        "shipRate": 0,
+        "keptPerSession": 0,
+        "tokensPerKept": 2
+      }
+    ]
+  }
+}

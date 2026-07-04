@@ -34,11 +34,13 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
   const [patientName, setPatientName] = useState('');
   const [treatmentType, setTreatmentType] = useState('');
   const [urgency, setUrgency] = useState<Case['urgency']>('NORMAL');
+  const [selectedLabId, setSelectedLabId] = useState<string>('');
+  const [dueDate, setDueDate] = useState<string>('');
+  
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [inventory, setInventory] = useState<DoctorInventoryItem[]>([]);
-  const [selectedLabId, setSelectedLabId] = useState<string>('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -95,18 +97,21 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
     
     try {
       // 1. Upload to Supabase Storage
-      const fileExt = selectedFile.name.split('.').pop();
-      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-      
-      const { data, error } = await supabase.storage
-        .from('scans')
-        .upload(fileName, selectedFile);
+      let scanUrl = null;
+      if (selectedFile) {
+        const fileName = `${Date.now()}_${selectedFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
         
-      if (error) {
-        console.error('Storage upload error:', error);
-        alert('Failed to upload file. Please ensure the Supabase scans bucket exists and RLS allows public uploads.');
-        setUploadState('idle');
-        return;
+        const { data, error } = await supabase.storage
+          .from('scans')
+          .upload(fileName, selectedFile);
+          
+        if (error) {
+          console.error('Storage upload error:', error);
+          alert('Failed to upload file. Please ensure the Supabase scans bucket exists and RLS allows public uploads.');
+          setUploadState('idle');
+          return;
+        }
+        scanUrl = data.path;
       }
       
       // 2. Insert the case into the Supabase 'cases' table
@@ -118,8 +123,8 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         urgency,
         requested_treatment: treatmentType,
         material: 'Zirconia HT', // Match the inventory name to trigger deduction
-        scan_url: data.path, // Store the file path
-        due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+        scan_url: scanUrl, // Store the file path
+        due_date: dueDate ? new Date(dueDate).toISOString() : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
       };
 
       const { data: insertedCase, error: insertError } = await supabase
@@ -171,6 +176,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
       setPatientName('');
       setTreatmentType('');
       setUrgency('NORMAL');
+      setDueDate('');
       setSelectedFile(null);
       setUploadState('idle');
       
@@ -420,6 +426,16 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                     <SelectItem value="URGENT">Urgent</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="dueDate">Due Date</Label>
+                <Input 
+                  id="dueDate" 
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                />
               </div>
             </div>
             

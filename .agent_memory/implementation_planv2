@@ -1,0 +1,34 @@
+# Dental Lab Functional Refactor Plan
+
+This plan outlines the steps to clean up the dummy data and implement functional global state so cases and chats actually persist and sync across views.
+
+## User Review Required
+Please review this implementation plan. Since the backend/database is absent, we will elevate the component-level mock data to a global React state in `App.tsx` (or a Context provider) so everything flows perfectly between the Dentist and Lab Admin views.
+
+## Proposed Changes
+
+### 1. Global Dentist Profile
+- Rename all instances of `Dr. Catherine Vance` to `Dr. Maneesh Vishnoi`.
+- Remove secondary dummy dentists (e.g., Dr. Arthur Pendelton).
+
+### 2. Single Vendor/Lab System
+- Remove all dummy/secondary lab selectors or vendor IDs that cause confusion.
+- The system will default to one primary functional lab to accept cases from Dr. Vishnoi.
+
+### 3. Functional Case Creation
+- Move the `cases` state strictly to the top level (`App.tsx`).
+- Wire the "Create Case" button in the Dentist Dashboard to correctly inject a new case object into the global `cases` array.
+- Since it's a global React state, any case submitted by the dentist will immediately trigger a re-render and appear on the Lab Admin's Kanban board.
+
+### 4. Functional Chat System
+- Currently, the chat might just be static UI or component-level state.
+- Create a global `chats` state in `App.tsx` mapped by `caseId`.
+- When a dentist creates a case, a new chat thread is initialized.
+- Sending a message from the Dentist view will appear in the Lab Admin view and vice-versa.
+
+## Verification Plan
+1. Start the React development server.
+2. Login as **Dentist (Dr. Maneesh Vishnoi)**.
+3. Create a new case and verify it appears in the Dentist's "Active Cases".
+4. Switch profile to **Lab Admin** and verify the newly created case appears instantly on the Kanban board.
+5. Open the **Secure Lab Chat** as Lab Admin, send a message to the Dentist, switch back to Dentist, and verify the message was received.

@@ -37,6 +37,7 @@ export default function CaseDetailsClient({ initialCase, currentUser }: CaseDeta
   const [showPatientLinkModal, setShowPatientLinkModal] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [newMessage, setNewMessage] = useState('');
+  const [isSending, setIsSending] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [chatId, setChatId] = useState<string | null>(null);
   const [dbTimeline, setDbTimeline] = useState<any[]>([]);
@@ -154,9 +155,10 @@ export default function CaseDetailsClient({ initialCase, currentUser }: CaseDeta
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !chatId) return;
+    if (!newMessage.trim() || !chatId || isSending) return;
 
     const content = newMessage;
+    setIsSending(true);
     setNewMessage(''); // optimistic clear
 
     await supabase.from('chat_messages').insert({
@@ -164,6 +166,8 @@ export default function CaseDetailsClient({ initialCase, currentUser }: CaseDeta
       sender_id: currentUser.id,
       content: content
     });
+    
+    setIsSending(false);
   };
   
   const handleStatusUpdate = async (newStatus: string) => {
@@ -407,8 +411,9 @@ export default function CaseDetailsClient({ initialCase, currentUser }: CaseDeta
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     className="flex-1 bg-background"
+                    disabled={isSending}
                   />
-                  <Button type="submit" size="icon" disabled={!newMessage.trim()}>
+                  <Button type="submit" size="icon" disabled={!newMessage.trim() || isSending}>
                     <Send className="w-4 h-4" />
                   </Button>
                 </form>

@@ -1,0 +1,16 @@
+{
+  "sources": {
+    "claude-code": {
+      "enabled": true
+    },
+    "claude-desktop": {
+      "enabled": true
+    },
+    "gemini": {
+      "enabled": true
+    },
+    "cline-roo": {
+      "enabled": true
+    }
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "runs": [
+    {
+      "ts": "2026-07-03T18:50:25.302Z",
+      "sessionsAnalyzed": 555,
+      "kept": 9,
+      "keptRate": 0.016216216216216217,
+      "patternsLearned": 11,
+      "sources": [
+        "autoclaw-native",
+        "claude-code",
+        "cline-roo",
+        "gemini"
+      ],
+      "estTokens": 9417326,
+      "gitEnriched": true
+    }
+  ],
+  "summary": {
+    "totalRuns": 1,
+    "totalSessions": 555,
+    "totalKept": 9,
+    "avgKeptRate": 0.016216216216216217,
+    "totalPatterns": 11,
+    "tokens": {
+      "estimated": 9417326,
+      "real": 0,
+      "hasReal": false
+    },
+    "totalCostUsd": 0,
+    "lastRun": {
+      "ts": "2026-07-03T18:50:25.302Z",
+      "sessionsAnalyzed": 555,
+      "kept": 9,
+      "keptRate": 0.016216216216216217,
+      "patternsLearned": 11,
+      "sources": [
+        "autoclaw-native",
+        "claude-code",
+        "cline-roo",
+        "gemini"
+      ],
+      "estTokens": 9417326,
+      "gitEnriched": true
+    }
+  },
+  "trends": {
+    "keptRate": [
+      {
+        "ts": "2026-07-03T18:50:25.302Z",
+        "value": 0.016216216216216217
+      }
+    ],
+    "patterns": [
+      {
+        "ts": "2026-07-03T18:50:25.302Z",
+        "value": 11
+      }
+    ],
+    "estTokens": [
+      {
+        "ts": "2026-07-03T18:50:25.302Z",
+        "value": 9417326
+      }
+    ],
+    "realTokens": [
+      {
+        "ts": "2026-07-03T18:50:25.302Z",
+        "value": 0
+      }
+    ]
+  }
+}
