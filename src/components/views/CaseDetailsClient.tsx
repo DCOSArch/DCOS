@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { User, Case, ChatMessage } from '@/types';
-import { mockTimelineEvents, mockUsers, mockOrderChats } from '@/mockData';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -10,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Calendar, FileText, User as UserIcon, Building2, Download, Box, Link2, Eye, Layers, Send, Lock } from 'lucide-react';
+import { ArrowLeft, Calendar, FileText, User as UserIcon, Building2, Download, Box, Link2, Eye, Layers, Send, Lock, ScanLine } from 'lucide-react';
 import ThreeDViewer from '@/components/ThreeDViewer';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -30,11 +29,33 @@ export default function CaseDetailsClient({ initialCase, currentUser }: CaseDeta
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [chatId, setChatId] = useState<string | null>(null);
   const [dbTimeline, setDbTimeline] = useState<any[]>([]);
-
-  const dentist = mockUsers.find(u => u.id === caseItem?.dentistId);
-  const lab = mockUsers.find(u => u.id === caseItem?.labId);
+  const [dentistName, setDentistName] = useState<string>('');
+  const [labName, setLabName] = useState<string>('');
   
   const isChatUnlocked = caseItem?.status !== 'PENDING' && (caseItem?.status as string) !== 'REJECTED';
+
+  // Fetch dentist name and lab name from real DB
+  useEffect(() => {
+    const fetchNames = async () => {
+      if (caseItem.dentistId) {
+        const { data: dentistData } = await supabase
+          .from('users')
+          .select('name')
+          .eq('id', caseItem.dentistId)
+          .single();
+        if (dentistData) setDentistName(dentistData.name);
+      }
+      if (caseItem.labId) {
+        const { data: labData } = await supabase
+          .from('lab_profiles')
+          .select('name')
+          .eq('id', caseItem.labId)
+          .single();
+        if (labData) setLabName(labData.name);
+      }
+    };
+    fetchNames();
+  }, [caseItem.dentistId, caseItem.labId]);
 
   useEffect(() => {
     if (!isChatUnlocked) return;
@@ -71,13 +92,17 @@ export default function CaseDetailsClient({ initialCase, currentUser }: CaseDeta
           .channel(`chat_${chatData.id}`)
           .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `chat_id=eq.${chatData.id}` }, payload => {
             const newMsg = payload.new;
-            setMessages(prev => [...prev, {
-              id: newMsg.id,
-              chatId: newMsg.chat_id,
-              senderId: newMsg.sender_id,
-              content: newMsg.content,
-              timestamp: newMsg.created_at
-            }]);
+            // Avoid duplicates: only add if not already in the list
+            setMessages(prev => {
+              if (prev.some(m => m.id === newMsg.id)) return prev;
+              return [...prev, {
+                id: newMsg.id,
+                chatId: newMsg.chat_id,
+                senderId: newMsg.sender_id,
+                content: newMsg.content,
+                timestamp: newMsg.created_at
+              }];
+            });
           })
           .subscribe();
 
@@ -150,17 +175,16 @@ export default function CaseDetailsClient({ initialCase, currentUser }: CaseDeta
     });
   };
 
-  // Timeline Filtering based on role
-  const combinedTimeline = [...mockTimelineEvents.filter(t => t.caseId === caseItem.id), ...dbTimeline.map(t => ({
-    id: t.id,
-    caseId: t.case_id,
-    statusUpdate: t.status_update,
-    notes: t.notes,
-    timestamp: t.timestamp,
-    visibility: t.visibility
-  }))];
-  
-  const timeline = combinedTimeline
+  // Timeline: only use real DB events (no mock data)
+  const timeline = dbTimeline
+    .map(t => ({
+      id: t.id,
+      caseId: t.case_id,
+      statusUpdate: t.status_update,
+      notes: t.notes,
+      timestamp: t.timestamp,
+      visibility: t.visibility
+    }))
     .filter(t => {
       if (currentUser.role === 'DENTIST') {
         return t.visibility === 'EXTERNAL' || t.visibility === 'BOTH';
@@ -172,8 +196,12 @@ export default function CaseDetailsClient({ initialCase, currentUser }: CaseDeta
 
   if (!caseItem) return <div>Case not found</div>;
 
+  // Determine the public base URL for patient preview links
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://dcos-ntw0f0d0w-dcosv1.vercel.app';
+  const patientPreviewUrl = `${baseUrl}/preview/${caseItem.id}`;
+
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(`dentalconnect.os/preview/hash-${caseItem.id}`);
+    navigator.clipboard.writeText(patientPreviewUrl);
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
   };
@@ -243,11 +271,11 @@ export default function CaseDetailsClient({ initialCase, currentUser }: CaseDeta
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground font-medium flex items-center gap-2"><UserIcon className="w-4 h-4" /> Prescribing Dentist</p>
-                  <p className="font-medium text-foreground">{dentist?.name}</p>
+                  <p className="font-medium text-foreground">{dentistName || '—'}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground font-medium flex items-center gap-2"><Building2 className="w-4 h-4" /> Destination Lab</p>
-                  <p className="font-medium text-foreground">{lab?.name}</p>
+                  <p className="font-medium text-foreground">{labName || '—'}</p>
                 </div>
               </div>
             </CardContent>
@@ -258,9 +286,11 @@ export default function CaseDetailsClient({ initialCase, currentUser }: CaseDeta
             <CardHeader className="bg-muted/30 border-b border-border flex flex-row items-center justify-between py-4">
               <CardTitle className="text-lg flex items-center gap-2"><Box className="w-5 h-5 text-primary"/> 3D Design Viewer</CardTitle>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="h-9 shadow-sm hidden sm:flex">
-                  <Download className="mr-2 h-4 w-4" /> Download STL
-                </Button>
+                {caseItem.scanUrl && (
+                  <Button variant="outline" size="sm" className="h-9 shadow-sm hidden sm:flex">
+                    <Download className="mr-2 h-4 w-4" /> Download STL
+                  </Button>
+                )}
               </div>
             </CardHeader>
             <div className="h-[400px] w-full bg-[#111827] relative flex items-center justify-center group overflow-hidden">
@@ -268,7 +298,7 @@ export default function CaseDetailsClient({ initialCase, currentUser }: CaseDeta
               <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent to-[#111827]/80 pointer-events-none"></div>
               
               <div className="absolute inset-0 w-full h-full">
-                <ThreeDViewer />
+                <ThreeDViewer stlUrl={caseItem.scanUrl || undefined} />
               </div>
             </div>
           </Card>
@@ -343,7 +373,7 @@ export default function CaseDetailsClient({ initialCase, currentUser }: CaseDeta
                 <div className="space-y-4">
                   {messages.map(msg => {
                     const isMe = msg.senderId === currentUser.id;
-                    const senderName = isMe ? 'You' : 'Participant'; // Simplified for now since we aren't fetching all users
+                    const senderName = isMe ? 'You' : 'Participant';
                     return (
                       <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                         <div className={`px-3 py-2 rounded-2xl max-w-[85%] text-sm ${isMe ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-muted text-foreground rounded-bl-sm'}`}>
@@ -390,7 +420,7 @@ export default function CaseDetailsClient({ initialCase, currentUser }: CaseDeta
               <Input
                 readOnly
                 className="font-mono text-sm bg-muted/50"
-                value={`https://dentalconnect.os/preview/hash-${caseItem.id}`}
+                value={patientPreviewUrl}
               />
             </div>
             <Button size="sm" className="px-3" onClick={handleCopyLink}>

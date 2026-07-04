@@ -19,6 +19,7 @@ export interface Case {
   urgency: Urgency;
   requestedTreatment: string;
   material?: string;
+  scanUrl?: string;
   createdAt: string;
   dueDate: string;
 }

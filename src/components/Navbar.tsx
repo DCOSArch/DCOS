@@ -26,10 +26,21 @@ export default function Navbar({ currentUser, cases }: NavbarProps) {
   const supabase = createClient();
 
   useEffect(() => {
-    // Check local storage or system preference for dark mode
-    if (typeof document !== 'undefined') {
-      const isDark = document.documentElement.classList.contains('dark');
-      setIsDarkMode(isDark);
+    // Initialize dark mode from localStorage on mount
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('darkMode');
+      if (saved === 'true') {
+        document.documentElement.classList.add('dark');
+        setIsDarkMode(true);
+      } else if (saved === 'false') {
+        document.documentElement.classList.remove('dark');
+        setIsDarkMode(false);
+      } else {
+        // Default to dark (Monokai) mode on first visit
+        document.documentElement.classList.add('dark');
+        setIsDarkMode(true);
+        localStorage.setItem('darkMode', 'true');
+      }
     }
   }, []);
 
@@ -55,12 +66,14 @@ export default function Navbar({ currentUser, cases }: NavbarProps) {
   };
 
   const toggleDarkMode = () => {
-    if (isDarkMode) {
-      document.documentElement.classList.remove('dark');
-    } else {
+    const newMode = !isDarkMode;
+    if (newMode) {
       document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
     }
-    setIsDarkMode(!isDarkMode);
+    setIsDarkMode(newMode);
+    localStorage.setItem('darkMode', String(newMode));
   };
 
   const handleLogout = async () => {
