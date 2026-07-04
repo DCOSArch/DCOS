@@ -15,6 +15,7 @@ import { UploadCloud } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo } from 'react';
+import { toast } from 'sonner';
 
 interface LabDashboardProps {
   initialCases: Case[];
@@ -103,6 +104,40 @@ export default function LabDashboard({ initialCases, initialInventory, available
   useEffect(() => {
     const channel = supabase.channel('lab_cases')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'cases' }, payload => {
+        const eventType = payload.eventType;
+        const newCase = payload.new as any;
+        
+        if (eventType === 'INSERT') {
+          toast.success(`New Case Submitted! Dr. ${newCase.dentist_id ? 'Vishnoi' : ''} added ${newCase.patient_name}`);
+          setCases(prev => {
+            if (prev.some(c => c.id === newCase.id)) return prev;
+            return [{
+              id: newCase.id,
+              patientName: newCase.patient_name,
+              dentistId: newCase.dentist_id,
+              labId: newCase.lab_id,
+              status: newCase.status as any,
+              urgency: newCase.urgency as any,
+              requestedTreatment: newCase.requested_treatment,
+              material: newCase.material,
+              scanUrl: newCase.scan_url,
+              createdAt: newCase.created_at,
+              dueDate: newCase.due_date,
+              deliveryTrackingId: newCase.delivery_tracking_id
+            }, ...prev];
+          });
+        } else if (eventType === 'UPDATE') {
+          setCases(prev => prev.map(c => c.id === newCase.id ? {
+            ...c,
+            status: newCase.status,
+            urgency: newCase.urgency,
+            requestedTreatment: newCase.requested_treatment,
+            material: newCase.material,
+            scanUrl: newCase.scan_url,
+            deliveryTrackingId: newCase.delivery_tracking_id
+          } : c));
+        }
+        
         router.refresh();
       })
       .subscribe();

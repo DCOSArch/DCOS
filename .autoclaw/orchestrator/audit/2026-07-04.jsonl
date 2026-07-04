@@ -322,3 +322,9 @@
 {"actor":"orchestrator-loop","agent_type":"coder","action":"dispatch","task_id":"next-antigravity","control_level":"individual","allowed":true,"ts":"2026-07-04T20:27:24.142Z"}
 {"actor":"orchestrator-loop","agent_type":"coder","action":"dispatch","task_id":"next-claude-code","control_level":"individual","allowed":true,"ts":"2026-07-04T20:27:24.560Z"}
 {"actor":"orchestrator-loop","agent_type":"coder","action":"dispatch","task_id":"next-cline","control_level":"individual","allowed":true,"ts":"2026-07-04T20:27:54.202Z"}
+{"actor":"orchestrator-loop","agent_type":"coder","action":"dispatch","task_id":"next-antigravity","control_level":"individual","allowed":true,"ts":"2026-07-04T20:32:54.201Z"}
+{"actor":"orchestrator-loop","agent_type":"coder","action":"dispatch","task_id":"next-claude-code","control_level":"individual","allowed":true,"ts":"2026-07-04T20:32:54.588Z"}
+{"actor":"orchestrator-loop","agent_type":"coder","action":"dispatch","task_id":"next-cline","control_level":"individual","allowed":true,"ts":"2026-07-04T20:33:24.203Z"}
+{"actor":"orchestrator-loop","agent_type":"coder","action":"dispatch","task_id":"next-antigravity","control_level":"individual","allowed":true,"ts":"2026-07-04T20:38:24.330Z"}
+{"actor":"orchestrator-loop","agent_type":"coder","action":"dispatch","task_id":"next-claude-code","control_level":"individual","allowed":true,"ts":"2026-07-04T20:38:24.882Z"}
+{"actor":"orchestrator-loop","agent_type":"coder","action":"dispatch","task_id":"next-cline","control_level":"individual","allowed":true,"ts":"2026-07-04T20:38:54.297Z"}

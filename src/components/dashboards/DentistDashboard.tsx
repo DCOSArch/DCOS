@@ -15,6 +15,7 @@ import { Plus, Activity, CheckCircle2, UploadCloud, FileBox, Filter, FileText, B
 import { Case, User, DoctorInventoryItem } from '@/types';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 interface DentistDashboardProps {
   initialCases: Case[];
@@ -73,6 +74,22 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
     // Subscribe to cases
     const channel = supabase.channel('dentist_cases')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'cases', filter: `dentist_id=eq.${currentUser.id}` }, payload => {
+        const eventType = payload.eventType;
+        const newCase = payload.new as any;
+        
+        if (eventType === 'UPDATE') {
+          toast.info(`Case updated: ${newCase.patient_name}'s status is now ${newCase.status}`);
+          setCases(prev => prev.map(c => c.id === newCase.id ? {
+            ...c,
+            status: newCase.status,
+            urgency: newCase.urgency,
+            requestedTreatment: newCase.requested_treatment,
+            material: newCase.material,
+            scanUrl: newCase.scan_url,
+            deliveryTrackingId: newCase.delivery_tracking_id
+          } : c));
+        }
+        
         router.refresh();
       })
       .subscribe();
@@ -181,6 +198,9 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         dueDate: dbCase.due_date
       };
       
+      // Optimistic UI - Immediately show the new case
+      setCases(prev => [newCase, ...prev]);
+      
       router.refresh();
       setIsCreateModalOpen(false);
       
@@ -191,6 +211,8 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
       setDueDate('');
       setSelectedFile(null);
       setUploadState('idle');
+      
+      toast.success('Case successfully submitted!');
       
     } catch (err) {
       console.error('Submission error:', err);
