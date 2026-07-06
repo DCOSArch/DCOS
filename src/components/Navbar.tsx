@@ -184,7 +184,10 @@ export default function Navbar({ currentUser, cases }: NavbarProps) {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 
                       className="w-full text-center text-sm font-medium text-primary justify-center cursor-pointer"
-                      onClick={() => setIsNotificationsOpen(true)}
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        setIsNotificationsOpen(true);
+                      }}
                     >
                       View all notifications
                     </DropdownMenuItem>

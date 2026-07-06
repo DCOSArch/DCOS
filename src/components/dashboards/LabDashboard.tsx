@@ -108,7 +108,9 @@ export default function LabDashboard({ initialCases, initialInventory, available
         const newCase = payload.new as any;
         
         if (eventType === 'INSERT') {
-          toast.success(`New Case Submitted! Dr. ${newCase.dentist_id ? 'Vishnoi' : ''} added ${newCase.patient_name}`);
+          const dentist = availableDentists.find(u => u.id === newCase.dentist_id);
+          const dentistName = dentist ? dentist.name : 'A dentist';
+          toast.success(`New Case Submitted! ${dentistName} added ${newCase.patient_name}`);
           setCases(prev => {
             if (prev.some(c => c.id === newCase.id)) return prev;
             return [{
