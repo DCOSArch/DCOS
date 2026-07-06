@@ -1,14 +1,14 @@
 {
-  "id": "msg-claim-next-cline-mr6trrdg",
+  "id": "msg-claim-next-cline-mr96e52n",
   "from": "orchestrator-loop",
   "to": "shared",
   "type": "task_claim",
-  "timestamp": "2026-07-04T20:38:54.292Z",
+  "timestamp": "2026-07-06T12:07:46.223Z",
   "task_id": "next-cline",
   "payload": {
     "vendor": "other",
     "priority": "low"
   },
   "requires_response": true,
-  "expires_at": "2026-07-04T21:08:54.292Z"
+  "expires_at": "2026-07-06T12:37:46.223Z"
 }

@@ -296,7 +296,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                       <h4 className="font-semibold text-foreground">{item.materialName}</h4>
                       <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5"><Building2 className="w-3 h-3" /> {lab?.name}</p>
                     </div>
-                    <Badge variant="secondary" className="text-xs font-mono">{item.lockedPrice}/unit</Badge>
+                    <Badge variant="secondary" className="text-xs font-mono">{item.lockedPrice.replace('$', '₹')}/unit</Badge>
                   </div>
                   
                   <div className="space-y-1.5 mt-2">

@@ -66,7 +66,7 @@ export default async function LabsMarketplacePage() {
                       <div key={idx} className="flex justify-between items-center text-sm border-b border-slate-100 dark:border-slate-800 pb-2">
                         <span className="font-medium text-slate-700 dark:text-slate-300">{svc.category}</span>
                         <div className="text-right">
-                          <span className="text-emerald-600 dark:text-emerald-400 font-semibold">${svc.price}</span>
+                          <span className="text-emerald-600 dark:text-emerald-400 font-semibold">₹{svc.price}</span>
                           <span className="text-slate-400 ml-2 flex items-center justify-end text-xs"><Clock className="w-3 h-3 mr-1" /> {svc.turnaround_days}d</span>
                         </div>
                       </div>

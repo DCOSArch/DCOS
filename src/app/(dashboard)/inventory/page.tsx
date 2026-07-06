@@ -165,7 +165,7 @@ export default async function InventoryDashboard() {
                       {item.remainingUnits} / {item.totalUnits}
                     </TableCell>
                     <TableCell className="text-right font-medium text-emerald-600 dark:text-emerald-400">
-                      {item.lockedPrice}/unit
+                      {item.lockedPrice.replace('$', '₹')}/unit
                     </TableCell>
                   </TableRow>
                 ))}
