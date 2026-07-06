@@ -1,46 +1,42 @@
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { AlertCircle, Package, ShoppingCart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { getCachedSession, getCachedUserProfile } from '@/lib/data'
+import { createClient } from '@/lib/supabase/server'
 
 export default async function InventoryDashboard() {
-  const cookieStore = await cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-      },
-    }
-  )
-
-  const { data: { session } } = await supabase.auth.getSession()
+  const session = await getCachedSession()
 
   if (!session) {
     redirect('/login')
   }
 
-  const { data: currentUser } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', session.user.id)
-    .single()
+  const currentUser = await getCachedUserProfile()
 
   if (currentUser?.role !== 'LAB_ADMIN') {
     redirect('/')
   }
 
-  const { data: inventoryData } = await supabase
-    .from('inventory')
-    .select('*')
-    .eq('lab_id', currentUser.id)
+  const supabase = await createClient()
+  const labId = currentUser.lab_id || currentUser.id
+
+  // Fetch inventory items and allocations in parallel
+  const [inventoryResult, allocationsResult] = await Promise.all([
+    supabase
+      .from('inventory_items')
+      .select('*')
+      .eq('lab_id', labId),
+    supabase
+      .from('doctor_inventory')
+      .select('*')
+      .eq('lab_id', labId)
+  ])
+
+  const inventoryData = inventoryResult.data
+  const allocationsData = allocationsResult.data
 
   const inventory = inventoryData?.map(i => ({
     id: i.id,
@@ -50,13 +46,8 @@ export default async function InventoryDashboard() {
     quantity: i.quantity,
     unit: i.unit,
     threshold: i.threshold,
-    lastRestocked: i.last_restocked
+    lastRestocked: i.created_at
   })) || []
-
-  const { data: allocationsData } = await supabase
-    .from('doctor_inventory')
-    .select('*')
-    .eq('lab_id', currentUser.id)
 
   const doctorAllocations = allocationsData?.map(item => ({
     id: item.id,

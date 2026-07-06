@@ -11,6 +11,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 interface NavbarProps {
   currentUser: User;
@@ -21,6 +22,7 @@ export default function Navbar({ currentUser, cases }: NavbarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showResults, setShowResults] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const supabase = createClient();
@@ -145,33 +147,111 @@ export default function Navbar({ currentUser, cases }: NavbarProps) {
         </div>
 
         <div className="ml-auto flex items-center space-x-2 md:space-x-4">
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              className="relative text-muted-foreground hidden sm:flex h-9 w-9 items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground outline-none"
-            >
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80">
-              <div className="px-1.5 py-1 text-xs font-medium text-muted-foreground">Notifications</div>
-              <DropdownMenuSeparator />
-              <div className="flex flex-col">
-                {cases.filter(c => c.status === 'DELIVERED' || c.status === 'QUALITY_CHECK').slice(0, 3).map(c => (
-                  <DropdownMenuItem key={c.id} className="cursor-pointer flex flex-col items-start gap-1 p-3" onClick={() => handleSearchSelect(c.id)}>
-                    <div className="flex items-center justify-between w-full">
-                      <span className="font-semibold text-sm">{c.patientName}</span>
-                      <StatusBadge status={c.status} />
+          {(() => {
+            const notifications = cases.filter(c => c.status === 'DELIVERED' || c.status === 'QUALITY_CHECK');
+            const hasNotifications = notifications.length > 0;
+            return (
+              <>
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    className="relative text-muted-foreground hidden sm:flex h-9 w-9 items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground outline-none"
+                  >
+                    <Bell className="w-5 h-5" />
+                    {hasNotifications && (
+                      <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                    )}
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-80">
+                    <div className="px-1.5 py-1 text-xs font-medium text-muted-foreground">Notifications</div>
+                    <DropdownMenuSeparator />
+                    <div className="flex flex-col">
+                      {notifications.length === 0 ? (
+                        <div className="px-4 py-3 text-center text-xs text-muted-foreground">
+                          No notifications
+                        </div>
+                      ) : (
+                        notifications.slice(0, 3).map(c => (
+                          <DropdownMenuItem key={c.id} className="cursor-pointer flex flex-col items-start gap-1 p-3" onClick={() => handleSearchSelect(c.id)}>
+                            <div className="flex items-center justify-between w-full">
+                              <span className="font-semibold text-sm">{c.patientName}</span>
+                              <StatusBadge status={c.status} />
+                            </div>
+                            <span className="text-xs text-muted-foreground">Case #{c.id.slice(-8).toUpperCase()} was updated.</span>
+                          </DropdownMenuItem>
+                        ))
+                      )}
                     </div>
-                    <span className="text-xs text-muted-foreground">Case #{c.id.slice(-8).toUpperCase()} was updated.</span>
-                  </DropdownMenuItem>
-                ))}
-              </div>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="w-full text-center text-sm font-medium text-primary justify-center cursor-pointer">
-                View all notifications
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      className="w-full text-center text-sm font-medium text-primary justify-center cursor-pointer"
+                      onSelect={() => setIsNotificationsOpen(true)}
+                    >
+                      View all notifications
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <Dialog open={isNotificationsOpen} onOpenChange={setIsNotificationsOpen}>
+                  <DialogContent className="sm:max-w-[480px] p-0 overflow-hidden bg-card border border-border shadow-2xl">
+                    <div className="bg-muted/30 p-6 border-b border-border">
+                      <DialogHeader>
+                        <DialogTitle className="text-xl font-bold flex items-center gap-2 text-foreground">
+                          <Bell className="w-5 h-5 text-primary" /> Notifications
+                        </DialogTitle>
+                        <DialogDescription className="text-sm text-muted-foreground mt-1">
+                          Stay updated on critical status updates and quality checks for your cases.
+                        </DialogDescription>
+                      </DialogHeader>
+                    </div>
+                    
+                    <div className="max-h-[350px] overflow-y-auto p-4 flex flex-col gap-3">
+                      {notifications.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
+                          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
+                            <Bell className="w-6 h-6 text-muted-foreground/60" />
+                          </div>
+                          <p className="font-semibold text-foreground">All caught up!</p>
+                          <p className="text-xs text-muted-foreground mt-1 max-w-[240px]">
+                            You have no pending case updates or delivery notifications at this time.
+                          </p>
+                        </div>
+                      ) : (
+                        notifications.map((c) => (
+                          <div
+                            key={`notif-modal-${c.id}`}
+                            onClick={() => {
+                              setIsNotificationsOpen(false);
+                              handleSearchSelect(c.id);
+                            }}
+                            className="group flex flex-col items-start gap-1.5 p-3 rounded-lg border border-border bg-background hover:bg-muted/55 hover:border-primary/20 cursor-pointer transition-all duration-200"
+                          >
+                            <div className="flex items-center justify-between w-full">
+                              <span className="font-semibold text-sm group-hover:text-primary transition-colors duration-150 text-foreground">
+                                {c.patientName}
+                              </span>
+                              <StatusBadge status={c.status} />
+                            </div>
+                            <div className="flex items-center justify-between w-full text-xs text-muted-foreground">
+                              <span>Case #{c.id.slice(-8).toUpperCase()} was updated.</span>
+                              {c.dueDate && (
+                                <span>Due: {new Date(c.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                              )}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    
+                    <div className="p-4 border-t border-border bg-muted/10 flex justify-end">
+                      <Button onClick={() => setIsNotificationsOpen(false)} variant="outline" size="sm">
+                        Close
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </>
+            );
+          })()}
 
           <Button variant="ghost" size="icon" onClick={toggleDarkMode} className="text-muted-foreground hidden sm:flex">
             {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}

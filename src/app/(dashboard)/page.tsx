@@ -1,38 +1,17 @@
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
 import DentistDashboard from '@/components/dashboards/DentistDashboard'
 import LabDashboard from '@/components/dashboards/LabDashboard'
+import { getCachedUserProfile, getCachedCases } from '@/lib/data'
+import { createClient } from '@/lib/supabase/server'
 
 export default async function DashboardRoot() {
-  const cookieStore = await cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-      },
-    }
-  )
+  const [userProfile, cases] = await Promise.all([
+    getCachedUserProfile(),
+    getCachedCases()
+  ])
 
-  const { data: { session } } = await supabase.auth.getSession()
-
-  const { data: userProfile } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', session?.user.id)
-    .single()
-
-  // Fetch Cases based on role
-  let casesQuery = supabase.from('cases').select('*')
-  
-  if (userProfile?.role === 'DENTIST') {
-    casesQuery = casesQuery.eq('dentist_id', userProfile.id)
+  if (!userProfile) {
+    return <div className="p-8 text-center">User profile not found.</div>
   }
-
-  const { data: cases } = await casesQuery
 
   const mappedCases = cases?.map(c => ({
     id: c.id,
@@ -48,12 +27,23 @@ export default async function DashboardRoot() {
     createdAt: c.created_at
   })) || []
 
-  if (userProfile?.role === 'LAB_ADMIN') {
-    // Fetch inventory for LabDashboard
-    const { data: inventoryData } = await supabase
-      .from('inventory_items') // Changed from 'inventory' to match schema
-      .select('*')
-      .eq('lab_id', userProfile.lab_id || userProfile.id)
+  const supabase = await createClient()
+
+  if (userProfile.role === 'LAB_ADMIN') {
+    // Fetch inventory and dentists in parallel
+    const [inventoryResult, dentistsResult] = await Promise.all([
+      supabase
+        .from('inventory_items')
+        .select('*')
+        .eq('lab_id', userProfile.lab_id || userProfile.id),
+      supabase
+        .from('users')
+        .select('*')
+        .eq('role', 'DENTIST')
+    ])
+
+    const inventoryData = inventoryResult.data
+    const dentistsData = dentistsResult.data
 
     const mappedInventory = inventoryData?.map(i => ({
       id: i.id,
@@ -65,12 +55,6 @@ export default async function DashboardRoot() {
       threshold: i.threshold,
       lastRestocked: i.created_at
     })) || []
-    
-    // Fetch Dentists to map names
-    const { data: dentistsData } = await supabase
-      .from('users')
-      .select('*')
-      .eq('role', 'DENTIST');
 
     return <LabDashboard initialCases={mappedCases} initialInventory={mappedInventory} availableDentists={dentistsData || []} />
   }

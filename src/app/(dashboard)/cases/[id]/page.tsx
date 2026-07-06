@@ -1,40 +1,24 @@
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import CaseDetailsClient from '@/components/views/CaseDetailsClient'
+import { getCachedSession, getCachedUserProfile } from '@/lib/data'
+import { createClient } from '@/lib/supabase/server'
 
 export default async function CaseDetailsPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
-  const cookieStore = await cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-      },
-    }
-  )
-
-  const { data: { session } } = await supabase.auth.getSession()
+  const session = await getCachedSession()
 
   if (!session) {
     redirect('/login')
   }
 
-  const { data: currentUser } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', session.user.id)
-    .single()
+  const supabase = await createClient()
 
-  const { data: caseData, error } = await supabase
-    .from('cases')
-    .select('*')
-    .eq('id', params.id)
-    .single()
+  const [currentUser, caseResult] = await Promise.all([
+    getCachedUserProfile(),
+    supabase.from('cases').select('*').eq('id', params.id).single()
+  ])
+
+  const { data: caseData, error } = caseResult
 
   if (error || !caseData) {
     return <div className="p-8 text-center">Case not found or you don't have access.</div>
