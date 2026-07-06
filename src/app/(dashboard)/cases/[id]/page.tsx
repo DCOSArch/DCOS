@@ -13,12 +13,28 @@ export default async function CaseDetailsPage(props: { params: Promise<{ id: str
 
   const supabase = await createClient()
 
-  const [currentUser, caseResult] = await Promise.all([
+  const [currentUser, caseResult, timelineResult, chatResult] = await Promise.all([
     getCachedUserProfile(),
-    supabase.from('cases').select('*').eq('id', params.id).single()
+    supabase
+      .from('cases')
+      .select('*, dentist:users(name), lab:lab_profiles(name)')
+      .eq('id', params.id)
+      .single(),
+    supabase
+      .from('timeline_events')
+      .select('*')
+      .eq('case_id', params.id)
+      .order('timestamp', { ascending: false }),
+    supabase
+      .from('order_chats')
+      .select('id, chat_messages(*)')
+      .eq('case_id', params.id)
+      .maybeSingle()
   ])
 
   const { data: caseData, error } = caseResult
+  const { data: timelineData } = timelineResult
+  const { data: chatData } = chatResult
 
   if (error || !caseData) {
     return <div className="p-8 text-center">Case not found or you don't have access.</div>
@@ -45,5 +61,26 @@ export default async function CaseDetailsPage(props: { params: Promise<{ id: str
     createdAt: caseData.created_at
   }
 
-  return <CaseDetailsClient initialCase={mappedCase} currentUser={currentUser} />
+  const dentistName = (caseData.dentist as any)?.name || '';
+  const labName = (caseData.lab as any)?.name || '';
+
+  const initialMessages = chatData?.chat_messages?.map((m: any) => ({
+    id: m.id,
+    chatId: m.chat_id,
+    senderId: m.sender_id,
+    content: m.content,
+    timestamp: m.created_at
+  })) || [];
+
+  return (
+    <CaseDetailsClient 
+      initialCase={mappedCase} 
+      currentUser={currentUser} 
+      initialDentistName={dentistName}
+      initialLabName={labName}
+      initialTimeline={timelineData || []}
+      initialMessages={initialMessages}
+      initialChatId={chatData?.id || null}
+    />
+  )
 }

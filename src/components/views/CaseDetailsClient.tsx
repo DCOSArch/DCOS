@@ -28,9 +28,22 @@ const ThreeDViewer = dynamic(() => import('@/components/ThreeDViewer'), {
 interface CaseDetailsProps {
   initialCase: Case;
   currentUser: User;
+  initialDentistName?: string;
+  initialLabName?: string;
+  initialTimeline?: any[];
+  initialMessages?: ChatMessage[];
+  initialChatId?: string | null;
 }
 
-export default function CaseDetailsClient({ initialCase, currentUser }: CaseDetailsProps) {
+export default function CaseDetailsClient({ 
+  initialCase, 
+  currentUser,
+  initialDentistName = '',
+  initialLabName = '',
+  initialTimeline = [],
+  initialMessages = [],
+  initialChatId = null
+}: CaseDetailsProps) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   
@@ -43,18 +56,19 @@ export default function CaseDetailsClient({ initialCase, currentUser }: CaseDeta
   const [isCopied, setIsCopied] = useState(false);
   const [newMessage, setNewMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [chatId, setChatId] = useState<string | null>(null);
-  const [dbTimeline, setDbTimeline] = useState<any[]>([]);
-  const [dentistName, setDentistName] = useState<string>('');
-  const [labName, setLabName] = useState<string>('');
+  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
+  const [chatId, setChatId] = useState<string | null>(initialChatId);
+  const [dbTimeline, setDbTimeline] = useState<any[]>(initialTimeline);
+  const [dentistName, setDentistName] = useState<string>(initialDentistName);
+  const [labName, setLabName] = useState<string>(initialLabName);
   
   const isChatUnlocked = caseItem?.status !== 'PENDING' && (caseItem?.status as string) !== 'REJECTED';
 
-  // Fetch dentist name and lab name from real DB
+  // Fetch dentist name and lab name from real DB if not provided
   useEffect(() => {
+    if (initialDentistName && initialLabName) return;
     const fetchNames = async () => {
-      if (caseItem.dentistId) {
+      if (caseItem.dentistId && !dentistName) {
         const { data: dentistData } = await supabase
           .from('users')
           .select('name')
@@ -62,7 +76,7 @@ export default function CaseDetailsClient({ initialCase, currentUser }: CaseDeta
           .single();
         if (dentistData) setDentistName(dentistData.name);
       }
-      if (caseItem.labId) {
+      if (caseItem.labId && !labName) {
         const { data: labData } = await supabase
           .from('lab_profiles')
           .select('name')
@@ -72,7 +86,7 @@ export default function CaseDetailsClient({ initialCase, currentUser }: CaseDeta
       }
     };
     fetchNames();
-  }, [caseItem.dentistId, caseItem.labId]);
+  }, [caseItem.dentistId, caseItem.labId, initialDentistName, initialLabName]);
 
   useEffect(() => {
     if (!isChatUnlocked) return;
@@ -80,31 +94,38 @@ export default function CaseDetailsClient({ initialCase, currentUser }: CaseDeta
     let subscription: ReturnType<typeof supabase.channel> | null = null;
 
     const fetchChat = async () => {
-      // 1. Get the chat ID for this case
-      let { data: chatData } = await supabase
-        .from('order_chats')
-        .select('id')
-        .eq('case_id', caseItem.id)
-        .single();
-        
-      if (!chatData) {
-        // Auto-initialize chat room if it doesn't exist
-        const { data: newChat } = await supabase
+      let activeChatId = chatId;
+      if (!activeChatId) {
+        // 1. Get the chat ID for this case
+        let { data: chatData } = await supabase
           .from('order_chats')
-          .insert({ case_id: caseItem.id })
           .select('id')
+          .eq('case_id', caseItem.id)
           .single();
           
-        chatData = newChat;
+        if (!chatData) {
+          // Auto-initialize chat room if it doesn't exist
+          const { data: newChat } = await supabase
+            .from('order_chats')
+            .insert({ case_id: caseItem.id })
+            .select('id')
+            .single();
+            
+          chatData = newChat;
+        }
+
+        if (chatData) {
+          setChatId(chatData.id);
+          activeChatId = chatData.id;
+        }
       }
 
-      if (chatData) {
-        setChatId(chatData.id);
-        // 2. Fetch existing messages
+      if (activeChatId && messages.length === 0) {
+        // 2. Fetch existing messages if not already provided
         const { data: messageData } = await supabase
           .from('chat_messages')
           .select('*')
-          .eq('chat_id', chatData.id)
+          .eq('chat_id', activeChatId)
           .order('created_at', { ascending: true });
         
         if (messageData) {
@@ -116,13 +137,14 @@ export default function CaseDetailsClient({ initialCase, currentUser }: CaseDeta
             timestamp: m.created_at
           })));
         }
+      }
 
+      if (activeChatId) {
         // 3. Subscribe to real-time new messages
         subscription = supabase
-          .channel(`chat_${chatData.id}`)
-          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `chat_id=eq.${chatData.id}` }, payload => {
+          .channel(`chat_${activeChatId}`)
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `chat_id=eq.${activeChatId}` }, payload => {
             const newMsg = payload.new;
-            // Avoid duplicates: only add if not already in the list
             setMessages(prev => {
               if (prev.some(m => m.id === newMsg.id)) return prev;
               return [...prev, {
@@ -140,27 +162,28 @@ export default function CaseDetailsClient({ initialCase, currentUser }: CaseDeta
 
     fetchChat();
 
-    // The cleanup function is returned synchronously by useEffect
     return () => {
       if (subscription) {
         supabase.removeChannel(subscription);
       }
     };
-  }, [caseItem.id, isChatUnlocked, supabase]);
+  }, [caseItem.id, isChatUnlocked, supabase, chatId, messages.length]);
 
   useEffect(() => {
-    const fetchTimeline = async () => {
-      const { data } = await supabase
-        .from('timeline_events')
-        .select('*')
-        .eq('case_id', caseItem.id)
-        .order('timestamp', { ascending: false });
-      
-      if (data) {
-        setDbTimeline(data);
-      }
-    };
-    fetchTimeline();
+    if (initialTimeline.length === 0 && dbTimeline.length === 0) {
+      const fetchTimeline = async () => {
+        const { data } = await supabase
+          .from('timeline_events')
+          .select('*')
+          .eq('case_id', caseItem.id)
+          .order('timestamp', { ascending: false });
+        
+        if (data) {
+          setDbTimeline(data);
+        }
+      };
+      fetchTimeline();
+    }
     
     // Subscribe to new timeline events
     const timelineSub = supabase.channel(`timeline_${caseItem.id}`)
@@ -172,7 +195,7 @@ export default function CaseDetailsClient({ initialCase, currentUser }: CaseDeta
     return () => {
       timelineSub.unsubscribe();
     };
-  }, [caseItem.id]);
+  }, [caseItem.id, initialTimeline, dbTimeline.length]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();

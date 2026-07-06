@@ -4,9 +4,12 @@ import { getCachedUserProfile, getCachedCases } from '@/lib/data'
 import { createClient } from '@/lib/supabase/server'
 
 export default async function DashboardRoot() {
-  const [userProfile, cases] = await Promise.all([
+  const supabase = await createClient()
+
+  const [userProfile, cases, labProfilesResult] = await Promise.all([
     getCachedUserProfile(),
-    getCachedCases()
+    getCachedCases(),
+    supabase.from('lab_profiles').select('*')
   ])
 
   if (!userProfile) {
@@ -26,8 +29,6 @@ export default async function DashboardRoot() {
     scanUrl: c.scan_url,
     createdAt: c.created_at
   })) || []
-
-  const supabase = await createClient()
 
   if (userProfile.role === 'LAB_ADMIN') {
     // Fetch inventory and dentists in parallel
@@ -60,7 +61,7 @@ export default async function DashboardRoot() {
   }
 
   // Default to Dentist view
-  const { data: labProfiles } = await supabase.from('lab_profiles').select('*');
+  const labProfiles = labProfilesResult.data || []
   
-  return <DentistDashboard initialCases={mappedCases} currentUser={userProfile} availableLabs={labProfiles || []} />
+  return <DentistDashboard initialCases={mappedCases} currentUser={userProfile} availableLabs={labProfiles} />
 }
