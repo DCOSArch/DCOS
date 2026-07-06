@@ -58,7 +58,11 @@ export default async function CaseDetailsPage(props: { params: Promise<{ id: str
     dueDate: caseData.due_date,
     material: caseData.material,
     scanUrl: signedScanUrl,
-    createdAt: caseData.created_at
+    createdAt: caseData.created_at,
+    shade: caseData.shade,
+    selectedTeeth: caseData.selected_teeth,
+    instructions: caseData.instructions,
+    designUrl: caseData.design_url
   }
 
   const dentistName = (caseData.dentist as any)?.name || '';

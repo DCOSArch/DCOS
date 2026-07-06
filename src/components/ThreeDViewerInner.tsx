@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Canvas, useLoader } from '@react-three/fiber';
-import { OrbitControls, Stage, Html } from '@react-three/drei';
+import { OrbitControls, Stage, Html, Loader } from '@react-three/drei';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import * as THREE from 'three';
 import { MapPin, CheckCircle2, Upload } from 'lucide-react';
@@ -146,6 +146,7 @@ export default function ThreeDViewerInner({
       )}
 
       {activeUrl ? (
+        <>
       <ErrorBoundary fallback={
         <div className="w-full h-full flex flex-col items-center justify-center text-slate-500 gap-3">
           <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center">
@@ -216,6 +217,8 @@ export default function ThreeDViewerInner({
         )}
       </Canvas>
       </ErrorBoundary>
+      <Loader />
+        </>
       ) : (
         <div className="w-full h-full flex flex-col items-center justify-center text-slate-500 gap-3">
           <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center">

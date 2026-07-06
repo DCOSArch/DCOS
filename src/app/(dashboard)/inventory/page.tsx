@@ -6,6 +6,7 @@ import { AlertCircle, Package, ShoppingCart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { getCachedSession, getCachedUserProfile } from '@/lib/data'
 import { createClient } from '@/lib/supabase/server'
+import DentistInventoryClient from '@/components/views/DentistInventoryClient'
 
 export default async function InventoryDashboard() {
   const session = await getCachedSession()
@@ -16,11 +17,48 @@ export default async function InventoryDashboard() {
 
   const currentUser = await getCachedUserProfile()
 
-  if (currentUser?.role !== 'LAB_ADMIN') {
-    redirect('/')
+  if (!currentUser) {
+    redirect('/login')
   }
 
   const supabase = await createClient()
+
+  if (currentUser.role === 'DENTIST') {
+    // 1. Fetch dentist allocations
+    const { data: allocationsData } = await supabase
+      .from('doctor_inventory')
+      .select('*')
+      .eq('dentist_id', currentUser.id)
+
+    // 2. Fetch available labs profiles
+    const { data: labsData } = await supabase
+      .from('lab_profiles')
+      .select('id, name')
+
+    const mappedAllocations = allocationsData?.map(item => ({
+      id: item.id,
+      dentistId: item.dentist_id,
+      labId: item.lab_id,
+      materialName: item.material_name,
+      totalUnits: item.total_units,
+      remainingUnits: item.remaining_units,
+      lockedPrice: `${item.locked_price}`
+    })) || []
+
+    const mappedLabs = labsData?.map(l => ({
+      id: l.id,
+      name: l.name
+    })) || []
+
+    return (
+      <DentistInventoryClient 
+        initialAllocations={mappedAllocations}
+        currentUser={currentUser}
+        availableLabs={mappedLabs}
+      />
+    )
+  }
+
   const labId = currentUser.lab_id || currentUser.id
 
   // Fetch inventory items and allocations in parallel

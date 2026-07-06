@@ -17,4 +17,12 @@ Dark mode is activated by adding the `.dark` class to the root `<html>` element 
 - Accent (Green): `#A6E22E`
 - Destructive (Orange): `#FD971F`
 - Card/Sidebar BG: `#1E1F1C`
-- Border: `#3E3D32`
+- Border: `#3E3D32`
+
+## Pre-Paid Virtual Inventory
+Clinics purchase material blocks (Zirconia, Lithium Disilicate, PFM) in bulk. This is tracked in `doctor_inventory`. 
+- Triggers: A database trigger `trigger_deduct_inventory` runs `AFTER INSERT OR UPDATE ON public.cases`.
+- Draft Safety: Inventory is **not** deducted when a case is saved as a `DRAFT`. The deduction of 1 unit occurs automatically when the status updates from `DRAFT` to `PENDING` (or is created as `PENDING` directly).
+
+## CAD/CAM Design Soft-Copy Archive
+A storage bucket `designs` holds the final milling-ready CAD output uploaded by technicians. The file path is saved in the `cases.design_url` column. Both lab admins and clinics have read access for warranty verification.

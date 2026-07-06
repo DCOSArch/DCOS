@@ -98,7 +98,7 @@ export default function LabDashboard({ initialCases, initialInventory, available
     { id: 'DELIVERED', label: 'Delivered' },
   ];
 
-  const activeCasesCount = cases.filter(c => c.status !== 'DELIVERED').length;
+  const activeCasesCount = cases.filter(c => c.status !== 'DELIVERED' && c.status !== 'DRAFT').length;
   const completedCasesCount = cases.filter(c => c.status === 'DELIVERED').length;
 
   useEffect(() => {
@@ -227,7 +227,7 @@ export default function LabDashboard({ initialCases, initialInventory, available
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 items-stretch pb-6 border-b border-border">
-        <SummaryChart cases={cases} />
+        <SummaryChart cases={cases.filter(c => c.status !== 'DRAFT')} />
         <Card className="flex flex-col justify-center h-full">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Production</CardTitle>

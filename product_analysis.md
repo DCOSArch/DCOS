@@ -32,7 +32,7 @@ DentalConnect OS acts as a **shared digital workspace** between dental clinics a
 | --- | --- |
 | **Dentists** | Submit digital prescriptions (Rx), upload 3D scans, track case status in real-time, manage pre-purchased material inventory, share design previews with patients. |
 | **Laboratories** | Receive structured digital orders, manage production via a Kanban board, auto-sync inventory with case production, communicate with dentists via contextual per-order chat. |
-| **Patients** | View a HIPAA-compliant, read-only 3D preview of their proposed smile design via a shareable link (B2B2C). |
+| **Patients** | View a GPDP-compliant, read-only 3D preview of their proposed smile design via a shareable link (B2B2C). |
 
 ### 2.3 Core Differentiators
 
@@ -640,9 +640,9 @@ Eight core types define the domain model:
 
 | Type | Purpose | Key Fields |
 | --- | --- | --- |
-| `Role` | Union type | `'DENTIST' | 'LAB_ADMIN' | 'LAB_STAFF'` |
-| `CaseStatus` | Case lifecycle states | `'PENDING' | 'IN_PROGRESS' | 'QUALITY_CHECK' | 'DISPATCHED' | 'DELIVERED'` |
-| `Urgency` | Priority levels | `'LOW' | 'NORMAL' | 'HIGH' | 'URGENT'` |
+| `Role` | Union type | \`'DENTIST' |
+| `CaseStatus` | Case lifecycle states | \`'PENDING' |
+| `Urgency` | Priority levels | \`'LOW' |
 | `User` | User profile | `id, name, role, labId?, avatarUrl?` |
 | `Case` | Lab case | `id, patientName, dentistId, labId, status, urgency, requestedTreatment, material?, dueDate, createdAt` |
 | `TimelineEvent` | Case activity log | `id, caseId, statusUpdate, notes, timestamp, visibility` |

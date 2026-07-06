@@ -1,8 +1,6 @@
 # Active Session Handoff
-- **Last Action Taken:** Committed Case ID truncation changes (`a278271`).
+- **Last Action Taken:** Completed all 6 roadmap checklist sections (Dentist/Lab dashboards, scanner file validation, drafts state engine, 3D viewers, UPI intent payments, and soft-copy design uploads).
 - **Current Blocker:** None.
-- **Next Immediate Step:** Ask the user to run `git push` manually to push the new commit.
+- **Next Immediate Step:** Run and verify features in the browser.
 - **Unfinished Checklist:**
   - All tasks completed successfully.
-
-

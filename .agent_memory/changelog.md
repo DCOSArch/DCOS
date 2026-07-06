@@ -1,4 +1,11 @@
 # Agent Changelog
+* 2026-07-07 - FEATURE: Dentist Dashboard & Case Ingestion — Refactored Create Case modal into Sirona-style 5-Tab Pipeline stepper with FDI tooth toggles, active locks, and "Not Specified" overrides.
+* 2026-07-07 - FEATURE: Scanner File Ingestion & Validation — Integrated client-side STL validator checks (warnings on margins/clearances) and auto-name/arch parsing from uploaded files.
+* 2026-07-07 - FEATURE: Asynchronous Cart Engine — Implemented "Save as Draft" status, detail page Submit Case banner, and updated database trigger `trigger_deduct_inventory` to only deduct units when transitioning from DRAFT to production statuses.
+* 2026-07-07 - FEATURE: 3D Scan URL Resolver — Resolved relative paths to fully-qualified public CDN urls on both dentist case details and unauthenticated patient preview routes.
+* 2026-07-07 - FEATURE: UPI Intent Payments — Built `DentistInventoryClient.tsx` to calculate bulk discounts, generate mobile `upi://pay` deep links, show desktop QR codes, and credit doctor inventory databases dynamically.
+* 2026-07-07 - FEATURE: Live Notification Center — Integrated a live production tracker feed on the dentist dashboard subscribing in real-time to Supabase `timeline_events`.
+* 2026-07-07 - FEATURE: CAD/CAM Soft-Copy Archiver — Created `designs` storage bucket and `design_url` database columns for permanent design archiving and technician file upload dropzones.
 * 2026-07-04 - BUG FIX: CaseDetailsClient.tsx — removed all mockData dependencies (mockUsers, mockTimelineEvents). Dentist/lab names now fetched from Supabase. Timeline shows only real DB events.
 * 2026-07-04 - BUG FIX: ThreeDViewer.tsx — replaced infinite spinner with a clean 'No 3D scan uploaded' empty state when no stlUrl is provided.
 * 2026-07-04 - BUG FIX: CaseDetailsClient.tsx — passed `stlUrl` prop to ThreeDViewer so real STL files render when available.
