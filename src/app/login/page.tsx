@@ -13,9 +13,11 @@ import { useRouter } from 'next/navigation';
 type Role = 'DENTIST' | 'LAB_ADMIN';
 
 export default function Login() {
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [authMode, setAuthMode] = useState<'signin' | 'signup' | 'forgot' | 'reset'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [role, setRole] = useState<Role>('DENTIST');
   const [labName, setLabName] = useState('');
@@ -25,13 +27,25 @@ export default function Login() {
   const router = useRouter();
   const supabase = createClient();
 
+  // Read URL parameters on mount to check if this is a password reset redirection
+  useState(() => {
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      
+      if (searchParams.get('mode') === 'reset' || hashParams.get('type') === 'recovery') {
+        setAuthMode('reset');
+      }
+    }
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErrorMsg('');
 
     try {
-      if (isSignUp) {
+      if (authMode === 'signup') {
         const metadata: any = {
           full_name: fullName,
           role: role,
@@ -49,7 +63,24 @@ export default function Login() {
         });
         if (error) throw error;
         alert('Sign up successful! You can now log in.');
-        setIsSignUp(false);
+        setAuthMode('signin');
+      } else if (authMode === 'forgot') {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/login?mode=reset`,
+        });
+        if (error) throw error;
+        alert('Password reset link sent! Please check your email.');
+        setAuthMode('signin');
+      } else if (authMode === 'reset') {
+        if (newPassword !== confirmPassword) {
+          throw new Error("Passwords do not match");
+        }
+        const { error } = await supabase.auth.updateUser({
+          password: newPassword
+        });
+        if (error) throw error;
+        alert('Password reset successful! You can now log in with your new password.');
+        setAuthMode('signin');
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -79,9 +110,17 @@ export default function Login() {
 
         <Card className="border-2 shadow-xl bg-background/60 backdrop-blur-sm">
           <CardHeader className="text-center pb-6">
-            <CardTitle className="text-2xl">{isSignUp ? 'Create an Account' : 'Welcome Back'}</CardTitle>
+            <CardTitle className="text-2xl">
+              {authMode === 'signup' && 'Create an Account'}
+              {authMode === 'signin' && 'Welcome Back'}
+              {authMode === 'forgot' && 'Reset Password'}
+              {authMode === 'reset' && 'Set New Password'}
+            </CardTitle>
             <CardDescription>
-              {isSignUp ? 'Enter your details below to create your account' : 'Enter your credentials to access your portal'}
+              {authMode === 'signup' && 'Enter your details below to create your account'}
+              {authMode === 'signin' && 'Enter your credentials to access your portal'}
+              {authMode === 'forgot' && 'Enter your email to receive a password reset link'}
+              {authMode === 'reset' && 'Enter your new secure password'}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -92,7 +131,7 @@ export default function Login() {
                 </div>
               )}
               
-              {isSignUp && (
+              {authMode === 'signup' && (
                 <>
                   <div className="space-y-2">
                     <Label htmlFor="fullName">Full Name</Label>
@@ -131,52 +170,105 @@ export default function Login() {
                 </>
               )}
 
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input 
-                  id="email" 
-                  type="email" 
-                  placeholder="name@example.com" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required 
-                />
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
-                  {!isSignUp && (
-                    <a href="#" className="text-xs text-primary hover:underline">Forgot password?</a>
-                  )}
+              {(authMode === 'signin' || authMode === 'signup' || authMode === 'forgot') && (
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input 
+                    id="email" 
+                    type="email" 
+                    placeholder="name@example.com" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required 
+                  />
                 </div>
-                <Input 
-                  id="password" 
-                  type="password" 
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required 
-                  minLength={6}
-                />
-              </div>
+              )}
+
+              {(authMode === 'signin' || authMode === 'signup') && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password">Password</Label>
+                    {authMode === 'signin' && (
+                      <button 
+                        type="button" 
+                        onClick={() => setAuthMode('forgot')} 
+                        className="text-xs text-primary hover:underline focus:outline-none"
+                      >
+                        Forgot password?
+                      </button>
+                    )}
+                  </div>
+                  <Input 
+                    id="password" 
+                    type="password" 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required 
+                    minLength={6}
+                  />
+                </div>
+              )}
+
+              {authMode === 'reset' && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="newPassword">New Password</Label>
+                    <Input 
+                      id="newPassword" 
+                      type="password" 
+                      placeholder="Minimum 6 characters"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      required 
+                      minLength={6}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                    <Input 
+                      id="confirmPassword" 
+                      type="password" 
+                      placeholder="Repeat new password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required 
+                      minLength={6}
+                    />
+                  </div>
+                </>
+              )}
 
               <Button type="submit" className="w-full mt-6 h-11" disabled={loading}>
                 {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}
-                {isSignUp ? 'Sign Up' : 'Sign In'}
+                {authMode === 'signup' && 'Sign Up'}
+                {authMode === 'signin' && 'Sign In'}
+                {authMode === 'forgot' && 'Send Reset Link'}
+                {authMode === 'reset' && 'Update Password'}
                 {!loading && <ArrowRight className="w-4 h-4 ml-2" />}
               </Button>
             </form>
           </CardContent>
-          <CardFooter className="flex justify-center border-t border-border pt-6">
-            <p className="text-sm text-muted-foreground">
-              {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+          <CardFooter className="flex flex-col gap-2 border-t border-border pt-6">
+            {authMode === 'forgot' || authMode === 'reset' ? (
               <button 
                 type="button" 
-                onClick={() => setIsSignUp(!isSignUp)} 
-                className="text-primary font-medium hover:underline focus:outline-none"
+                onClick={() => setAuthMode('signin')} 
+                className="text-sm text-primary font-medium hover:underline focus:outline-none"
               >
-                {isSignUp ? 'Sign In' : 'Sign Up'}
+                Back to Sign In
               </button>
-            </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                {authMode === 'signup' ? 'Already have an account?' : "Don't have an account?"}{' '}
+                <button 
+                  type="button" 
+                  onClick={() => setAuthMode(authMode === 'signup' ? 'signin' : 'signup')} 
+                  className="text-primary font-medium hover:underline focus:outline-none"
+                >
+                  {authMode === 'signup' ? 'Sign In' : 'Sign Up'}
+                </button>
+              </p>
+            )}
           </CardFooter>
         </Card>
       </div>
