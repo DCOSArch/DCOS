@@ -1,4 +1,5 @@
 # Agent Changelog
+* 2026-07-07 - FEATURE: Auth Recovery & Reset — Integrated native Supabase password recovery and secure reset morphing screens directly into the main Login card.
 * 2026-07-07 - FEATURE: CBCT DICOM Ingestion — Built Treatment Type selectors and conditional CBCT scan uploads for surgical guide cases, archiving DICOM path links in the database.
 * 2026-07-07 - FEATURE: Global Real-Time Chime Bell — Embedded browser Web Audio API synth double-beep alerts and live WebSocket subscriptions inside the navbar bell component.
 * 2026-07-07 - FEATURE: Live Stepper Updates — Wired real-time cases and timeline subscriptions inside CaseDetailsClient.tsx to automatically advance progress steps and history feeds.
