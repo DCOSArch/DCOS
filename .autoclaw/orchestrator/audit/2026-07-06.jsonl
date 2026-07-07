@@ -124,3 +124,12 @@
 {"actor":"orchestrator-loop","agent_type":"coder","action":"dispatch","task_id":"next-claude-code","control_level":"individual","allowed":true,"ts":"2026-07-06T23:39:22.155Z"}
 {"actor":"orchestrator-loop","agent_type":"coder","action":"dispatch","task_id":"next-antigravity","control_level":"individual","allowed":true,"ts":"2026-07-06T23:39:52.021Z"}
 {"actor":"orchestrator-loop","agent_type":"coder","action":"dispatch","task_id":"next-cline","control_level":"individual","allowed":true,"ts":"2026-07-06T23:39:52.392Z"}
+{"actor":"orchestrator-loop","agent_type":"coder","action":"dispatch","task_id":"next-claude-code","control_level":"individual","allowed":true,"ts":"2026-07-06T23:44:52.168Z"}
+{"actor":"orchestrator-loop","agent_type":"coder","action":"dispatch","task_id":"next-antigravity","control_level":"individual","allowed":true,"ts":"2026-07-06T23:45:22.178Z"}
+{"actor":"orchestrator-loop","agent_type":"coder","action":"dispatch","task_id":"next-cline","control_level":"individual","allowed":true,"ts":"2026-07-06T23:45:22.609Z"}
+{"actor":"orchestrator-loop","agent_type":"coder","action":"dispatch","task_id":"next-claude-code","control_level":"individual","allowed":true,"ts":"2026-07-06T23:50:22.221Z"}
+{"actor":"orchestrator-loop","agent_type":"coder","action":"dispatch","task_id":"next-antigravity","control_level":"individual","allowed":true,"ts":"2026-07-06T23:50:52.204Z"}
+{"actor":"orchestrator-loop","agent_type":"coder","action":"dispatch","task_id":"next-cline","control_level":"individual","allowed":true,"ts":"2026-07-06T23:50:52.566Z"}
+{"actor":"orchestrator-loop","agent_type":"coder","action":"dispatch","task_id":"next-claude-code","control_level":"individual","allowed":true,"ts":"2026-07-06T23:55:52.319Z"}
+{"actor":"orchestrator-loop","agent_type":"coder","action":"dispatch","task_id":"next-antigravity","control_level":"individual","allowed":true,"ts":"2026-07-06T23:56:22.420Z"}
+{"actor":"orchestrator-loop","agent_type":"coder","action":"dispatch","task_id":"next-cline","control_level":"individual","allowed":true,"ts":"2026-07-06T23:56:22.965Z"}

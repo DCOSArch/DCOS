@@ -191,7 +191,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
 
     // Subscribe to timeline events
     const timelineChannel = supabase.channel('dentist_timeline')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'timeline_events' }, payload => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'timeline_events', filter: `dentist_id=eq.${currentUser.id}` }, payload => {
         fetchNotifications();
       })
       .subscribe();
