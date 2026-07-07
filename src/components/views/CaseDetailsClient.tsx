@@ -679,47 +679,8 @@ export default function CaseDetailsClient({
 
         {/* Timeline Column */}
         <div className="space-y-6">
-          <Card className="h-full shadow-sm border-border">
-            <CardHeader className="border-b border-border bg-muted/30">
-              <CardTitle className="text-lg">Case Timeline</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6">
-              {timeline.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
-                    <Calendar className="h-6 w-6 text-muted-foreground" />
-                  </div>
-                  <p className="text-sm font-medium text-foreground">No timeline events</p>
-                  <p className="text-xs text-muted-foreground mt-1">This case hasn't been updated yet.</p>
-                </div>
-              ) : (
-                <div className="relative pl-6 border-l-2 border-border space-y-8 pb-4">
-                  {timeline.map((event, index) => (
-                    <div key={event.id} className="relative">
-                      <div className="absolute -left-[31px] bg-background p-1 rounded-full border border-background">
-                        <div className={`w-3 h-3 rounded-full ring-4 ${event.visibility === 'INTERNAL' ? 'bg-amber-500 ring-amber-500/20' : 'bg-primary ring-primary/20'}`} />
-                      </div>
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <p className="text-sm font-semibold text-foreground">{event.statusUpdate.replace('_', ' ')}</p>
-                            {event.visibility === 'INTERNAL' && (
-                              <Badge variant="outline" className="text-[10px] h-4 px-1 py-0 border-amber-200 text-amber-700 bg-amber-50 dark:border-amber-900 dark:text-amber-400 dark:bg-amber-950/30">Internal</Badge>
-                            )}
-                          </div>
-                          <span className="text-xs font-mono text-muted-foreground whitespace-nowrap">{new Date(event.timestamp).toLocaleDateString()}</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground leading-relaxed mt-1">{event.notes}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
           {/* Chat Integration Card */}
-          <Card className="flex flex-col h-[500px] shadow-sm border-border">
+          <Card className="flex flex-col h-[600px] shadow-sm border-border">
             <CardHeader className="border-b border-border bg-muted/30 py-4">
               <CardTitle className="text-lg flex items-center justify-between">
                 Order Chat
