@@ -27,6 +27,108 @@ export default function Navbar({ currentUser, cases }: NavbarProps) {
   const router = useRouter();
   const supabase = createClient();
 
+  const [liveNotifications, setLiveNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    // 1. Fetch initial notification-worthy timeline events
+    const fetchInitialNotifications = async () => {
+      if (currentUser.role !== 'DENTIST') return;
+      const { data } = await supabase
+        .from('timeline_events')
+        .select('id, status_update, notes, timestamp, case_id, cases!inner(patient_name, dentist_id)')
+        .eq('cases.dentist_id', currentUser.id)
+        .order('timestamp', { ascending: false })
+        .limit(10);
+      if (data) {
+        setLiveNotifications(data.map((n: any) => ({
+          id: n.id,
+          statusUpdate: n.status_update,
+          notes: n.notes,
+          timestamp: n.timestamp,
+          caseId: n.case_id,
+          patientName: n.cases.patient_name
+        })));
+      }
+    };
+    fetchInitialNotifications();
+
+    if (currentUser.role !== 'DENTIST') return;
+
+    // 2. Play Audio chime using Web Audio API
+    const playChime = () => {
+      try {
+        const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        
+        // Osc 1 (lower note)
+        const osc1 = audioCtx.createOscillator();
+        const gain1 = audioCtx.createGain();
+        osc1.connect(gain1);
+        gain1.connect(audioCtx.destination);
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+        gain1.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        osc1.start();
+        osc1.stop(audioCtx.currentTime + 0.12);
+
+        // Osc 2 (higher note) after 150ms
+        setTimeout(() => {
+          const osc2 = audioCtx.createOscillator();
+          const gain2 = audioCtx.createGain();
+          osc2.connect(gain2);
+          gain2.connect(audioCtx.destination);
+          osc2.type = 'sine';
+          osc2.frequency.setValueAtTime(880, audioCtx.currentTime); // A5
+          gain2.gain.setValueAtTime(0.08, audioCtx.currentTime);
+          osc2.start();
+          osc2.stop(audioCtx.currentTime + 0.18);
+        }, 150);
+      } catch (err) {
+        console.error('Audio beep failed', err);
+      }
+    };
+
+    // 3. Subscribe to real-time timeline events for the dentist
+    const channel = supabase.channel('global_dentist_notifications')
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'timeline_events', 
+        filter: `dentist_id=eq.${currentUser.id}` 
+      }, async (payload) => {
+        const newEvent = payload.new as any;
+        
+        // Fetch case info for patient name
+        const { data: caseInfo } = await supabase
+          .from('cases')
+          .select('patient_name')
+          .eq('id', newEvent.case_id)
+          .single();
+
+        const newNotif = {
+          id: newEvent.id,
+          statusUpdate: newEvent.status_update,
+          notes: newEvent.notes,
+          timestamp: newEvent.timestamp,
+          caseId: newEvent.case_id,
+          patientName: caseInfo?.patient_name || 'Patient'
+        };
+
+        setLiveNotifications(prev => [newNotif, ...prev.slice(0, 9)]);
+        setUnreadCount(prev => prev + 1);
+        playChime();
+        
+        // Trigger toast
+        const toast = (await import('sonner')).toast;
+        toast.info(`Case Update: ${newNotif.patientName} - ${newNotif.statusUpdate}`);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentUser.id, currentUser.role, supabase]);
+
   useEffect(() => {
     // Initialize dark mode from localStorage on mount
     if (typeof window !== 'undefined') {
@@ -148,42 +250,47 @@ export default function Navbar({ currentUser, cases }: NavbarProps) {
 
         <div className="ml-auto flex items-center space-x-2 md:space-x-4">
           {(() => {
-            const notifications = cases.filter(c => c.status === 'DELIVERED' || c.status === 'QUALITY_CHECK');
-            const hasNotifications = notifications.length > 0;
+            const hasNotifications = liveNotifications.length > 0 || unreadCount > 0;
             return (
               <>
-                <DropdownMenu>
+                <DropdownMenu onOpenChange={(open) => { if (open) setUnreadCount(0); }}>
                   <DropdownMenuTrigger
                     className="relative text-muted-foreground hidden sm:flex h-9 w-9 items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground outline-none"
                   >
                     <Bell className="w-5 h-5" />
-                    {hasNotifications && (
-                      <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                    {unreadCount > 0 && (
+                      <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                      </span>
                     )}
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-80">
-                    <div className="px-1.5 py-1 text-xs font-medium text-muted-foreground">Notifications</div>
+                    <div className="px-1.5 py-1 text-xs font-semibold text-muted-foreground flex justify-between items-center bg-muted/10">
+                      <span>Notifications</span>
+                      {unreadCount > 0 && <span className="bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full">{unreadCount} new</span>}
+                    </div>
                     <DropdownMenuSeparator />
-                    <div className="flex flex-col">
-                      {notifications.length === 0 ? (
+                    <div className="flex flex-col max-h-[240px] overflow-y-auto">
+                      {liveNotifications.length === 0 ? (
                         <div className="px-4 py-3 text-center text-xs text-muted-foreground">
                           No notifications
                         </div>
                       ) : (
-                        notifications.slice(0, 3).map(c => (
-                          <DropdownMenuItem key={c.id} className="cursor-pointer flex flex-col items-start gap-1 p-3" onClick={() => handleSearchSelect(c.id)}>
+                        liveNotifications.slice(0, 4).map(c => (
+                          <DropdownMenuItem key={c.id} className="cursor-pointer flex flex-col items-start gap-1 p-3 border-b border-border/40 last:border-0 hover:bg-muted/60" onClick={() => handleSearchSelect(c.caseId)}>
                             <div className="flex items-center justify-between w-full">
-                              <span className="font-semibold text-sm">{c.patientName}</span>
-                              <StatusBadge status={c.status} />
+                              <span className="font-semibold text-xs text-foreground truncate max-w-[120px]">{c.patientName}</span>
+                              <span className="text-[9px] bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200 px-1.5 py-0.5 rounded-md font-medium">{c.statusUpdate}</span>
                             </div>
-                            <span className="text-xs text-muted-foreground">Case #{c.id.slice(-8).toUpperCase()} was updated.</span>
+                            <span className="text-[10px] text-muted-foreground line-clamp-2 leading-relaxed text-left">{c.notes}</span>
                           </DropdownMenuItem>
                         ))
                       )}
                     </div>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 
-                      className="w-full text-center text-sm font-medium text-primary justify-center cursor-pointer"
+                      className="w-full text-center text-xs font-medium text-primary justify-center cursor-pointer py-2 hover:bg-primary/5"
                       onSelect={(e) => {
                         e.preventDefault();
                         setIsNotificationsOpen(true);
@@ -208,7 +315,7 @@ export default function Navbar({ currentUser, cases }: NavbarProps) {
                     </div>
                     
                     <div className="max-h-[350px] overflow-y-auto p-4 flex flex-col gap-3">
-                      {notifications.length === 0 ? (
+                      {liveNotifications.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
                           <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
                             <Bell className="w-6 h-6 text-muted-foreground/60" />
@@ -219,12 +326,12 @@ export default function Navbar({ currentUser, cases }: NavbarProps) {
                           </p>
                         </div>
                       ) : (
-                        notifications.map((c) => (
+                        liveNotifications.map((c) => (
                           <div
                             key={`notif-modal-${c.id}`}
                             onClick={() => {
                               setIsNotificationsOpen(false);
-                              handleSearchSelect(c.id);
+                              handleSearchSelect(c.caseId);
                             }}
                             className="group flex flex-col items-start gap-1.5 p-3 rounded-lg border border-border bg-background hover:bg-muted/55 hover:border-primary/20 cursor-pointer transition-all duration-200"
                           >
@@ -232,13 +339,14 @@ export default function Navbar({ currentUser, cases }: NavbarProps) {
                               <span className="font-semibold text-sm group-hover:text-primary transition-colors duration-150 text-foreground">
                                 {c.patientName}
                               </span>
-                              <StatusBadge status={c.status} />
+                              <span className="text-[10px] bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200 px-1.5 py-0.5 rounded-md font-medium">{c.statusUpdate}</span>
                             </div>
-                            <div className="flex items-center justify-between w-full text-xs text-muted-foreground">
-                              <span>Case #{c.id.slice(-8).toUpperCase()} was updated.</span>
-                              {c.dueDate && (
-                                <span>Due: {new Date(c.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
-                              )}
+                            <div className="text-[10px] text-muted-foreground flex flex-col gap-1 w-full text-left">
+                              <p className="leading-relaxed">{c.notes}</p>
+                              <div className="flex justify-between items-center mt-1 border-t border-border/50 pt-1 text-[9px]">
+                                <span>Case ID: #{c.caseId.slice(-8).toUpperCase()}</span>
+                                <span>{new Date(c.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                              </div>
                             </div>
                           </div>
                         ))

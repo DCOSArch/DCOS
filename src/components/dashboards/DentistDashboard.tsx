@@ -48,6 +48,8 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
   
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedDicomFile, setSelectedDicomFile] = useState<File | null>(null);
+  const dicomInputRef = useRef<HTMLInputElement>(null);
 
   const [inventory, setInventory] = useState<DoctorInventoryItem[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -72,8 +74,11 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
   const isStepComplete = (stepIndex: number): boolean => {
     switch (stepIndex) {
       case 0: // Administration
-        return patientName.trim().length > 0 && selectedLabId !== '';
+        return patientName.trim().length > 0 && selectedLabId !== '' && treatmentType.trim().length > 0;
       case 1: // Acquisition
+        if (treatmentType === 'Surgical Guide') {
+          return selectedFile !== null && selectedDicomFile !== null && uploadState !== 'analyzing';
+        }
         return selectedFile !== null && uploadState !== 'analyzing';
       case 2: // Model Mapping
         return selectedTeeth.length > 0 || isTeethNotSpecified;
@@ -261,9 +266,25 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
     fileInputRef.current?.click();
   };
 
+  const handleDicomFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedDicomFile(e.target.files[0]);
+      toast.success(`DICOM Scan attached: "${e.target.files[0].name}"`);
+    }
+  };
+
+  const handleDicomUploadClick = () => {
+    dicomInputRef.current?.click();
+  };
+
   const handleSubmitCase = async (isDraft: boolean = false) => {
     if (!patientName.trim() || !selectedFile || !selectedLabId) {
       alert('Please fill out patient name, select a lab, and select a scan file.');
+      return;
+    }
+
+    if (treatmentType === 'Surgical Guide' && !selectedDicomFile) {
+      alert('Please upload a DICOM / CBCT scan file for surgical guide fabrication.');
       return;
     }
     
@@ -286,6 +307,23 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
           scanUrl = data.path;
         }
       }
+
+      // 1b. Upload DICOM file
+      let dicomUrl = null;
+      if (selectedDicomFile) {
+        const dicomFileName = `dicom/${Date.now()}_${selectedDicomFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        
+        const { data, error } = await supabase.storage
+          .from('scans')
+          .upload(dicomFileName, selectedDicomFile);
+          
+        if (error) {
+          console.error('DICOM Storage upload error:', error);
+          alert('Warning: DICOM file upload failed.');
+        } else {
+          dicomUrl = data.path;
+        }
+      }
       
       // 2. Insert the case into the Supabase 'cases' table
       const dbCase = {
@@ -297,6 +335,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         requested_treatment: treatmentType || 'Not Specified',
         material: isDesignNotSpecified ? 'Not Specified' : material,
         scan_url: scanUrl, // Store the file path
+        dicom_url: dicomUrl, // Store the DICOM path
         due_date: dueDate ? new Date(dueDate).toISOString() : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         shade: isDesignNotSpecified ? 'Not Specified' : shade,
         selected_teeth: isTeethNotSpecified ? null : selectedTeeth,
@@ -355,7 +394,8 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         dueDate: dbCase.due_date,
         shade: dbCase.shade,
         selectedTeeth: isTeethNotSpecified ? undefined : selectedTeeth,
-        instructions: instructions || undefined
+        instructions: instructions || undefined,
+        dicomUrl: dicomUrl || undefined
       };
       
       // Optimistic UI - Immediately show the new case
@@ -370,6 +410,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
       setUrgency('NORMAL');
       setDueDate('');
       setSelectedFile(null);
+      setSelectedDicomFile(null);
       setUploadState('idle');
       setValidationWarnings([]);
       setValidationDimensions(null);
@@ -676,6 +717,21 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                   <p className="text-xs text-muted-foreground">Or upload a scan file in the next step to auto-extract the name.</p>
                 </div>
                 <div className="grid gap-2">
+                  <Label htmlFor="treatmentType" className="text-foreground">Treatment Type <span className="text-red-500">*</span></Label>
+                  <Select value={treatmentType} onValueChange={(val) => setTreatmentType(val || '')}>
+                    <SelectTrigger className="border-border text-foreground bg-background">
+                      <SelectValue placeholder="Select treatment type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Single Crown">Single Crown</SelectItem>
+                      <SelectItem value="Bridge">Bridge</SelectItem>
+                      <SelectItem value="Implant Abutment">Implant Abutment</SelectItem>
+                      <SelectItem value="Veneer">Veneer</SelectItem>
+                      <SelectItem value="Surgical Guide">Surgical Guide (for guide fabrication)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
                   <Label htmlFor="lab" className="text-foreground">Assign to Laboratory <span className="text-red-500">*</span></Label>
                   <Select value={selectedLabId} onValueChange={(val) => setSelectedLabId(val || '')} disabled>
                     <SelectTrigger className="border-border text-foreground">
@@ -708,72 +764,114 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
             {/* Step 1: Acquisition (Scan upload & STL Validator) */}
             {currentStep === 1 && (
               <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                <Label className="text-foreground mb-2 block">Upload 3D Scan (STL/PLY) <span className="text-red-500">*</span></Label>
-                <input 
-                  type="file" 
-                  accept=".stl,.ply" 
-                  className="hidden" 
-                  ref={fileInputRef} 
-                  onChange={handleFileChange} 
-                />
-                
-                {uploadState === 'idle' && !selectedFile && (
-                  <div 
-                    onClick={handleUploadClick}
-                    className="border-2 border-dashed border-border rounded-lg p-10 flex flex-col items-center justify-center text-center bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
-                  >
-                    <UploadCloud className="h-10 w-10 text-muted-foreground mb-3" />
-                    <p className="text-sm font-medium text-foreground">Drag & Drop STL/PLY Files Here</p>
-                    <p className="text-xs text-muted-foreground mt-1">or click to browse from your computer</p>
-                  </div>
-                )}
-
-                {selectedFile && (
-                  <div className="space-y-4">
+                <div>
+                  <Label className="text-foreground mb-2 block">Upload 3D Scan (STL/PLY) <span className="text-red-500">*</span></Label>
+                  <input 
+                    type="file" 
+                    accept=".stl,.ply" 
+                    className="hidden" 
+                    ref={fileInputRef} 
+                    onChange={handleFileChange} 
+                  />
+                  
+                  {uploadState === 'idle' && !selectedFile && (
                     <div 
                       onClick={handleUploadClick}
-                      className="border-2 border-blue-600/40 rounded-lg p-4 flex items-center gap-4 bg-blue-600/5 cursor-pointer hover:bg-blue-600/10 transition-colors"
+                      className="border-2 border-dashed border-border rounded-lg p-10 flex flex-col items-center justify-center text-center bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
                     >
-                      <div className="w-10 h-10 rounded-full bg-blue-600/20 flex items-center justify-center shrink-0">
-                        <FileText className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{selectedFile.name}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB • Click to replace
-                        </p>
-                      </div>
+                      <UploadCloud className="h-10 w-10 text-muted-foreground mb-3" />
+                      <p className="text-sm font-medium text-foreground">Drag & Drop STL/PLY Files Here</p>
+                      <p className="text-xs text-muted-foreground mt-1">or click to browse from your computer</p>
                     </div>
+                  )}
 
-                    {uploadState === 'analyzing' && (
-                      <div className="border border-border rounded-lg p-6 flex flex-col items-center justify-center text-center bg-muted/20">
-                        <Activity className="h-8 w-8 text-blue-600 mb-2 animate-pulse" />
-                        <p className="text-sm font-medium text-foreground">Analyzing STL geometry bounds...</p>
-                        <div className="w-full max-w-xs bg-muted rounded-full h-1 mt-3 overflow-hidden">
-                          <div className="bg-blue-600 h-1 rounded-full animate-[progress_2s_ease-in-out_infinite]" style={{ width: '60%' }}></div>
+                  {selectedFile && (
+                    <div className="space-y-4">
+                      <div 
+                        onClick={handleUploadClick}
+                        className="border-2 border-blue-600/40 rounded-lg p-4 flex items-center gap-4 bg-blue-600/5 cursor-pointer hover:bg-blue-600/10 transition-colors"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-blue-600/20 flex items-center justify-center shrink-0">
+                          <FileText className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{selectedFile.name}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB • Click to replace
+                          </p>
                         </div>
                       </div>
-                    )}
 
-                    {uploadState === 'warning' && (
-                      <div className="border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/20 rounded-lg p-4">
-                        <h4 className="text-sm font-semibold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
-                          <Activity className="h-4 w-4 text-amber-600 dark:text-amber-500" />
-                          Pre-Flight Analysis Alerts
-                        </h4>
-                        <ul className="list-disc pl-5 mt-2 space-y-1">
-                          {validationWarnings.map((warn, i) => (
-                            <li key={i} className="text-xs text-amber-700 dark:text-amber-400">{warn}</li>
-                          ))}
-                        </ul>
+                      {uploadState === 'analyzing' && (
+                        <div className="border border-border rounded-lg p-6 flex flex-col items-center justify-center text-center bg-muted/20">
+                          <Activity className="h-8 w-8 text-blue-600 mb-2 animate-pulse" />
+                          <p className="text-sm font-medium text-foreground">Analyzing STL geometry bounds...</p>
+                          <div className="w-full max-w-xs bg-muted rounded-full h-1 mt-3 overflow-hidden">
+                            <div className="bg-blue-600 h-1 rounded-full animate-[progress_2s_ease-in-out_infinite]" style={{ width: '60%' }}></div>
+                          </div>
+                        </div>
+                      )}
+
+                      {uploadState === 'warning' && (
+                        <div className="border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/20 rounded-lg p-4">
+                          <h4 className="text-sm font-semibold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
+                            <Activity className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+                            Pre-Flight Analysis Alerts
+                          </h4>
+                          <ul className="list-disc pl-5 mt-2 space-y-1">
+                            {validationWarnings.map((warn, i) => (
+                              <li key={i} className="text-xs text-amber-700 dark:text-amber-400">{warn}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {validationDimensions && (
+                        <div className="border border-border rounded-lg p-3 bg-muted/20 text-xs flex justify-around text-foreground">
+                          <div><span className="font-semibold">Width (X):</span> {validationDimensions.x.toFixed(1)} mm</div>
+                          <div><span className="font-semibold">Length (Y):</span> {validationDimensions.y.toFixed(1)} mm</div>
+                          <div><span className="font-semibold">Height (Z):</span> {validationDimensions.z.toFixed(1)} mm</div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* DICOM Upload Section for Surgical Guides */}
+                {treatmentType === 'Surgical Guide' && (
+                  <div className="border-t border-border pt-4 mt-4">
+                    <Label className="text-foreground mb-2 block">Upload DICOM / CBCT Scan (DCM/ZIP) <span className="text-red-500">*</span></Label>
+                    <input 
+                      type="file" 
+                      accept=".dcm,.zip,.rar" 
+                      className="hidden" 
+                      ref={dicomInputRef} 
+                      onChange={handleDicomFileChange} 
+                    />
+                    
+                    {!selectedDicomFile ? (
+                      <div 
+                        onClick={handleDicomUploadClick}
+                        className="border-2 border-dashed border-border rounded-lg p-8 flex flex-col items-center justify-center text-center bg-muted/20 hover:bg-muted/40 transition-colors cursor-pointer"
+                      >
+                        <UploadCloud className="h-8 w-8 text-muted-foreground mb-2" />
+                        <p className="text-sm font-medium text-foreground">Drag & Drop DICOM Files Here</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">or click to browse (.dcm, .zip)</p>
                       </div>
-                    )}
-
-                    {validationDimensions && (
-                      <div className="border border-border rounded-lg p-3 bg-muted/20 text-xs flex justify-around text-foreground">
-                        <div><span className="font-semibold">Width (X):</span> {validationDimensions.x.toFixed(1)} mm</div>
-                        <div><span className="font-semibold">Length (Y):</span> {validationDimensions.y.toFixed(1)} mm</div>
-                        <div><span className="font-semibold">Height (Z):</span> {validationDimensions.z.toFixed(1)} mm</div>
+                    ) : (
+                      <div 
+                        onClick={handleDicomUploadClick}
+                        className="border border-emerald-500/30 rounded-lg p-4 flex items-center gap-4 bg-emerald-500/5 cursor-pointer hover:bg-emerald-500/10 transition-colors"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
+                          <FileText className="h-4 w-4 text-emerald-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{selectedDicomFile.name}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {(selectedDicomFile.size / (1024 * 1024)).toFixed(2)} MB • Click to replace
+                          </p>
+                        </div>
                       </div>
                     )}
                   </div>

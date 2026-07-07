@@ -25,4 +25,10 @@ Clinics purchase material blocks (Zirconia, Lithium Disilicate, PFM) in bulk. Th
 - Draft Safety: Inventory is **not** deducted when a case is saved as a `DRAFT`. The deduction of 1 unit occurs automatically when the status updates from `DRAFT` to `PENDING` (or is created as `PENDING` directly).
 
 ## CAD/CAM Design Soft-Copy Archive
-A storage bucket `designs` holds the final milling-ready CAD output uploaded by technicians. The file path is saved in the `cases.design_url` column. Both lab admins and clinics have read access for warranty verification.
+A storage bucket `designs` holds the final milling-ready CAD output uploaded by technicians. The file path is saved in the `cases.design_url` column. Both lab admins and clinics have read access for warranty verification.
+
+## DICOM / CBCT Scan Archive
+A column `cases.dicom_url` stores references to 3D DICOM / CBCT scan files uploaded by clinics for surgical guide cases. This is stored under the `dicom/` prefix in the `scans` bucket.
+
+## Realtime RLS Optimizations
+To support Supabase Realtime WebSocket notifications on tables containing RLS, we configured `REPLICA IDENTITY FULL` on `cases` and `timeline_events`. We also denormalized `dentist_id` and `lab_id` onto `timeline_events` via a `BEFORE INSERT` trigger function `populate_timeline_event_participants()`, ensuring that RLS rules (`dentist_id = auth.uid()`) can be evaluated directly on the row by the Supabase Realtime filter without subqueries.

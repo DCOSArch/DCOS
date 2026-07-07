@@ -263,11 +263,31 @@ export default function CaseDetailsClient({
         setDbTimeline(prev => [payload.new, ...prev]);
       })
       .subscribe();
+
+    // Subscribe to updates on the case itself (live stepper updates)
+    const caseSub = supabase.channel(`case_update_${caseItem.id}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'cases', filter: `id=eq.${caseItem.id}` }, payload => {
+        const updated = payload.new as any;
+        setCaseItem(prev => ({
+          ...prev,
+          status: updated.status,
+          urgency: updated.urgency,
+          dueDate: updated.due_date,
+          material: updated.material,
+          shade: updated.shade,
+          selectedTeeth: updated.selected_teeth,
+          instructions: updated.instructions,
+          designUrl: updated.design_url,
+          dicomUrl: updated.dicom_url
+        }));
+      })
+      .subscribe();
       
     return () => {
-      timelineSub.unsubscribe();
+      supabase.removeChannel(timelineSub);
+      supabase.removeChannel(caseSub);
     };
-  }, [caseItem.id, initialTimeline, dbTimeline.length]);
+  }, [caseItem.id, initialTimeline, dbTimeline.length, supabase]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -614,6 +634,47 @@ export default function CaseDetailsClient({
               )}
             </CardContent>
           </Card>
+
+          {/* DICOM / CBCT Scan (Surgical Guide) */}
+          {caseItem.dicomUrl && (
+            <Card className="shadow-sm border-border">
+              <CardHeader className="bg-muted/30 border-b border-border py-4">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Box className="w-5 h-5 text-indigo-500" />
+                  DICOM / CBCT Scan File
+                </CardTitle>
+                <CardDescription>Surgical guide fabrication CBCT scan archive.</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between gap-4 p-4 rounded-lg bg-indigo-500/5 border border-indigo-500/20">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-950/30 flex items-center justify-center text-indigo-600">
+                      <FileText className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-foreground">CBCT Scan Active</p>
+                      <p className="text-xs text-muted-foreground truncate max-w-[120px] sm:max-w-[220px]">
+                        {caseItem.dicomUrl.split('/').pop()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={async () => {
+                        const { data } = supabase.storage.from('scans').getPublicUrl(caseItem.dicomUrl!);
+                        window.open(data.publicUrl, '_blank');
+                      }}
+                      className="gap-1.5 h-9"
+                    >
+                      <Download className="w-4 h-4" /> Download DICOM
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Timeline Column */}

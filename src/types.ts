@@ -26,6 +26,7 @@ export interface Case {
   selectedTeeth?: number[];
   instructions?: string;
   designUrl?: string;
+  dicomUrl?: string;
 }
 
 export interface TimelineEvent {

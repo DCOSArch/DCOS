@@ -30,7 +30,8 @@ export default async function DashboardLayout({
     dueDate: c.due_date,
     material: c.material,
     scanUrl: c.scan_url,
-    createdAt: c.created_at
+    createdAt: c.created_at,
+    dicomUrl: c.dicom_url
   })) || [];
 
   return (

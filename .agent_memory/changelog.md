@@ -1,4 +1,7 @@
 # Agent Changelog
+* 2026-07-07 - FEATURE: CBCT DICOM Ingestion — Built Treatment Type selectors and conditional CBCT scan uploads for surgical guide cases, archiving DICOM path links in the database.
+* 2026-07-07 - FEATURE: Global Real-Time Chime Bell — Embedded browser Web Audio API synth double-beep alerts and live WebSocket subscriptions inside the navbar bell component.
+* 2026-07-07 - FEATURE: Live Stepper Updates — Wired real-time cases and timeline subscriptions inside CaseDetailsClient.tsx to automatically advance progress steps and history feeds.
 * 2026-07-07 - FEATURE: Dentist Dashboard & Case Ingestion — Refactored Create Case modal into Sirona-style 5-Tab Pipeline stepper with FDI tooth toggles, active locks, and "Not Specified" overrides.
 * 2026-07-07 - FEATURE: Scanner File Ingestion & Validation — Integrated client-side STL validator checks (warnings on margins/clearances) and auto-name/arch parsing from uploaded files.
 * 2026-07-07 - FEATURE: Asynchronous Cart Engine — Implemented "Save as Draft" status, detail page Submit Case banner, and updated database trigger `trigger_deduct_inventory` to only deduct units when transitioning from DRAFT to production statuses.

@@ -62,7 +62,8 @@ export default async function CaseDetailsPage(props: { params: Promise<{ id: str
     shade: caseData.shade,
     selectedTeeth: caseData.selected_teeth,
     instructions: caseData.instructions,
-    designUrl: caseData.design_url
+    designUrl: caseData.design_url,
+    dicomUrl: caseData.dicom_url
   }
 
   const dentistName = (caseData.dentist as any)?.name || '';
