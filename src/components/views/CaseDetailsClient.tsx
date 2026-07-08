@@ -954,12 +954,27 @@ export default function CaseDetailsClient({
                     <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Tooth Configuration Details</h4>
                     <div className="flex flex-wrap gap-2">
                       {Object.entries(parsedDesignParams.toothConfigs).map(([tooth, status]) => {
-                        const label = status === 'single' ? 'Single Crown' : status === 'abutment' ? 'Bridge Abutment' : status === 'pontic' ? 'Bridge Pontic' : status === 'implant' ? 'Implant' : (status as string);
-                        const statusColor = status === 'single' ? 'bg-red-500/10 text-red-700 border-red-200' : status === 'abutment' ? 'bg-blue-900/10 text-blue-700 border-blue-200' : status === 'pontic' ? 'bg-blue-200 text-blue-800 border-blue-300' : 'bg-zinc-100 text-zinc-800 border-zinc-200';
+                        const getIndicationDetails = (s: string) => {
+                          switch (s) {
+                            case 'coping':
+                              return { label: 'Coping', color: 'bg-teal-500/10 text-teal-700 border-teal-200 dark:bg-teal-950 dark:text-teal-400 dark:border-teal-900' };
+                            case 'anatomic':
+                              return { label: 'Anatomic Crown', color: 'bg-purple-500/10 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-400 dark:border-purple-900' };
+                            case 'pontic':
+                              return { label: 'Pontic Segment', color: 'bg-red-500/10 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-900' };
+                            case 'adjacent':
+                              return { label: 'Adjacent Element', color: 'bg-orange-500/10 text-orange-700 border-orange-200 dark:bg-orange-950 dark:text-orange-400 dark:border-orange-900' };
+                            case 'antagonist':
+                              return { label: 'Antagonist Layer', color: 'bg-yellow-500/10 text-yellow-700 border-yellow-200 dark:bg-yellow-950 dark:text-yellow-400 dark:border-yellow-900' };
+                            default:
+                              return { label: s, color: 'bg-zinc-100 text-zinc-800 border-zinc-200' };
+                          }
+                        };
+                        const details = getIndicationDetails(status as string);
                         return (
-                          <div key={tooth} className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md border ${statusColor}`}>
+                          <div key={tooth} className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md border ${details.color}`}>
                             <span className="font-bold font-mono">Tooth {tooth}:</span>
-                            <span className="font-medium">{label}</span>
+                            <span className="font-medium">{details.label}</span>
                           </div>
                         );
                       })}

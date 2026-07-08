@@ -50,20 +50,35 @@ const MATERIALS = [
   { value: 'Titanium Abutment', label: 'Titanium Custom Abutment' },
 ];
 
-const TOOTH_STATUS_CYCLE: Record<string, 'single' | 'abutment' | 'pontic' | 'implant' | 'none'> = {
-  'none': 'single',
-  'single': 'abutment',
-  'abutment': 'pontic',
-  'pontic': 'implant',
-  'implant': 'none'
+const INDICATIONS: Record<string, { hex: string; txt: string; label: string }> = {
+  none: { hex: '#ffffff', txt: '#64748b', label: 'Healthy / Clear' },
+  coping: { hex: '#0d9488', txt: '#ffffff', label: 'Coping' },
+  anatomic: { hex: '#9333ea', txt: '#ffffff', label: 'Anatomic Crown' },
+  pontic: { hex: '#b91c1c', txt: '#ffffff', label: 'Pontic Segment' },
+  adjacent: { hex: '#f97316', txt: '#ffffff', label: 'Adjacent Element' },
+  antagonist: { hex: '#eab308', txt: '#ffffff', label: 'Antagonist Layer' }
 };
 
-const TOOTH_STATUS_LABELS: Record<string, string> = {
-  'none': 'None',
-  'single': 'Single Crown',
-  'abutment': 'Bridge Abutment',
-  'pontic': 'Bridge Pontic',
-  'implant': 'Implant'
+const TEETH_DATA = [
+  { id: 18, type: 'molar', deg: 172 }, { id: 17, type: 'molar', deg: 161 }, { id: 16, type: 'molar', deg: 150 },
+  { id: 15, type: 'premolar', deg: 139 }, { id: 14, type: 'premolar', deg: 128 }, { id: 13, type: 'canine', deg: 117 },
+  { id: 12, type: 'incisor', deg: 106 }, { id: 11, type: 'incisor', deg: 94 }, { id: 21, type: 'incisor', deg: 86 },
+  { id: 22, type: 'incisor', deg: 74 }, { id: 23, type: 'canine', deg: 63 }, { id: 24, type: 'premolar', deg: 52 },
+  { id: 25, type: 'premolar', deg: 41 }, { id: 26, type: 'molar', deg: 30 }, { id: 27, type: 'molar', deg: 19 },
+  { id: 28, type: 'molar', deg: 8 },
+  { id: 48, type: 'molar', deg: 188 }, { id: 47, type: 'molar', deg: 199 }, { id: 46, type: 'molar', deg: 210 },
+  { id: 45, type: 'premolar', deg: 221 }, { id: 44, type: 'premolar', deg: 232 }, { id: 43, type: 'canine', deg: 243 },
+  { id: 42, type: 'incisor', deg: 254 }, { id: 41, type: 'incisor', deg: 266 }, { id: 31, type: 'incisor', deg: 274 },
+  { id: 32, type: 'incisor', deg: 286 }, { id: 33, type: 'canine', deg: 297 }, { id: 34, type: 'premolar', deg: 308 },
+  { id: 35, type: 'premolar', deg: 319 }, { id: 36, type: 'molar', deg: 330 }, { id: 37, type: 'molar', deg: 341 },
+  { id: 38, type: 'molar', deg: 352 }
+];
+
+const getPath = (t: string) => {
+  if (t === 'molar') return "M -17 -17 C -6 -20, 6 -20, 17 -17 C 23 -8, 23 8, 17 17 C 6 20, -6 20, -17 17 C -23 8, -23 -8, -17 -17 Z";
+  if (t === 'premolar') return "M -14 -14 C -5 -16, 5 -16, 14 -14 C 19 -7, 19 7, 14 14 C 5 16, -5 16, -14 14 C -19 7, -19 -7, -14 -14 Z";
+  if (t === 'canine') return "M 0 -18 L 12 -8 C 15 2, 12 13, 0 18 C -12 13, -15 2, -12 -8 Z";
+  return "M -13 -12 L 13 -12 C 15 -4, 13 9, 0 16 C -13 9, -15 -4, -13 -12 Z";
 };
 
 interface DentistDashboardProps {
@@ -132,7 +147,8 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
   const [carouselPanel, setCarouselPanel] = useState<'material' | 'shade'>('material');
 
   // Phase 3 states - Tooth Configurations
-  const [toothConfigs, setToothConfigs] = useState<Record<number, 'single' | 'abutment' | 'pontic' | 'implant' | 'none'>>({});
+  const [toothConfigs, setToothConfigs] = useState<Record<number, 'coping' | 'anatomic' | 'pontic' | 'adjacent' | 'antagonist' | 'none'>>({});
+  const [activeToothId, setActiveToothId] = useState<number | null>(null);
   const [occlusalClearance, setOcclusalClearance] = useState('Medium');
   const [contactDesign, setContactDesign] = useState('Normal');
   const [connectorDesign, setConnectorDesign] = useState('Anatomical');
@@ -183,66 +199,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
     setSelectedTeeth(Object.keys(toothConfigs).map(Number).sort((a, b) => a - b));
   }, [toothConfigs]);
 
-  const cycleToothStatus = (toothNumber: number) => {
-    const current = toothConfigs[toothNumber] || 'none';
-    const nextStatus = TOOTH_STATUS_CYCLE[current] || 'single';
-    setToothConfigs(prev => {
-      const updated = { ...prev };
-      if (nextStatus === 'none') {
-        delete updated[toothNumber];
-      } else {
-        updated[toothNumber] = nextStatus;
-      }
-      return updated;
-    });
-  };
 
-  const renderToothButton = (toothNumber: number) => {
-    const status = toothConfigs[toothNumber] || 'none';
-    const statusStyles: Record<string, string> = {
-      'none': 'border-border text-foreground hover:bg-muted bg-background',
-      'single': 'bg-red-500 border-red-600 text-white',
-      'abutment': 'bg-blue-800 border-blue-900 text-white',
-      'pontic': 'bg-blue-300 border-blue-400 text-slate-900',
-      'implant': 'bg-zinc-600 border-zinc-700 text-white'
-    };
-    return (
-      <button
-        key={toothNumber}
-        type="button"
-        disabled={isTeethNotSpecified}
-        onClick={() => cycleToothStatus(toothNumber)}
-        className={`relative w-7 h-7 text-[10px] font-bold rounded flex items-center justify-center border transition-all ${statusStyles[status]
-          } ${isTeethNotSpecified ? 'opacity-40 cursor-not-allowed' : ''}`}
-        title={`Tooth ${toothNumber}: ${TOOTH_STATUS_LABELS[status]}`}
-      >
-        {toothNumber}
-        {status === 'implant' && (
-          <span className="absolute w-2 h-2 rounded-full bg-zinc-950 border border-zinc-700" />
-        )}
-      </button>
-    );
-  };
-
-  const renderQuadrantRow = (teeth: number[]) => {
-    return teeth.map((toothNumber, idx) => {
-      const status = toothConfigs[toothNumber] || 'none';
-      const isBridge = status === 'abutment' || status === 'pontic';
-      const nextTooth = teeth[idx + 1];
-      const nextStatus = nextTooth ? (toothConfigs[nextTooth] || 'none') : 'none';
-      const nextIsBridge = nextStatus === 'abutment' || nextStatus === 'pontic';
-      const showBridgeLine = isBridge && nextIsBridge;
-
-      return (
-        <React.Fragment key={toothNumber}>
-          {renderToothButton(toothNumber)}
-          {showBridgeLine && idx < teeth.length - 1 && (
-            <div className="w-3 h-1 bg-blue-600 self-center shrink-0" />
-          )}
-        </React.Fragment>
-      );
-    });
-  };
 
   const renderShadeGrid = (onSelect: (shade: string) => void, selectedShade?: string) => {
     const groups = ['A', 'B', 'C', 'D'];
@@ -658,6 +615,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
       setContactDesign('Normal');
       setConnectorDesign('Anatomical');
       setPonticDesign('Ovate');
+      setActiveToothId(null);
 
       toast.success(isDraft ? 'Case saved as draft!' : 'Case successfully submitted!');
 
@@ -927,6 +885,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
             setContactDesign('Normal');
             setConnectorDesign('Anatomical');
             setPonticDesign('Ovate');
+            setActiveToothId(null);
           }, 300);
         }
       }}>
@@ -946,7 +905,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
             {steps.map((step, idx) => {
               const isCurrent = idx === currentStep;
               const isDone = idx < currentStep || isStepComplete(idx);
-              const isSelectable = idx <= currentStep || (idx > 0 && isStepComplete(idx - 1));
+              const isSelectable = idx === 0 || Array.from({ length: idx }).every((_, i) => isStepComplete(i));
               return (
                 <button
                   key={idx}
@@ -1225,11 +1184,11 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
               </div>
             )}
 
-            {/* Step 2: Model Mapping (FDI Quadrant Chart) */}
+            {/* Step 2: Model Mapping (exocad circular chart selector) */}
             {currentStep === 2 && (
               <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                <div className="flex justify-between items-center mb-2">
-                  <Label className="text-foreground">Tooth Charting (FDI Notation)</Label>
+                <div className="flex justify-between items-center mb-1">
+                  <Label className="text-foreground font-semibold text-sm">Tooth Charting & Restoration Properties</Label>
                   <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
@@ -1240,6 +1199,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                         if (e.target.checked) {
                           setSelectedTeeth([]);
                           setToothConfigs({});
+                          setActiveToothId(null);
                         }
                       }}
                       className="rounded border-border text-blue-600 focus:ring-blue-600 h-4 w-4 bg-background"
@@ -1249,102 +1209,191 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                 </div>
 
                 {!isTeethNotSpecified ? (
-                  <div className="space-y-3 border border-border rounded-lg p-4 bg-muted/10">
-                    {/* Legend */}
-                    <div className="flex flex-wrap gap-3 text-[9px] text-muted-foreground justify-center">
-                      <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-red-500 border border-red-600"></span>Crown</span>
-                      <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-blue-800 border border-blue-900"></span>Abutment</span>
-                      <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-blue-300 border border-blue-400"></span>Pontic</span>
-                      <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-zinc-600 border border-zinc-700"></span>Implant</span>
-                      <span className="text-muted-foreground/60">Click tooth to cycle status</span>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border border-border rounded-lg p-3 bg-muted/10">
+                    {/* Sidebar controls */}
+                    <div className="md:col-span-1 border-b md:border-b-0 md:border-r border-border pb-3 md:pb-0 md:pr-3 space-y-4">
+                      <div>
+                        <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Selected Segment</p>
+                        <p className="text-lg font-bold text-foreground mt-0.5">
+                          {activeToothId ? `Tooth ${activeToothId}` : '— Select a Tooth'}
+                        </p>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Restoration Properties</p>
+                        <div className="grid gap-1.5">
+                          {Object.entries(INDICATIONS).map(([key, info]) => {
+                            const isSelected = (toothConfigs[activeToothId!] || 'none') === key;
+                            const isEnabled = activeToothId !== null;
+                            return (
+                              <button
+                                key={key}
+                                type="button"
+                                disabled={!isEnabled}
+                                onClick={() => {
+                                  if (activeToothId === null) return;
+                                  setToothConfigs(prev => {
+                                    const updated = { ...prev };
+                                    if (key === 'none') {
+                                      delete updated[activeToothId];
+                                    } else {
+                                      updated[activeToothId] = key as any;
+                                    }
+                                    return updated;
+                                  });
+                                }}
+                                className={`w-full text-left px-2.5 py-1.5 rounded-md border text-xs font-semibold flex items-center gap-2 transition-all ${
+                                  !isEnabled 
+                                    ? 'opacity-40 cursor-not-allowed bg-muted/20 border-transparent text-muted-foreground' 
+                                    : isSelected
+                                      ? 'border-blue-600 bg-blue-600/10 text-foreground'
+                                      : 'border-border bg-background hover:bg-muted text-foreground'
+                                }`}
+                              >
+                                <span className="w-3.5 h-3.5 rounded border border-black/10 shrink-0" style={{ backgroundColor: info.hex }} />
+                                {info.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {selectedTeeth.length > 0 && (
+                        <div className="text-[10px] text-muted-foreground border-t border-border pt-2.5">
+                          Configured teeth: <span className="font-semibold text-blue-600">{selectedTeeth.join(', ')}</span>
+                        </div>
+                      )}
                     </div>
 
-                    <div className="text-center text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Upper Jaw</div>
-                    {/* Q1: UR 18-11 | Q2: UL 21-28 */}
-                    <div className="flex flex-wrap gap-1.5 justify-center items-center">
-                      {renderQuadrantRow([18, 17, 16, 15, 14, 13, 12, 11])}
-                      <div className="w-[1px] h-7 bg-border mx-1"></div>
-                      {renderQuadrantRow([21, 22, 23, 24, 25, 26, 27, 28])}
-                    </div>
+                    {/* Chart SVG wrapper */}
+                    <div className="md:col-span-2 flex items-center justify-center bg-background/50 border border-border rounded-lg p-2.5 relative min-h-[300px]">
+                      {/* SVG Tooth Chart */}
+                      <div className="w-full max-w-[420px] relative">
+                        <svg viewBox="0 0 800 540" className="w-full h-auto overflow-visible">
+                          <line x1="400" y1="20" x2="400" y2="520" stroke="#cbd5e1" strokeDasharray="4 4" strokeWidth="2" className="opacity-50" />
+                          <line x1="120" y1="270" x2="680" y2="270" stroke="#cbd5e1" strokeDasharray="4 4" strokeWidth="2" className="opacity-50" />
+                          {/* Render teeth nodes */}
+                          {TEETH_DATA.map(tooth => {
+                            const rad = (tooth.deg * Math.PI) / 180;
+                            const x = 400 + 245 * Math.cos(rad);
+                            const y = 270 - 215 * Math.sin(rad);
+                            const rot = (tooth.id >= 11 && tooth.id <= 28) ? tooth.deg - 90 : tooth.deg - 270;
+                            const status = toothConfigs[tooth.id] || 'none';
+                            const info = INDICATIONS[status] || INDICATIONS.none;
+                            const isActive = activeToothId === tooth.id;
 
-                    <div className="text-center text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mt-3">Lower Jaw</div>
-                    {/* Q4: LR 48-41 | Q3: LL 31-38 */}
-                    <div className="flex flex-wrap gap-1.5 justify-center items-center">
-                      {renderQuadrantRow([48, 47, 46, 45, 44, 43, 42, 41])}
-                      <div className="w-[1px] h-7 bg-border mx-1"></div>
-                      {renderQuadrantRow([31, 32, 33, 34, 35, 36, 37, 38])}
-                    </div>
+                            return (
+                              <g 
+                                key={tooth.id} 
+                                className="cursor-pointer group"
+                                onClick={() => setActiveToothId(tooth.id)}
+                                transform={`translate(${x}, ${y})`}
+                              >
+                                <g transform={`rotate(${rot})`}>
+                                  {/* Hitbox */}
+                                  <rect x="-26" y="-26" width="52" height="52" fill="transparent" />
+                                  {/* Tooth shape */}
+                                  <path 
+                                    d={getPath(tooth.type)} 
+                                    className={`transition-all duration-200 ${
+                                      isActive 
+                                        ? 'stroke-blue-600 stroke-[3px]' 
+                                        : 'stroke-slate-400 group-hover:stroke-blue-400 stroke-[1.5px]'
+                                    }`}
+                                    style={{ fill: info.hex }} 
+                                  />
+                                </g>
+                                {/* Tooth Label Number */}
+                                <text 
+                                  textAnchor="middle" 
+                                  dominantBaseline="central" 
+                                  className="text-xs font-mono font-bold select-none pointer-events-none"
+                                  style={{ fill: info.txt }}
+                                >
+                                  {tooth.id}
+                                </text>
+                              </g>
+                            );
+                          })}
+                        </svg>
 
-                    {selectedTeeth.length > 0 && (
-                      <div className="text-xs text-muted-foreground text-center mt-2">
-                        Configured: <span className="font-semibold text-blue-600">{selectedTeeth.join(', ')}</span>
-                      </div>
-                    )}
-
-                    {/* Phase 3.3: Predefined Dropdown Parameters */}
-                    <div className="grid grid-cols-2 gap-3 mt-4 pt-3 border-t border-border">
-                      <div className="grid gap-1">
-                        <Label htmlFor="occlusalClearance" className="text-[11px] text-foreground">Occlusal Clearance</Label>
-                        <Select value={occlusalClearance} onValueChange={(val) => setOcclusalClearance(val || 'Medium')}>
-                          <SelectTrigger className="h-8 text-xs border-border text-foreground bg-background">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="High">High</SelectItem>
-                            <SelectItem value="Medium">Medium</SelectItem>
-                            <SelectItem value="Light">Light</SelectItem>
-                            <SelectItem value="Out of Occlusion">Out of Occlusion</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="grid gap-1">
-                        <Label htmlFor="contactDesign" className="text-[11px] text-foreground">Contact Design</Label>
-                        <Select value={contactDesign} onValueChange={(val) => setContactDesign(val || 'Normal')}>
-                          <SelectTrigger className="h-8 text-xs border-border text-foreground bg-background">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Tight">Tight</SelectItem>
-                            <SelectItem value="Normal">Normal</SelectItem>
-                            <SelectItem value="Light">Light</SelectItem>
-                            <SelectItem value="Open">Open</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="grid gap-1">
-                        <Label htmlFor="connectorDesign" className="text-[11px] text-foreground">Connector Design</Label>
-                        <Select value={connectorDesign} onValueChange={(val) => setConnectorDesign(val || 'Anatomical')}>
-                          <SelectTrigger className="h-8 text-xs border-border text-foreground bg-background">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Anatomical">Anatomical</SelectItem>
-                            <SelectItem value="Reduced">Reduced</SelectItem>
-                            <SelectItem value="Knife Edge">Knife Edge</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="grid gap-1">
-                        <Label htmlFor="ponticDesign" className="text-[11px] text-foreground">Pontic Design</Label>
-                        <Select value={ponticDesign} onValueChange={(val) => setPonticDesign(val || 'Ovate')}>
-                          <SelectTrigger className="h-8 text-xs border-border text-foreground bg-background">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Sanitary">Sanitary</SelectItem>
-                            <SelectItem value="Saddle">Saddle</SelectItem>
-                            <SelectItem value="Ovate">Ovate</SelectItem>
-                            <SelectItem value="Modified Ridge Lap">Modified Ridge Lap</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        {/* Centered Legend */}
+                        <div className="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-[110px] bg-background/95 border border-border rounded p-1.5 shadow-sm text-left pointer-events-none select-none flex flex-col gap-1">
+                          <p className="text-[8px] font-bold text-muted-foreground uppercase border-b border-border pb-0.5 text-center">Indications</p>
+                          {Object.entries(INDICATIONS).filter(([k]) => k !== 'none').map(([key, val]) => (
+                            <div key={key} className="flex items-center gap-1 text-[8px] font-semibold text-muted-foreground leading-none">
+                              <span className="w-2 h-2 rounded shrink-0 border border-black/10" style={{ backgroundColor: val.hex }} />
+                              {val.label}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
                 ) : (
                   <div className="border border-dashed border-border rounded-lg p-8 text-center text-muted-foreground text-sm">
-                    Teeth not specified. The lab will design according to the scan models provided.
+                    No teeth configured (Case parameters general)
                   </div>
                 )}
+
+                {/* Phase 3.3: Predefined Dropdown Parameters */}
+                <div className="grid grid-cols-2 gap-3 mt-4 pt-3 border-t border-border">
+                  <div className="grid gap-1">
+                    <Label htmlFor="occlusalClearance" className="text-[11px] text-foreground">Occlusal Clearance</Label>
+                    <Select value={occlusalClearance} onValueChange={(val) => setOcclusalClearance(val || 'Medium')}>
+                      <SelectTrigger className="h-8 text-xs border-border text-foreground bg-background">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="High">High</SelectItem>
+                        <SelectItem value="Medium">Medium</SelectItem>
+                        <SelectItem value="Light">Light</SelectItem>
+                        <SelectItem value="Out of Occlusion">Out of Occlusion</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-1">
+                    <Label htmlFor="contactDesign" className="text-[11px] text-foreground">Contact Design</Label>
+                    <Select value={contactDesign} onValueChange={(val) => setContactDesign(val || 'Normal')}>
+                      <SelectTrigger className="h-8 text-xs border-border text-foreground bg-background">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Tight">Tight</SelectItem>
+                        <SelectItem value="Normal">Normal</SelectItem>
+                        <SelectItem value="Light">Light</SelectItem>
+                        <SelectItem value="Open">Open</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-1">
+                    <Label htmlFor="connectorDesign" className="text-[11px] text-foreground">Connector Design</Label>
+                    <Select value={connectorDesign} onValueChange={(val) => setConnectorDesign(val || 'Anatomical')}>
+                      <SelectTrigger className="h-8 text-xs border-border text-foreground bg-background">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Anatomical">Anatomical</SelectItem>
+                        <SelectItem value="Reduced">Reduced</SelectItem>
+                        <SelectItem value="Knife Edge">Knife Edge</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-1">
+                    <Label htmlFor="ponticDesign" className="text-[11px] text-foreground">Pontic Design</Label>
+                    <Select value={ponticDesign} onValueChange={(val) => setPonticDesign(val || 'Ovate')}>
+                      <SelectTrigger className="h-8 text-xs border-border text-foreground bg-background">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Sanitary">Sanitary</SelectItem>
+                        <SelectItem value="Saddle">Saddle</SelectItem>
+                        <SelectItem value="Ovate">Ovate</SelectItem>
+                        <SelectItem value="Modified Ridge Lap">Modified Ridge Lap</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>
             )}
 
