@@ -1278,7 +1278,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                                   cx={dotX}
                                   cy={dotY}
                                   r="6"
-                                  className="cursor-pointer transition-all hover:scale-110"
+                                  className="cursor-pointer transition-opacity duration-200 hover:opacity-80"
                                   fill={isConnected ? "#10b981" : "#ffffff"}
                                   stroke={isConnected ? "#059669" : "#cbd5e1"}
                                   strokeWidth="2"
