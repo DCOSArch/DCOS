@@ -113,11 +113,7 @@ Our audit has revealed that the system has an excellent foundational blueprint w
 ## C. Gotten Wrong & Critical Fixes
 *High-severity issues that block execution, compromise compliance, or introduce critical security vulnerabilities.*
 
-### 1. Unprotected Routes due to Misnamed Middleware File (CRITICAL)
-- **The Error**: The authentication guard middleware is implemented in [src/proxy.ts](file:///c:/Users/balee/Desktop/DCOS/src/proxy.ts).
-- **Why It's Wrong**: Next.js automatically detects middleware *only* if the file is named `middleware.ts` (or `middleware.js`) and located directly in the root or `src/` directory. Next.js ignores `proxy.ts` completely.
-- **The Consequence**: No authentication middleware runs. Routes such as `/inventory` and protected cases are accessible directly without authentication, leaving the application unprotected at the routing layer.
-- **The Fix**: Rename `src/proxy.ts` to `src/middleware.ts` and export a default function or named function called `middleware`.
+
 
 ### 2. Completely Public Scans Bucket (CRITICAL DATA PRIVACY RISK)
 - **The Error**: The initial storage bucket setup in [20260618131640_add_scans_bucket.sql](file:///c:/Users/balee/Desktop/DCOS/supabase/migrations/20260618131640_add_scans_bucket.sql) creates the `scans` bucket as `public: true` and defines a policy allowing public anonymous access:
