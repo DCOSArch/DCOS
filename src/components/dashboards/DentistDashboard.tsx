@@ -50,13 +50,24 @@ const MATERIALS = [
   { value: 'Titanium Abutment', label: 'Titanium Custom Abutment' },
 ];
 
-const INDICATIONS: Record<string, { hex: string; txt: string; label: string }> = {
-  none: { hex: '#ffffff', txt: '#64748b', label: 'Healthy / Clear' },
-  coping: { hex: '#0d9488', txt: '#ffffff', label: 'Coping' },
-  anatomic: { hex: '#9333ea', txt: '#ffffff', label: 'Anatomic Crown' },
-  pontic: { hex: '#b91c1c', txt: '#ffffff', label: 'Pontic Segment' },
-  adjacent: { hex: '#f97316', txt: '#ffffff', label: 'Adjacent Element' },
-  antagonist: { hex: '#eab308', txt: '#ffffff', label: 'Antagonist Layer' }
+const getIndications = (treatmentType: string) => {
+  const base: Record<string, { hex: string; txt: string; label: string }> = {
+    none: { hex: '#ffffff', txt: '#64748b', label: 'Healthy / Clear' },
+    coping: { hex: '#0d9488', txt: '#ffffff', label: 'Coping' },
+    anatomic: { hex: '#9333ea', txt: '#ffffff', label: 'Anatomic Crown' },
+    pontic: { hex: '#b91c1c', txt: '#ffffff', label: 'Pontic Segment' }
+  };
+
+  if (!['CNB', 'FPD', 'Veneer'].includes(treatmentType)) {
+    base.adjacent = { hex: '#f97316', txt: '#ffffff', label: 'Adjacent Element' };
+    base.antagonist = { hex: '#eab308', txt: '#ffffff', label: 'Antagonist Layer' };
+  }
+
+  if (treatmentType === 'Implant') {
+    base.screw_holes = { hex: '#3b82f6', txt: '#ffffff', label: 'Screw holes on selected tooth' };
+  }
+
+  return base;
 };
 
 const TEETH_DATA = [
@@ -147,7 +158,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
   const [carouselPanel, setCarouselPanel] = useState<'material' | 'shade'>('material');
 
   // Phase 3 states - Tooth Configurations
-  const [toothConfigs, setToothConfigs] = useState<Record<number, 'coping' | 'anatomic' | 'pontic' | 'adjacent' | 'antagonist' | 'none'>>({});
+  const [toothConfigs, setToothConfigs] = useState<Record<number, string>>({});
   const [activeToothId, setActiveToothId] = useState<number | null>(null);
   const [occlusalClearance, setOcclusalClearance] = useState('Medium');
   const [contactDesign, setContactDesign] = useState('Normal');
@@ -174,7 +185,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
           Number(patientAge) > 0 &&
           patientGender !== '';
 
-        if (treatmentType === 'Implant Abutment') {
+        if (treatmentType === 'Implant') {
           return isBasicComplete && implantBrand !== '' && scanBodyModel !== '' && analogLogistics !== '';
         }
         return isBasicComplete;
@@ -184,6 +195,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         }
         return selectedFile !== null && uploadState !== 'analyzing';
       case 2: // Model Mapping
+        if (treatmentType === 'Full Arch') return true;
         return Object.values(toothConfigs).some(v => v !== 'none') || isTeethNotSpecified;
       case 3: // CAD Design
         return isDesignNotSpecified || (material !== '' && shade !== '');
@@ -511,9 +523,9 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         instructions: enhancedInstructions || null,
         patient_age: patientAge ? parseInt(patientAge, 10) : null,
         patient_gender: patientGender || null,
-        implant_brand: treatmentType === 'Implant Abutment' ? implantBrand : null,
-        scan_body_model: treatmentType === 'Implant Abutment' ? scanBodyModel : null,
-        analog_logistics: treatmentType === 'Implant Abutment' ? analogLogistics : null
+        implant_brand: treatmentType === 'Implant' ? implantBrand : null,
+        scan_body_model: treatmentType === 'Implant' ? scanBodyModel : null,
+        analog_logistics: treatmentType === 'Implant' ? analogLogistics : null
       };
 
       const { data: insertedCase, error: insertError } = await supabase
@@ -632,6 +644,8 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
     if (filterStatus !== 'ALL' && c.status !== filterStatus) return false;
     return true;
   });
+
+  const currentIndications = getIndications(treatmentType);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out relative">
@@ -971,7 +985,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                   <Label htmlFor="treatmentType" className="text-foreground">Treatment Type <span className="text-red-500">*</span></Label>
                   <Select value={treatmentType} onValueChange={(val) => {
                     setTreatmentType(val || '');
-                    if (val !== 'Implant Abutment') {
+                    if (val !== 'Implant') {
                       setImplantBrand('');
                       setScanBodyModel('');
                       setAnalogLogistics('');
@@ -981,16 +995,17 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                       <SelectValue placeholder="Select treatment type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Single Crown">Single Crown</SelectItem>
-                      <SelectItem value="Bridge">Bridge</SelectItem>
-                      <SelectItem value="Implant Abutment">Implant Abutment</SelectItem>
+                      <SelectItem value="CNB">CNB (Crown and Bridge)</SelectItem>
+                      <SelectItem value="FPD">FPD (Fixed Partial Denture)</SelectItem>
                       <SelectItem value="Veneer">Veneer</SelectItem>
-                      <SelectItem value="Surgical Guide">Surgical Guide (for guide fabrication)</SelectItem>
+                      <SelectItem value="Implant">Implant</SelectItem>
+                      <SelectItem value="Full Arch">Full Arch (CNB 6+ / FPD 6+ / Implant)</SelectItem>
+                      <SelectItem value="Surgical Guide">Surgical Guide</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                {treatmentType === 'Implant Abutment' && (
+                {treatmentType === 'Implant' && (
                   <div className="border border-border rounded-lg p-3 space-y-3 bg-muted/20 animate-in slide-in-from-top-2 duration-200">
                     <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Implant Workflow Configurations</p>
                     <div className="grid grid-cols-2 gap-3">
@@ -1187,7 +1202,19 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
             {/* Step 2: Model Mapping (exocad circular chart selector) */}
             {currentStep === 2 && (
               <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                <div className="flex justify-between items-center mb-1">
+                {treatmentType === 'Full Arch' ? (
+                  <div className="border border-dashed border-border rounded-lg p-10 text-center text-muted-foreground flex flex-col items-center justify-center gap-3 bg-muted/10">
+                    <div className="w-12 h-12 rounded-full bg-blue-600/10 flex items-center justify-center">
+                      <CheckCircle2 className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground">Tooth Charting Not Required</h3>
+                      <p className="text-xs mt-1">Individual tooth charting is skipped for Full Arch cases.<br/>Click Next to proceed to Materials.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex justify-between items-center mb-1">
                   <Label className="text-foreground font-semibold text-sm">Tooth Charting & Restoration Properties</Label>
                   <div className="flex items-center gap-2">
                     <input
@@ -1222,7 +1249,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                       <div className="space-y-1.5">
                         <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Restoration Properties</p>
                         <div className="grid gap-1.5">
-                          {Object.entries(INDICATIONS).map(([key, info]) => {
+                          {Object.entries(currentIndications).map(([key, info]) => {
                             const isSelected = (toothConfigs[activeToothId!] || 'none') === key;
                             const isEnabled = activeToothId !== null;
                             return (
@@ -1279,7 +1306,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                             const y = 270 - 215 * Math.sin(rad);
                             const rot = (tooth.id >= 11 && tooth.id <= 28) ? tooth.deg - 90 : tooth.deg - 270;
                             const status = toothConfigs[tooth.id] || 'none';
-                            const info = INDICATIONS[status] || INDICATIONS.none;
+                            const info = currentIndications[status] || currentIndications.none;
                             const isActive = activeToothId === tooth.id;
 
                             return (
@@ -1320,7 +1347,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                         {/* Centered Legend */}
                         <div className="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-[110px] bg-background/95 border border-border rounded p-1.5 shadow-sm text-left pointer-events-none select-none flex flex-col gap-1">
                           <p className="text-[8px] font-bold text-muted-foreground uppercase border-b border-border pb-0.5 text-center">Indications</p>
-                          {Object.entries(INDICATIONS).filter(([k]) => k !== 'none').map(([key, val]) => (
+                          {Object.entries(currentIndications).filter(([k]) => k !== 'none').map(([key, val]) => (
                             <div key={key} className="flex items-center gap-1 text-[8px] font-semibold text-muted-foreground leading-none">
                               <span className="w-2 h-2 rounded shrink-0 border border-black/10" style={{ backgroundColor: val.hex }} />
                               {val.label}
@@ -1394,6 +1421,8 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                     </Select>
                   </div>
                 </div>
+                </>
+              )}
               </div>
             )}
 
