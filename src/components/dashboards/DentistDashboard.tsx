@@ -159,7 +159,8 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
 
   // Phase 3 states - Tooth Configurations
   const [toothConfigs, setToothConfigs] = useState<Record<number, string>>({});
-  const [activeToothId, setActiveToothId] = useState<number | null>(null);
+  const [activeIndication, setActiveIndication] = useState<string>('coping');
+  const [showArchLimitPopup, setShowArchLimitPopup] = useState<boolean>(false);
   const [occlusalClearance, setOcclusalClearance] = useState('Medium');
   const [contactDesign, setContactDesign] = useState('Normal');
   const [connectorDesign, setConnectorDesign] = useState('Anatomical');
@@ -1226,7 +1227,6 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                         if (e.target.checked) {
                           setSelectedTeeth([]);
                           setToothConfigs({});
-                          setActiveToothId(null);
                         }
                       }}
                       className="rounded border-border text-blue-600 focus:ring-blue-600 h-4 w-4 bg-background"
@@ -1239,42 +1239,20 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border border-border rounded-lg p-3 bg-muted/10">
                     {/* Sidebar controls */}
                     <div className="md:col-span-1 border-b md:border-b-0 md:border-r border-border pb-3 md:pb-0 md:pr-3 space-y-4">
-                      <div>
-                        <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Selected Segment</p>
-                        <p className="text-lg font-bold text-foreground mt-0.5">
-                          {activeToothId ? `Tooth ${activeToothId}` : '— Select a Tooth'}
-                        </p>
-                      </div>
-
                       <div className="space-y-1.5">
-                        <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Restoration Properties</p>
+                        <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Restoration Tools</p>
                         <div className="grid gap-1.5">
-                          {Object.entries(currentIndications).map(([key, info]) => {
-                            const isSelected = (toothConfigs[activeToothId!] || 'none') === key;
-                            const isEnabled = activeToothId !== null;
+                          {Object.entries(currentIndications).filter(([k]) => k !== 'none').map(([key, info]) => {
+                            const isSelected = activeIndication === key;
                             return (
                               <button
                                 key={key}
                                 type="button"
-                                disabled={!isEnabled}
-                                onClick={() => {
-                                  if (activeToothId === null) return;
-                                  setToothConfigs(prev => {
-                                    const updated = { ...prev };
-                                    if (key === 'none') {
-                                      delete updated[activeToothId];
-                                    } else {
-                                      updated[activeToothId] = key as any;
-                                    }
-                                    return updated;
-                                  });
-                                }}
+                                onClick={() => setActiveIndication(key)}
                                 className={`w-full text-left px-2.5 py-1.5 rounded-md border text-xs font-semibold flex items-center gap-2 transition-all ${
-                                  !isEnabled 
-                                    ? 'opacity-40 cursor-not-allowed bg-muted/20 border-transparent text-muted-foreground' 
-                                    : isSelected
-                                      ? 'border-blue-600 bg-blue-600/10 text-foreground'
-                                      : 'border-border bg-background hover:bg-muted text-foreground'
+                                  isSelected
+                                    ? 'border-blue-600 bg-blue-600/10 text-foreground'
+                                    : 'border-border bg-background hover:bg-muted text-foreground'
                                 }`}
                               >
                                 <span className="w-3.5 h-3.5 rounded border border-black/10 shrink-0" style={{ backgroundColor: info.hex }} />
@@ -1307,13 +1285,41 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                             const rot = (tooth.id >= 11 && tooth.id <= 28) ? tooth.deg - 90 : tooth.deg - 270;
                             const status = toothConfigs[tooth.id] || 'none';
                             const info = currentIndications[status] || currentIndications.none;
-                            const isActive = activeToothId === tooth.id;
 
                             return (
                               <g 
                                 key={tooth.id} 
                                 className="cursor-pointer group"
-                                onClick={() => setActiveToothId(tooth.id)}
+                                onClick={() => {
+                                  if (!activeIndication) return;
+                                  
+                                  setToothConfigs(prev => {
+                                    const updated = { ...prev };
+                                    
+                                    if (updated[tooth.id] === activeIndication) {
+                                      delete updated[tooth.id];
+                                      return updated;
+                                    }
+                                    
+                                    if (['CNB', 'FPD', 'Veneer', 'Implant'].includes(treatmentType)) {
+                                      const isUpper = tooth.id < 30;
+                                      const jawCount = Object.keys(updated).reduce((count, idStr) => {
+                                        const id = parseInt(idStr);
+                                        if (isUpper && id < 30) return count + 1;
+                                        if (!isUpper && id >= 30) return count + 1;
+                                        return count;
+                                      }, 0);
+                                      
+                                      if (jawCount >= 6 && !updated[tooth.id]) {
+                                        setShowArchLimitPopup(true);
+                                        return updated;
+                                      }
+                                    }
+                                    
+                                    updated[tooth.id] = activeIndication;
+                                    return updated;
+                                  });
+                                }}
                                 transform={`translate(${x}, ${y})`}
                               >
                                 <g transform={`rotate(${rot})`}>
@@ -1322,10 +1328,8 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                                   {/* Tooth shape */}
                                   <path 
                                     d={getPath(tooth.type)} 
-                                    className={`transition-all duration-200 ${
-                                      isActive 
-                                        ? 'stroke-blue-600 stroke-[3px]' 
-                                        : 'stroke-slate-400 group-hover:stroke-blue-400 stroke-[1.5px]'
+                                    className={`transition-all duration-200 stroke-[1.5px] ${
+                                      status !== 'none' ? 'stroke-blue-600' : 'stroke-slate-400 group-hover:stroke-blue-400'
                                     }`}
                                     style={{ fill: info.hex }} 
                                   />
@@ -1742,6 +1746,26 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         </DialogContent>
       </Dialog>
 
+      {/* Jaw Limit Popup */}
+      <Dialog open={showArchLimitPopup} onOpenChange={setShowArchLimitPopup}>
+        <DialogContent className="sm:max-w-md border-border bg-background">
+          <DialogHeader>
+            <DialogTitle className="text-foreground flex items-center gap-2">
+              <Activity className="h-5 w-5 text-amber-500" />
+              Maximum Teeth Selected
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground pt-2">
+              A maximum of 6 teeth per jaw can be selected for this treatment type. 
+              If you require more restorations in a single jaw, we recommend changing the Treatment Type to <strong>Full Arch</strong> in Step 1.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4">
+            <Button onClick={() => setShowArchLimitPopup(false)} className="bg-blue-600 hover:bg-blue-700 text-white w-full">
+              Got it
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
