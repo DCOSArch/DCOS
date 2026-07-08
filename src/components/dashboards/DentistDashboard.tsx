@@ -85,6 +85,13 @@ const TEETH_DATA = [
   { id: 38, type: 'molar', deg: 352 }
 ];
 
+const ADJACENT_PAIRS = [
+  // Upper
+  [18, 17], [17, 16], [16, 15], [15, 14], [14, 13], [13, 12], [12, 11], [11, 21], [21, 22], [22, 23], [23, 24], [24, 25], [25, 26], [26, 27], [27, 28],
+  // Lower
+  [48, 47], [47, 46], [46, 45], [45, 44], [44, 43], [43, 42], [42, 41], [41, 31], [31, 32], [32, 33], [33, 34], [34, 35], [35, 36], [36, 37], [37, 38]
+];
+
 const getPath = (t: string) => {
   if (t === 'molar') return "M -17 -17 C -6 -20, 6 -20, 17 -17 C 23 -8, 23 8, 17 17 C 6 20, -6 20, -17 17 C -23 8, -23 -8, -17 -17 Z";
   if (t === 'premolar') return "M -14 -14 C -5 -16, 5 -16, 14 -14 C 19 -7, 19 7, 14 14 C 5 16, -5 16, -14 14 C -19 7, -19 -7, -14 -14 Z";
@@ -103,7 +110,6 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
   const supabase = useMemo(() => createClient(), []);
   const [cases, setCases] = useState<Case[]>(initialCases);
 
-  // Sync initialCases with cases when router.refresh() happens
   useEffect(() => {
     setCases(initialCases);
   }, [initialCases]);
@@ -129,14 +135,12 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
   const [inventory, setInventory] = useState<DoctorInventoryItem[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
 
-  // Patient Demographics & Implant states (Phase 1)
   const [patientAge, setPatientAge] = useState('');
   const [patientGender, setPatientGender] = useState<'MALE' | 'FEMALE' | ''>('');
   const [implantBrand, setImplantBrand] = useState('');
   const [scanBodyModel, setScanBodyModel] = useState('');
   const [analogLogistics, setAnalogLogistics] = useState('');
 
-  // 5-Tab Pipeline State
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedTeeth, setSelectedTeeth] = useState<number[]>([]);
   const [isTeethNotSpecified, setIsTeethNotSpecified] = useState(false);
@@ -145,7 +149,6 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
   const [isDesignNotSpecified, setIsDesignNotSpecified] = useState(false);
   const [instructions, setInstructions] = useState('');
 
-  // Phase 2 states - Custom Shading
   const [customShadeEnabled, setCustomShadeEnabled] = useState(false);
   const [cervicalShade, setCervicalShade] = useState('A2');
   const [bodyShade, setBodyShade] = useState('A2');
@@ -154,11 +157,10 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
   const [shadePhotoFile, setShadePhotoFile] = useState<File | null>(null);
   const [activeZone, setActiveZone] = useState<'cervical' | 'body' | 'incisal' | null>(null);
 
-  // Phase 2 states - Carousel
   const [carouselPanel, setCarouselPanel] = useState<'material' | 'shade'>('material');
 
-  // Phase 3 states - Tooth Configurations
   const [toothConfigs, setToothConfigs] = useState<Record<number, string>>({});
+  const [connections, setConnections] = useState<string[]>([]);
   const [activeIndication, setActiveIndication] = useState<string>('coping');
   const [showArchLimitPopup, setShowArchLimitPopup] = useState<boolean>(false);
   const [occlusalClearance, setOcclusalClearance] = useState('Medium');
@@ -176,7 +178,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
 
   const isStepComplete = (stepIndex: number): boolean => {
     switch (stepIndex) {
-      case 0: // Administration
+      case 0: 
         const isBasicComplete =
           patientName.trim().length > 0 &&
           selectedLabId !== '' &&
@@ -190,29 +192,26 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
           return isBasicComplete && implantBrand !== '' && scanBodyModel !== '' && analogLogistics !== '';
         }
         return isBasicComplete;
-      case 1: // Acquisition
+      case 1:
         if (treatmentType === 'Surgical Guide') {
           return selectedFile !== null && selectedDicomFile !== null && uploadState !== 'analyzing';
         }
         return selectedFile !== null && uploadState !== 'analyzing';
-      case 2: // Model Mapping
+      case 2:
         if (treatmentType === 'Full Arch') return true;
         return Object.values(toothConfigs).some(v => v !== 'none') || isTeethNotSpecified;
-      case 3: // CAD Design
+      case 3:
         return isDesignNotSpecified || (material !== '' && shade !== '');
-      case 4: // CAM Manufacturing
+      case 4:
         return dueDate !== '';
       default:
         return false;
     }
   };
 
-  // Sync selectedTeeth from toothConfigs for payload compatibility
   useEffect(() => {
     setSelectedTeeth(Object.keys(toothConfigs).map(Number).sort((a, b) => a - b));
   }, [toothConfigs]);
-
-
 
   const renderShadeGrid = (onSelect: (shade: string) => void, selectedShade?: string) => {
     const groups = ['A', 'B', 'C', 'D'];
@@ -246,7 +245,6 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
 
   useEffect(() => {
     const fetchData = async () => {
-      // Fetch Inventory
       const { data: invData } = await supabase
         .from('doctor_inventory')
         .select('*')
@@ -295,7 +293,6 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
     fetchData();
     fetchNotifications();
 
-    // Subscribe to cases
     const channel = supabase.channel('dentist_cases')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'cases', filter: `dentist_id=eq.${currentUser.id}` }, payload => {
         const eventType = payload.eventType;
@@ -315,12 +312,10 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
           fetchData();
           fetchNotifications();
         }
-
         router.refresh();
       })
       .subscribe();
 
-    // Subscribe to timeline events
     const timelineChannel = supabase.channel('dentist_timeline')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'timeline_events', filter: `dentist_id=eq.${currentUser.id}` }, payload => {
         fetchNotifications();
@@ -337,13 +332,11 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setSelectedFile(file);
-
-      // Auto-fill patient name if not yet entered
       const baseName = file.name.replace(/\.(stl|ply)$/i, '');
       let nameGuess = baseName
-        .replace(/(upper|lower|bite|arch|scan|prep|mesh)/gi, '') // remove common keywords
-        .replace(/[^a-zA-Z\s]/g, ' ') // replace non-alphabetic chars with spaces
-        .replace(/\s+/g, ' ') // collapse multiple spaces
+        .replace(/(upper|lower|bite|arch|scan|prep|mesh)/gi, '')
+        .replace(/[^a-zA-Z\s]/g, ' ')
+        .replace(/\s+/g, ' ')
         .trim();
 
       if (nameGuess) {
@@ -354,17 +347,6 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         }
       }
 
-      // Detect arch type
-      let archGuess = '';
-      if (/upper/i.test(baseName)) archGuess = 'Upper Arch';
-      else if (/lower/i.test(baseName)) archGuess = 'Lower Arch';
-      else if (/bite/i.test(baseName)) archGuess = 'Bite Registry';
-
-      if (archGuess) {
-        toast.info(`Detected scan: ${archGuess}`);
-      }
-
-      // Pre-flight validation
       setUploadState('analyzing');
       try {
         const result = await validateSTLFile(file);
@@ -428,11 +410,9 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
     setUploadState('analyzing');
 
     try {
-      // 1. Upload to Supabase Storage
       let scanUrl = null;
       if (selectedFile) {
         const fileName = `${Date.now()}_${selectedFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-
         const { data, error } = await supabase.storage
           .from('scans')
           .upload(fileName, selectedFile);
@@ -445,11 +425,9 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         }
       }
 
-      // 1b. Upload DICOM file
       let dicomUrl = null;
       if (selectedDicomFile) {
         const dicomFileName = `dicom/${Date.now()}_${selectedDicomFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-
         const { data, error } = await supabase.storage
           .from('scans')
           .upload(dicomFileName, selectedDicomFile);
@@ -462,7 +440,6 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         }
       }
 
-      // 1c. Upload shade reference photo
       let shadePhotoUrl = null;
       if (shadePhotoFile) {
         const shadePhotoFileName = `shade_photos/${Date.now()}_${shadePhotoFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
@@ -476,7 +453,6 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         }
       }
 
-      // Serialize Phase 2 & 3 design parameters into instructions
       const designParams: Record<string, any> = {
         occlusalClearance,
         contactDesign,
@@ -487,6 +463,9 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         designParams.toothConfigs = Object.fromEntries(
           Object.entries(toothConfigs).map(([k, v]) => [k, v])
         );
+      }
+      if (connections.length > 0) {
+        designParams.connections = connections;
       }
       if (customShadeEnabled) {
         designParams.customShade = {
@@ -507,7 +486,6 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         ? `${instructions}\n\n[Design Parameters]: ${designParamsJson}`
         : `[Design Parameters]: ${designParamsJson}`;
 
-      // 2. Insert the case into the Supabase 'cases' table
       const dbCase = {
         patient_name: patientName,
         dentist_id: currentUser.id,
@@ -516,8 +494,8 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         urgency,
         requested_treatment: treatmentType || 'Not Specified',
         material: isDesignNotSpecified ? 'Not Specified' : material,
-        scan_url: scanUrl, // Store the file path
-        dicom_url: dicomUrl, // Store the DICOM path
+        scan_url: scanUrl,
+        dicom_url: dicomUrl,
         due_date: dueDate ? new Date(dueDate).toISOString() : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         shade: isDesignNotSpecified ? 'Not Specified' : shade,
         selected_teeth: isTeethNotSpecified ? null : selectedTeeth,
@@ -539,7 +517,6 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         console.error('DB Insert Error:', insertError);
         alert('Error inserting case: ' + insertError.message);
       } else if (insertedCase) {
-        // Create initial timeline event
         await supabase.from('timeline_events').insert({
           case_id: insertedCase.id,
           status_update: isDraft ? 'Draft Saved' : 'Case Created',
@@ -547,7 +524,6 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
           visibility: 'BOTH'
         });
 
-        // Refetch inventory to reflect deduction (only if not a draft)
         if (!isDraft) {
           const { data: invData } = await supabase
             .from('doctor_inventory')
@@ -587,16 +563,13 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         patientGender: (dbCase.patient_gender as any) || undefined,
         implantBrand: dbCase.implant_brand || undefined,
         scanBodyModel: dbCase.scan_body_model || undefined,
-        analogLogistics: dbCase.analog_logistics || undefined
+        analog_logistics: dbCase.analog_logistics || undefined
       };
 
-      // Optimistic UI - Immediately show the new case
       setCases(prev => [newCase, ...prev]);
-
       router.refresh();
       setIsCreateModalOpen(false);
 
-      // Reset form
       setPatientName('');
       setTreatmentType('');
       setUrgency('NORMAL');
@@ -613,7 +586,6 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
       setIsDesignNotSpecified(false);
       setInstructions('');
       setCurrentStep(0);
-      // Reset Phase 2 states
       setCustomShadeEnabled(false);
       setCervicalShade('A2');
       setBodyShade('A2');
@@ -622,13 +594,13 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
       setShadePhotoFile(null);
       setActiveZone(null);
       setCarouselPanel('material');
-      // Reset Phase 3 states
       setToothConfigs({});
       setOcclusalClearance('Medium');
       setContactDesign('Normal');
       setConnectorDesign('Anatomical');
       setPonticDesign('Ovate');
       setActiveIndication('coping');
+      setConnections([]);
 
       toast.success(isDraft ? 'Case saved as draft!' : 'Case successfully submitted!');
 
@@ -690,7 +662,6 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        {/* Virtual Inventory (Takes 2 columns) */}
         <Card className="lg:col-span-2 shadow-sm border-border">
           <CardHeader className="flex flex-row items-center justify-between pb-4">
             <div>
@@ -740,7 +711,6 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
           </CardContent>
         </Card>
 
-        {/* Live Notification Center (Takes 1 column) */}
         <Card className="shadow-sm border-border flex flex-col h-full min-h-[220px]">
           <CardHeader className="pb-3 border-b border-border bg-muted/10">
             <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground">
@@ -885,7 +855,6 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
             setScanBodyModel('');
             setAnalogLogistics('');
             setCurrentStep(0);
-            // Reset Phase 2 states
             setCustomShadeEnabled(false);
             setCervicalShade('A2');
             setBodyShade('A2');
@@ -894,13 +863,13 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
             setShadePhotoFile(null);
             setActiveZone(null);
             setCarouselPanel('material');
-            // Reset Phase 3 states
             setToothConfigs({});
             setOcclusalClearance('Medium');
             setContactDesign('Normal');
             setConnectorDesign('Anatomical');
             setPonticDesign('Ovate');
             setActiveIndication('coping');
+            setConnections([]);
           }, 300);
         }
       }}>
@@ -915,7 +884,6 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
             </DialogDescription>
           </DialogHeader>
 
-          {/* Stepper Dot Indicators */}
           <div className="flex justify-between items-center my-4 border-b border-border pb-4">
             {steps.map((step, idx) => {
               const isCurrent = idx === currentStep;
@@ -941,7 +909,6 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
           </div>
 
           <div className="grid gap-4 py-2 min-h-[260px]">
-            {/* Step 0: Administration */}
             {currentStep === 0 && (
               <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="grid gap-2">
@@ -1082,7 +1049,6 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
               </div>
             )}
 
-            {/* Step 1: Acquisition (Scan upload & STL Validator) */}
             {currentStep === 1 && (
               <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                 <div>
@@ -1158,7 +1124,6 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                   )}
                 </div>
 
-                {/* DICOM Upload Section for Surgical Guides */}
                 {treatmentType === 'Surgical Guide' && (
                   <div className="border-t border-border pt-4 mt-4">
                     <Label className="text-foreground mb-2 block">Upload DICOM / CBCT Scan (DCM/ZIP) <span className="text-red-500">*</span></Label>
@@ -1200,7 +1165,6 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
               </div>
             )}
 
-            {/* Step 2: Model Mapping (exocad circular chart selector) */}
             {currentStep === 2 && (
               <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                 {treatmentType === 'Full Arch' ? (
@@ -1227,6 +1191,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                         if (e.target.checked) {
                           setSelectedTeeth([]);
                           setToothConfigs({});
+                          setConnections([]);
                         }
                       }}
                       className="rounded border-border text-blue-600 focus:ring-blue-600 h-4 w-4 bg-background"
@@ -1237,7 +1202,6 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
 
                 {!isTeethNotSpecified ? (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border border-border rounded-lg p-3 bg-muted/10">
-                    {/* Sidebar controls */}
                     <div className="md:col-span-1 border-b md:border-b-0 md:border-r border-border pb-3 md:pb-0 md:pr-3 space-y-4">
                       <div className="space-y-1.5">
                         <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Restoration Tools</p>
@@ -1270,14 +1234,69 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                       )}
                     </div>
 
-                    {/* Chart SVG wrapper */}
                     <div className="md:col-span-2 flex items-center justify-center bg-background/50 border border-border rounded-lg p-2.5 relative min-h-[300px]">
-                      {/* SVG Tooth Chart */}
                       <div className="w-full max-w-[420px] relative">
                         <svg viewBox="0 0 800 540" className="w-full h-auto overflow-visible">
                           <line x1="400" y1="20" x2="400" y2="520" stroke="#cbd5e1" strokeDasharray="4 4" strokeWidth="2" className="opacity-50" />
                           <line x1="120" y1="270" x2="680" y2="270" stroke="#cbd5e1" strokeDasharray="4 4" strokeWidth="2" className="opacity-50" />
-                          {/* Render teeth nodes */}
+                          
+                          {ADJACENT_PAIRS.map(([idA, idB]) => {
+                            const statusA = toothConfigs[idA];
+                            const statusB = toothConfigs[idB];
+                            if (!statusA || statusA === 'none' || !statusB || statusB === 'none') return null;
+
+                            const toothA = TEETH_DATA.find(t => t.id === idA)!;
+                            const toothB = TEETH_DATA.find(t => t.id === idB)!;
+
+                            const radA = (toothA.deg * Math.PI) / 180;
+                            const xA = 400 + 245 * Math.cos(radA);
+                            const yA = 270 - 215 * Math.sin(radA);
+
+                            const radB = (toothB.deg * Math.PI) / 180;
+                            const xB = 400 + 245 * Math.cos(radB);
+                            const yB = 270 - 215 * Math.sin(radB);
+
+                            const midAngle = (toothA.deg + toothB.deg) / 2;
+                            const radMid = (midAngle * Math.PI) / 180;
+                            const dotX = 400 + 275 * Math.cos(radMid);
+                            const dotY = 270 - 240 * Math.sin(radMid);
+
+                            const connectionKey = `${idA}-${idB}`;
+                            const isConnected = connections.includes(connectionKey);
+
+                            return (
+                              <g key={connectionKey}>
+                                <path
+                                  d={`M ${xA} ${yA} L ${dotX} ${dotY} L ${xB} ${yB}`}
+                                  fill="none"
+                                  stroke={isConnected ? "#10b981" : "#cbd5e1"}
+                                  strokeWidth="2"
+                                  strokeDasharray={isConnected ? "none" : "3 3"}
+                                  className="transition-colors duration-200"
+                                />
+                                <circle
+                                  cx={dotX}
+                                  cy={dotY}
+                                  r="6"
+                                  className="cursor-pointer transition-all hover:scale-110"
+                                  fill={isConnected ? "#10b981" : "#ffffff"}
+                                  stroke={isConnected ? "#059669" : "#cbd5e1"}
+                                  strokeWidth="2"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setConnections(prev => {
+                                      if (prev.includes(connectionKey)) {
+                                        return prev.filter(c => c !== connectionKey);
+                                      } else {
+                                        return [...prev, connectionKey];
+                                      }
+                                    });
+                                  }}
+                                />
+                              </g>
+                            );
+                          })}
+
                           {TEETH_DATA.map(tooth => {
                             const rad = (tooth.deg * Math.PI) / 180;
                             const x = 400 + 245 * Math.cos(rad);
@@ -1323,9 +1342,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                                 transform={`translate(${x}, ${y})`}
                               >
                                 <g transform={`rotate(${rot})`}>
-                                  {/* Hitbox */}
                                   <rect x="-26" y="-26" width="52" height="52" fill="transparent" />
-                                  {/* Tooth shape */}
                                   <path 
                                     d={getPath(tooth.type)} 
                                     className={`transition-all duration-200 stroke-[1.5px] ${
@@ -1334,7 +1351,6 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                                     style={{ fill: info.hex }} 
                                   />
                                 </g>
-                                {/* Tooth Label Number */}
                                 <text 
                                   textAnchor="middle" 
                                   dominantBaseline="central" 
@@ -1348,7 +1364,6 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                           })}
                         </svg>
 
-                        {/* Centered Legend */}
                         <div className="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-[110px] bg-background/95 border border-border rounded p-1.5 shadow-sm text-left pointer-events-none select-none flex flex-col gap-1">
                           <p className="text-[8px] font-bold text-muted-foreground uppercase border-b border-border pb-0.5 text-center">Indications</p>
                           {Object.entries(currentIndications).filter(([k]) => k !== 'none').map(([key, val]) => (
@@ -1367,7 +1382,6 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                   </div>
                 )}
 
-                {/* Phase 3.3: Predefined Dropdown Parameters */}
                 <div className="grid grid-cols-2 gap-3 mt-4 pt-3 border-t border-border">
                   <div className="grid gap-1">
                     <Label htmlFor="occlusalClearance" className="text-[11px] text-foreground">Occlusal Clearance</Label>
@@ -1430,7 +1444,6 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
               </div>
             )}
 
-            {/* Step 3: CAD Design (Material → Shade Carousel) */}
             {currentStep === 3 && (
               <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="flex justify-between items-center mb-2">
@@ -1451,17 +1464,14 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
 
                 {!isDesignNotSpecified ? (
                   <div className="space-y-3">
-                    {/* Carousel indicator */}
                     <div className="flex items-center justify-center gap-2 text-[10px] text-muted-foreground">
                       <span className={carouselPanel === 'material' ? 'font-bold text-blue-600' : ''}>1. Material</span>
                       <ChevronRight className="w-3 h-3" />
                       <span className={carouselPanel === 'shade' ? 'font-bold text-blue-600' : ''}>2. Shade</span>
                     </div>
 
-                    {/* Carousel Container */}
                     <div className="overflow-hidden">
                       <div className="flex transition-transform duration-500 ease-out" style={{ transform: `translateX(-${carouselPanel === 'shade' ? 100 : 0}%)` }}>
-                        {/* Panel 1: Material Selection */}
                         <div className="w-full shrink-0 pr-1">
                           <div className="grid gap-2">
                             {MATERIALS.map(mat => (
@@ -1486,9 +1496,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                           </div>
                         </div>
 
-                        {/* Panel 2: Shade Selection */}
                         <div className="w-full shrink-0 pl-1 space-y-4">
-                          {/* Back to material button */}
                           <button
                             type="button"
                             onClick={() => setCarouselPanel('material')}
@@ -1498,18 +1506,15 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                             Back to Material
                           </button>
 
-                          {/* Selected material display */}
                           <div className="text-xs text-muted-foreground">
                             Material: <span className="font-semibold text-foreground">{MATERIALS.find(m => m.value === material)?.label}</span>
                           </div>
 
-                          {/* Vita 16-Shade Grid */}
                           <div>
-                            <Label className="text-foreground mb-2 block text-sm">Vita Shade Code <span className="text-red-500">*</span></Label>
+                            <Label className="text-foreground mb-2 block text-sm">Shade-Code <span className="text-red-500">*</span></Label>
                             {renderShadeGrid((s) => setShade(s), shade)}
                           </div>
 
-                          {/* Custom Shading Toggle */}
                           <div className="border-t border-border pt-3">
                             <div className="flex items-center gap-2 mb-3">
                               <input
@@ -1527,46 +1532,37 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
 
                             {customShadeEnabled && (
                               <div className="space-y-3">
-                                {/* SVG Incisor with 3 zones */}
                                 <div className="flex gap-3 items-start">
-                                  {/* Zone labels */}
                                   <div className="flex flex-col justify-between text-[8px] text-muted-foreground py-1" style={{ height: '120px' }}>
                                     <span>Cervical</span>
                                     <span>Body</span>
                                     <span>Incisal</span>
                                   </div>
-                                  {/* SVG Tooth */}
                                   <svg viewBox="0 0 80 120" className="w-20 shrink-0" style={{ height: '120px' }}>
                                     <defs>
                                       <clipPath id="toothClip">
-                                        <path d="M 15 8 Q 40 3 65 8 L 63 45 L 60 80 L 55 105 Q 40 115 25 105 L 20 80 L 17 45 Z" />
+                                        <path d="M 15 8 Q 40 3 65 8 L 63 45 L 60 80 L 55 105 L 40 118 L 25 105 L 20 80 L 17 45 Z" />
                                       </clipPath>
                                     </defs>
-                                    {/* Cervical zone */}
                                     <rect x="0" y="0" width="80" height="40"
                                       fill={SHADE_HEX_MAP[cervicalShade] || '#ebdccb'}
                                       clipPath="url(#toothClip)"
                                       onClick={() => setActiveZone(activeZone === 'cervical' ? null : 'cervical')}
                                       className="cursor-pointer transition-opacity hover:opacity-80" />
-                                    {/* Body zone */}
                                     <rect x="0" y="40" width="80" height="40"
                                       fill={SHADE_HEX_MAP[bodyShade] || '#ebdccb'}
                                       clipPath="url(#toothClip)"
                                       onClick={() => setActiveZone(activeZone === 'body' ? null : 'body')}
                                       className="cursor-pointer transition-opacity hover:opacity-80" />
-                                    {/* Incisal zone */}
                                     <rect x="0" y="80" width="80" height="40"
                                       fill={SHADE_HEX_MAP[incisalShade] || '#ebdccb'}
                                       clipPath="url(#toothClip)"
                                       onClick={() => setActiveZone(activeZone === 'incisal' ? null : 'incisal')}
                                       className="cursor-pointer transition-opacity hover:opacity-80" />
-                                    {/* Outline */}
-                                    <path d="M 15 8 Q 40 3 65 8 L 63 45 L 60 80 L 55 105 Q 40 115 25 105 L 20 80 L 17 45 Z"
+                                    <path d="M 15 8 Q 40 3 65 8 L 63 45 L 60 80 L 55 105 L 40 118 L 25 105 L 20 80 L 17 45 Z"
                                       fill="none" stroke="#999" strokeWidth="1.5" />
-                                    {/* Zone dividers */}
                                     <line x1="15" y1="40" x2="65" y2="40" stroke="#aaa" strokeWidth="0.5" strokeDasharray="2,2" />
                                     <line x1="18" y1="80" x2="62" y2="80" stroke="#aaa" strokeWidth="0.5" strokeDasharray="2,2" />
-                                    {/* Active zone highlight */}
                                     {activeZone === 'cervical' && <rect x="0" y="0" width="80" height="40" fill="none" stroke="#3b82f6" strokeWidth="2" clipPath="url(#toothClip)" />}
                                     {activeZone === 'body' && <rect x="0" y="40" width="80" height="40" fill="none" stroke="#3b82f6" strokeWidth="2" clipPath="url(#toothClip)" />}
                                     {activeZone === 'incisal' && <rect x="0" y="80" width="80" height="40" fill="none" stroke="#3b82f6" strokeWidth="2" clipPath="url(#toothClip)" />}
