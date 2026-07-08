@@ -563,7 +563,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         patientGender: (dbCase.patient_gender as any) || undefined,
         implantBrand: dbCase.implant_brand || undefined,
         scanBodyModel: dbCase.scan_body_model || undefined,
-        analog_logistics: dbCase.analog_logistics || undefined
+        analogLogistics: dbCase.analog_logistics || undefined
       };
 
       setCases(prev => [newCase, ...prev]);
