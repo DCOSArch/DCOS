@@ -628,7 +628,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
       setContactDesign('Normal');
       setConnectorDesign('Anatomical');
       setPonticDesign('Ovate');
-      setActiveToothId(null);
+      setActiveIndication('coping');
 
       toast.success(isDraft ? 'Case saved as draft!' : 'Case successfully submitted!');
 
@@ -900,7 +900,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
             setContactDesign('Normal');
             setConnectorDesign('Anatomical');
             setPonticDesign('Ovate');
-            setActiveToothId(null);
+            setActiveIndication('coping');
           }, 300);
         }
       }}>
