@@ -1,4 +1,7 @@
 # Agent Changelog
+* 2026-07-08 - FEATURE: Case Details Visual Design Specs — Parsed the serialized JSON design parameters from custom instructions and rendered them as a visual card on the Case Details screen, including parameters table, 3-zone custom shading SVG preview, FDI tooth configs list, and attached shade matching photographs.
+* 2026-07-08 - FEATURE: Cline Sprint Phase 2 (Shade Canvas & Carousel UI) — Replaced shade dropdown with 16-tile VITA Classical grid (A1-D4 with hex colors). Implemented horizontal carousel that auto-slides from Material to Shade panel on click. Added 3-zone custom shading SVG incisor canvas with clickable Cervical/Body/Incisal zones, floating shade mini-grids, characterizations checkboxes, and shade reference photo upload.
+* 2026-07-08 - FEATURE: Cline Sprint Phase 3 (Interactive DentalDB Charting Grid) — Replaced tooth toggle buttons with FDI quadrant chart featuring click-to-cycle status (None → Crown → Abutment → Pontic → Implant). Applied exocad color coding (Red/Blue/Light Blue/Zinc) with implant screw chimney overlay and bridge connector lines. Added 4 predefined dropdown parameters (Occlusal Clearance, Contact Design, Connector Design, Pontic Design). All new states serialized as JSON into `instructions` field — no DB schema changes.
 * 2026-07-07 - FEATURE: Auth Recovery & Reset — Integrated native Supabase password recovery and secure reset morphing screens directly into the main Login card.
 * 2026-07-07 - FEATURE: CBCT DICOM Ingestion — Built Treatment Type selectors and conditional CBCT scan uploads for surgical guide cases, archiving DICOM path links in the database.
 * 2026-07-07 - FEATURE: Global Real-Time Chime Bell — Embedded browser Web Audio API synth double-beep alerts and live WebSocket subscriptions inside the navbar bell component.
@@ -22,4 +25,4 @@
 * 2026-07-04 - Fixed B2B database RLS policies to use `public.users` instead of the empty `public.profiles` table.
 * 2026-07-04 - Re-seeded the database cases and inventory allocations to populate the dashboards.
 * 2026-07-04 - Implemented a complete Monokai dark theme in `src/app/globals.css` by mapping Tailwind v4 variables.
-* 2026-06-26 - Delegated data generation (50K rows) and revenue calculation to native Gemini agent.
+* 2026-06-26 - Delegated data generation (50K rows) and revenue calculation to native Gemini agent.

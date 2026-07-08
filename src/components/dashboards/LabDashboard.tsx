@@ -16,6 +16,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
 
 interface LabDashboardProps {
   initialCases: Case[];
@@ -303,7 +304,15 @@ export default function LabDashboard({ initialCases, initialInventory, available
                                 <StatusBadge status={caseItem.status} />
                               </div>
                             </div>
-                            <h4 className="font-semibold text-xs text-foreground truncate">{caseItem.patientName}</h4>
+                            <div className="flex justify-between items-center gap-1.5 min-w-0">
+                              <h4 className="font-semibold text-xs text-foreground truncate">{caseItem.patientName}</h4>
+                              {caseItem.patientGender === 'MALE' && (
+                                <Badge className="bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100 text-[8px] px-1 py-0 h-3.5 shrink-0 scale-90 origin-right">M</Badge>
+                              )}
+                              {caseItem.patientGender === 'FEMALE' && (
+                                <Badge className="bg-pink-100 text-pink-800 border-pink-200 hover:bg-pink-100 text-[8px] px-1 py-0 h-3.5 shrink-0 scale-90 origin-right">F</Badge>
+                              )}
+                            </div>
                             <div className="mt-1.5 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100/50 dark:border-blue-900/30 rounded px-1.5 py-1">
                               <p className="text-[10px] font-medium text-blue-800 dark:text-blue-300 leading-none truncate">{caseItem.requestedTreatment}</p>
                             </div>

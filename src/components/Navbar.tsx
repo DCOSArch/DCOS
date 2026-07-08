@@ -33,13 +33,26 @@ export default function Navbar({ currentUser, cases }: NavbarProps) {
   useEffect(() => {
     // 1. Fetch initial notification-worthy timeline events
     const fetchInitialNotifications = async () => {
-      if (currentUser.role !== 'DENTIST') return;
-      const { data } = await supabase
+      let query = supabase
         .from('timeline_events')
-        .select('id, status_update, notes, timestamp, case_id, cases!inner(patient_name, dentist_id)')
-        .eq('cases.dentist_id', currentUser.id)
+        .select('id, status_update, notes, timestamp, case_id, cases!inner(patient_name, dentist_id, lab_id)');
+      
+      if (currentUser.role === 'DENTIST') {
+        query = query
+          .eq('cases.dentist_id', currentUser.id)
+          .in('visibility', ['EXTERNAL', 'BOTH']);
+      } else {
+        // Find the lab ID. If role is LAB_ADMIN, use currentUser.labId or currentUser.id
+        const userLabId = currentUser.labId || currentUser.id;
+        query = query
+          .eq('cases.lab_id', userLabId)
+          .in('visibility', ['INTERNAL', 'BOTH']);
+      }
+
+      const { data } = await query
         .order('timestamp', { ascending: false })
         .limit(10);
+
       if (data) {
         setLiveNotifications(data.map((n: any) => ({
           id: n.id,
@@ -52,8 +65,6 @@ export default function Navbar({ currentUser, cases }: NavbarProps) {
       }
     };
     fetchInitialNotifications();
-
-    if (currentUser.role !== 'DENTIST') return;
 
     // 2. Play Audio chime using Web Audio API
     const playChime = () => {
@@ -70,7 +81,7 @@ export default function Navbar({ currentUser, cases }: NavbarProps) {
         gain1.gain.setValueAtTime(0.08, audioCtx.currentTime);
         osc1.start();
         osc1.stop(audioCtx.currentTime + 0.12);
-
+ 
         // Osc 2 (higher note) after 150ms
         setTimeout(() => {
           const osc2 = audioCtx.createOscillator();
@@ -88,22 +99,33 @@ export default function Navbar({ currentUser, cases }: NavbarProps) {
       }
     };
 
-    // 3. Subscribe to real-time timeline events for the dentist
-    const channel = supabase.channel('global_dentist_notifications')
+    // 3. Subscribe to real-time timeline events globally
+    const channel = supabase.channel('global_timeline_notifications')
       .on('postgres_changes', { 
         event: 'INSERT', 
         schema: 'public', 
-        table: 'timeline_events', 
-        filter: `dentist_id=eq.${currentUser.id}` 
+        table: 'timeline_events'
       }, async (payload) => {
         const newEvent = payload.new as any;
         
-        // Fetch case info for patient name
+        // Fetch case info to verify ownership and visibility
         const { data: caseInfo } = await supabase
           .from('cases')
-          .select('patient_name')
+          .select('patient_name, dentist_id, lab_id')
           .eq('id', newEvent.case_id)
           .single();
+
+        if (!caseInfo) return;
+
+        let isAuthorized = false;
+        if (currentUser.role === 'DENTIST') {
+          isAuthorized = caseInfo.dentist_id === currentUser.id && (newEvent.visibility === 'EXTERNAL' || newEvent.visibility === 'BOTH');
+        } else {
+          const userLabId = currentUser.labId || currentUser.id;
+          isAuthorized = caseInfo.lab_id === userLabId && (newEvent.visibility === 'INTERNAL' || newEvent.visibility === 'BOTH');
+        }
+
+        if (!isAuthorized) return;
 
         const newNotif = {
           id: newEvent.id,
@@ -111,7 +133,7 @@ export default function Navbar({ currentUser, cases }: NavbarProps) {
           notes: newEvent.notes,
           timestamp: newEvent.timestamp,
           caseId: newEvent.case_id,
-          patientName: caseInfo?.patient_name || 'Patient'
+          patientName: caseInfo.patient_name
         };
 
         setLiveNotifications(prev => [newNotif, ...prev.slice(0, 9)]);
@@ -127,7 +149,7 @@ export default function Navbar({ currentUser, cases }: NavbarProps) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [currentUser.id, currentUser.role, supabase]);
+  }, [currentUser.id, currentUser.role, currentUser.labId, supabase]);
 
   useEffect(() => {
     // Initialize dark mode from localStorage on mount

@@ -10,6 +10,8 @@ export function StatusBadge({ status }: { status: CaseStatus }) {
     QUALITY_CHECK: { label: 'QC Hold', className: 'bg-purple-100 text-purple-800 hover:bg-purple-100 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-900/50 dark:hover:bg-purple-900/40' },
     DISPATCHED: { label: 'Dispatched', className: 'bg-orange-100 text-orange-800 hover:bg-orange-100 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-900/50 dark:hover:bg-orange-900/40' },
     DELIVERED: { label: 'Delivered', className: 'bg-emerald-100 text-emerald-800 hover:bg-emerald-100 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-900/50 dark:hover:bg-emerald-900/40' },
+    COMPLETED: { label: 'Completed', className: 'bg-emerald-200 text-emerald-900 hover:bg-emerald-200 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-900' },
+    REJECTED: { label: 'Rejected', className: 'bg-red-100 text-red-800 hover:bg-red-100 border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-900' },
   };
 
   const config = statusConfig[status];

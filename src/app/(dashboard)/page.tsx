@@ -27,7 +27,14 @@ export default async function DashboardRoot() {
     dueDate: c.due_date,
     material: c.material,
     scanUrl: c.scan_url,
-    createdAt: c.created_at
+    createdAt: c.created_at,
+    patientAge: c.patient_age,
+    patientGender: c.patient_gender,
+    implantBrand: c.implant_brand,
+    scanBodyModel: c.scan_body_model,
+    analogLogistics: c.analog_logistics,
+    proposedDueDate: c.proposed_due_date,
+    dueDateProposalsCount: c.due_date_proposals_count
   })) || []
 
   if (userProfile.role === 'LAB_ADMIN') {

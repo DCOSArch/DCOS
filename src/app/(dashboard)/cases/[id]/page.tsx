@@ -63,7 +63,14 @@ export default async function CaseDetailsPage(props: { params: Promise<{ id: str
     selectedTeeth: caseData.selected_teeth,
     instructions: caseData.instructions,
     designUrl: caseData.design_url,
-    dicomUrl: caseData.dicom_url
+    dicomUrl: caseData.dicom_url,
+    patientAge: caseData.patient_age,
+    patientGender: caseData.patient_gender,
+    implantBrand: caseData.implant_brand,
+    scanBodyModel: caseData.scan_body_model,
+    analogLogistics: caseData.analog_logistics,
+    proposedDueDate: caseData.proposed_due_date,
+    dueDateProposalsCount: caseData.due_date_proposals_count
   }
 
   const dentistName = (caseData.dentist as any)?.name || '';

@@ -1,5 +1,5 @@
 export type Role = 'DENTIST' | 'LAB_ADMIN' | 'LAB_STAFF';
-export type CaseStatus = 'DRAFT' | 'PENDING' | 'IN_PROGRESS' | 'QUALITY_CHECK' | 'DISPATCHED' | 'DELIVERED';
+export type CaseStatus = 'DRAFT' | 'PENDING' | 'IN_PROGRESS' | 'QUALITY_CHECK' | 'DISPATCHED' | 'DELIVERED' | 'COMPLETED' | 'REJECTED';
 export type Urgency = 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
 
 export interface User {
@@ -27,6 +27,13 @@ export interface Case {
   instructions?: string;
   designUrl?: string;
   dicomUrl?: string;
+  patientAge?: number;
+  patientGender?: 'MALE' | 'FEMALE';
+  implantBrand?: string;
+  scanBodyModel?: string;
+  analogLogistics?: string;
+  proposedDueDate?: string;
+  dueDateProposalsCount?: number;
 }
 
 export interface TimelineEvent {
