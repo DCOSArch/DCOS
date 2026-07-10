@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>exocad DentalDB - Vertical Ellipse & Veneers</title>
+  
+  <style>
+    /* Reset & Base Rules */
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #e2e8f0; color: #0f172a; overflow: hidden; }
+    
+    /* App Window */
+    .app-container { display: flex; flex-direction: column; width: 100%; height: 100%; background: #ffffff; }
+
+    /* Header */
+    .header { padding: 12px 16px; background: #f8fafc; border-bottom: 1px solid #cbd5e1; flex-shrink: 0; }
+    .header h1 { font-size: 18px; margin: 0 0 2px 0; font-weight: 700; }
+    .header p { font-size: 11px; margin: 0; color: #64748b; }
+    
+    .btn { margin-top: 8px; padding: 6px 12px; font-size: 12px; font-weight: bold; border: 1px solid #cbd5e1; border-radius: 4px; background: white; cursor: pointer; transition: background 0.15s; }
+    .btn:hover { background: #f1f5f9; }
+    .btn:active { background: #e2e8f0; }
+
+    /* Main Grid */
+    .main-content { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+    @media (min-width: 768px) { .main-content { flex-direction: row; } }
+
+    /* Sidebar Workflow */
+    .sidebar { padding: 16px; background: #ffffff; border-right: 1px solid #cbd5e1; flex-shrink: 0; width: 300px; height: 100%; overflow-y: auto; }
+
+    .label { font-size: 10px; text-transform: uppercase; color: #64748b; letter-spacing: 1px; font-weight: bold; margin-bottom: 4px; }
+    
+    /* Highlighted Tool Display */
+    .active-tool-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-bottom: 20px; }
+    .active-tool-text { font-size: 15px; font-weight: bold; color: #0f172a; min-height: 20px; }
+
+    /* Paintbrush Tool Buttons */
+    .btn-indication { width: 100%; text-align: left; padding: 12px 10px; margin-bottom: 8px; border: 1px solid #cbd5e1; border-radius: 6px; background: #ffffff; font-size: 12px; font-weight: bold; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+    .btn-indication:hover { border-color: #94a3b8; background: #f8fafc; }
+    .btn-indication.active-sel { border-color: #3b82f6; background: #eff6ff; box-shadow: 0 0 0 2px rgba(59,130,246,0.2); }
+    
+    .swatch { width: 16px; height: 16px; border-radius: 4px; display: inline-block; border: 1px solid rgba(0,0,0,0.15); flex-shrink: 0; }
+
+    /* SVG Canvas Area */
+    .chart-area { flex: 1; display: flex; align-items: center; justify-content: center; background: #f8fafc; padding: 16px; position: relative; }
+    .svg-wrapper { width: 100%; max-width: 800px; position: relative; }
+    svg { width: 100%; height: auto; display: block; overflow: visible; }
+
+    /* Nested Legend Box */
+    .legend-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 230px; background: rgba(255, 255, 255, 0.95); border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); pointer-events: none; }
+    .legend-title { font-size: 10px; font-weight: bold; text-transform: uppercase; color: #64748b; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin-bottom: 8px; text-align: center; }
+    .legend-item { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: bold; color: #475569; margin-bottom: 6px; }
+
+    /* --- TOOTH & IMPLANT SVG STYLING --- */
+    .tooth-node { cursor: pointer; }
+    .tooth-shape { fill: #f1f5f9; stroke: #475569; stroke-width: 2px; transition: transform 0.15s, stroke 0.15s, fill 0.15s; }
+    
+    /* Text styling with user-select none to completely disable selection */
+    .tooth-text { 
+      font-size: 14px; 
+      font-weight: bold; 
+      fill: #475569; 
+      pointer-events: none; 
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      font-family: monospace; 
+      transition: fill 0.15s; 
+    }
+    
+    .tooth-node:hover .tooth-shape { transform: scale(1.05); stroke: #3b82f6; stroke-width: 2.5px; }
+    
+    /* Standard Indication Painted State */
+    .tooth-node.has-indication .tooth-shape { stroke: #0f172a; stroke-width: 2.5px; }
+    .tooth-node.has-indication:hover .tooth-shape { stroke: #000000; stroke-width: 3px; }
+
+    /* Implant Screw Graphic (Rotated INWARD by JS layout) */
+    .implant-fixture { opacity: 0; transition: opacity 0.25s ease-in-out; pointer-events: none; }
+    .tooth-node.has-fixture .implant-fixture { opacity: 1; }
+
+    /* --- VENEER SPECIFIC STYLING --- */
+    /* The secondary curve placed on the buccal (outer) side of the tooth */
+    .veneer-arc { opacity: 0; fill: none; stroke: #ec4899; stroke-width: 3.5px; stroke-linecap: round; pointer-events: none; transition: opacity 0.2s, transform 0.2s; }
+    .tooth-node.has-veneer .veneer-arc { opacity: 1; }
+    .tooth-node:hover.has-veneer .veneer-arc { transform: scale(1.05); stroke-width: 4px; }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <div class="header">
+      <h1>Implant Planning & Cosmetic Dentistry</h1>
+      <p>Interactive Dental Chart - Vertical Ellipse Layout & Veneers</p>
+      <button class="btn" id="reset-btn">Reset All Selections</button>
+    </div>
+
+    <div class="main-content">
+      
+      <div class="sidebar">
+        <div class="label">Current Tool Active</div>
+        <div class="active-tool-box">
+          <div class="active-tool-text" id="active-tool-txt">Please select a tool...</div>
+        </div>
+
+        <div class="label" style="margin-bottom: 12px;">Restorative Properties</div>
+        <div id="controls-box">
+          <button class="btn-indication" data-type="implant">
+            <span class="swatch" style="background-color: #475569;"></span> Implant Placement
+          </button>
+          <button class="btn-indication" data-type="abutment">
+            <span class="swatch" style="background-color: #eab308;"></span> Custom Abutment
+          </button>
+          <button class="btn-indication" data-type="crown">
+            <span class="swatch" style="background-color: #3b82f6;"></span> Crown
+          </button>
+          <button class="btn-indication" data-type="pontic">
+            <span class="swatch" style="background-color: #b91c1c;"></span> Pontic
+          </button>
+          <button class="btn-indication" data-type="fpd">
+            <span class="swatch" style="background-color: #059669;"></span> Fixed Partial Denture
+          </button>
+          <button class="btn-indication" data-type="veneer">
+            <span class="swatch" style="background-color: #ffffff; border: 3px solid #ec4899;"></span> Porcelain Veneer
+          </button>
+        </div>
+      </div>
+
+      <div class="chart-area">
+        <div class="svg-wrapper">
+          <svg id="chart-svg" viewBox="0 0 800 800">
+            <!-- Midline indicator -->
+            <line x1="400" y1="40" x2="400" y2="760" stroke="#cbd5e1" stroke-dasharray="4 4" stroke-width="2" />
+          </svg>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    window.onload = function() {
+      try {
+        var ns = "http://www.w3.org/2000/svg";
+        
+        // Tool Configurations (Updated with Crown, Pontic, and FPD - Eraser removed)
+        var INDICATIONS = {
+          implant: { hex: '#475569', txt: '#ffffff', label: 'Implant Placement', hasScrew: true, isVeneer: false },
+          abutment: { hex: '#eab308', txt: '#ffffff', label: 'Custom Abutment', hasScrew: true, isVeneer: false },
+          crown: { hex: '#3b82f6', txt: '#ffffff', label: 'Crown', hasScrew: false, isVeneer: false },
+          pontic: { hex: '#b91c1c', txt: '#ffffff', label: 'Pontic', hasScrew: false, isVeneer: false },
+          fpd: { hex: '#059669', txt: '#ffffff', label: 'Fixed Partial Denture', hasScrew: false, isVeneer: false },
+          veneer: { hex: '#f1f5f9', txt: '#475569', label: 'Porcelain Veneer', hasScrew: false, isVeneer: true } 
+        };
+
+        var TEETH_DATA = [
+          // Upper Arch
+          { id: 18, q: 1, idx: 8, type: 'molar' }, { id: 17, q: 1, idx: 7, type: 'molar' }, { id: 16, q: 1, idx: 6, type: 'molar' }, { id: 15, q: 1, idx: 5, type: 'premolar' }, { id: 14, q: 1, idx: 4, type: 'premolar' }, { id: 13, q: 1, idx: 3, type: 'canine' }, { id: 12, q: 1, idx: 2, type: 'incisor' }, { id: 11, q: 1, idx: 1, type: 'incisor' },
+          { id: 21, q: 2, idx: 1, type: 'incisor' }, { id: 22, q: 2, idx: 2, type: 'incisor' }, { id: 23, q: 2, idx: 3, type: 'canine' }, { id: 24, q: 2, idx: 4, type: 'premolar' }, { id: 25, q: 2, idx: 5, type: 'premolar' }, { id: 26, q: 2, idx: 6, type: 'molar' }, { id: 27, q: 2, idx: 7, type: 'molar' }, { id: 28, q: 2, idx: 8, type: 'molar' },
+          // Lower Arch
+          { id: 48, q: 4, idx: 8, type: 'molar' }, { id: 47, q: 4, idx: 7, type: 'molar' }, { id: 46, q: 4, idx: 6, type: 'molar' }, { id: 45, q: 4, idx: 5, type: 'premolar' }, { id: 44, q: 4, idx: 4, type: 'premolar' }, { id: 43, q: 4, idx: 3, type: 'canine' }, { id: 42, q: 4, idx: 2, type: 'incisor' }, { id: 41, q: 4, idx: 1, type: 'incisor' },
+          { id: 31, q: 3, idx: 1, type: 'incisor' }, { id: 32, q: 3, idx: 2, type: 'incisor' }, { id: 33, q: 3, idx: 3, type: 'canine' }, { id: 34, q: 3, idx: 4, type: 'premolar' }, { id: 35, q: 3, idx: 5, type: 'premolar' }, { id: 36, q: 3, idx: 6, type: 'molar' }, { id: 37, q: 3, idx: 7, type: 'molar' }, { id: 38, q: 3, idx: 8, type: 'molar' }
+        ];
+
+        // Adjusted angles for uniform ~5px spacing between geometries
+        var T_ANGLES = { 1: 7, 2: 20, 3: 33, 4: 46, 5: 58, 6: 69, 7: 80, 8: 90 };
+        
+        // Reduced radii to pack the teeth closer together physically
+        var A_RAD = 130;  
+        var B_RAD = 220;  
+        
+        var CENTER_X = 400;
+        
+        // Shifted vertices slightly inward to comfortably center the tighter arches in the SVG 
+        var UPPER_VERTEX_Y = 120;     
+        var LOWER_VERTEX_Y = 680;    
+
+        var activeTool = null; 
+        var toothColors = {}; 
+
+        var svgEl = document.getElementById('chart-svg');
+        var textEl = document.getElementById('active-tool-txt');
+        var btns = document.querySelectorAll('.btn-indication');
+
+        // Main tooth geometry
+        function getPath(t) {
+          if (t === 'molar') return "M -17 -17 C -6 -20, 6 -20, 17 -17 C 23 -8, 23 8, 17 17 C 6 20, -6 20, -17 17 C -23 8, -23 -8, -17 -17 Z";
+          if (t === 'premolar') return "M -14 -14 C -5 -16, 5 -16, 14 -14 C 19 -7, 19 7, 14 14 C 5 16, -5 16, -14 14 C -19 7, -19 -7, -14 -14 Z";
+          if (t === 'canine') return "M 0 -18 L 12 -8 C 15 2, 12 13, 0 18 C -12 13, -15 2, -12 -8 Z";
+          return "M -13 -12 L 13 -12 C 15 -4, 13 9, 0 16 C -13 9, -15 -4, -13 -12 Z"; // Incisor
+        }
+
+        // Dedicated arc geometry specifically outlining the buccal/outer edge of each tooth type
+        function getVeneerArc(t) {
+          if (t === 'molar') return "M -17 -17 C -6 -20, 6 -20, 17 -17";
+          if (t === 'premolar') return "M -14 -14 C -5 -16, 5 -16, 14 -14";
+          if (t === 'canine') return "M -11 -7 L 0 -18 L 11 -7"; // Traces pointy tip
+          return "M -13 -12 C -6 -14, 6 -14, 13 -12"; // Incisor (slight curve)
+        }
+
+        TEETH_DATA.forEach(function(tooth) {
+          
+          var t_deg = T_ANGLES[tooth.idx];
+          var t_rad = t_deg * (Math.PI / 180);
+          
+          // Calculate parametric offsets based on the angle
+          var dx = A_RAD * Math.sin(t_rad);
+          var dy = B_RAD * (1 - Math.cos(t_rad));
+          
+          var x, y, rot;
+
+          // Position and rotate based on the exact parametric angle per quadrant
+          if (tooth.q === 1) { // Upper Right
+            x = CENTER_X - dx;
+            y = UPPER_VERTEX_Y + dy;
+            rot = -t_deg; 
+          } 
+          else if (tooth.q === 2) { // Upper Left
+            x = CENTER_X + dx;
+            y = UPPER_VERTEX_Y + dy;
+            rot = t_deg;  
+          } 
+          else if (tooth.q === 3) { // Lower Left
+            x = CENTER_X + dx;
+            y = LOWER_VERTEX_Y - dy;
+            rot = 180 - t_deg; 
+          } 
+          else if (tooth.q === 4) { // Lower Right
+            x = CENTER_X - dx;
+            y = LOWER_VERTEX_Y - dy;
+            rot = 180 + t_deg; 
+          }
+
+          var g = document.createElementNS(ns, "g");
+          g.setAttribute("class", "tooth-node");
+          g.setAttribute("id", "t-" + tooth.id);
+          g.setAttribute("transform", "translate(" + x + ", " + y + ")");
+
+          var wrapper = document.createElementNS(ns, "g");
+          wrapper.setAttribute("transform", "rotate(" + rot + ")");
+
+          // Touch hitbox
+          var hitbox = document.createElementNS(ns, "rect");
+          hitbox.setAttribute("x", "-26"); hitbox.setAttribute("y", "-26");
+          hitbox.setAttribute("width", "52"); hitbox.setAttribute("height", "52");
+          hitbox.setAttribute("fill", "transparent");
+          wrapper.appendChild(hitbox);
+
+          // --- IMPLANT SCREW GEOMETRY ---
+          // Wrapped in an extra group to flip 180 degrees so it always points INWARD towards oral cavity
+          var implantFlipWrapper = document.createElementNS(ns, "g");
+          implantFlipWrapper.setAttribute("transform", "rotate(180)");
+          
+          var implantGroup = document.createElementNS(ns, "g");
+          implantGroup.setAttribute("class", "implant-fixture");
+
+          var collar = document.createElementNS(ns, "path");
+          collar.setAttribute("d", "M-5,-12 L5,-12 L4,-16 L-4,-16 Z"); 
+          collar.setAttribute("fill", "#cbd5e1");
+
+          var implantBody = document.createElementNS(ns, "path");
+          implantBody.setAttribute("d", "M-4,-16 L4,-16 L2.5,-35 L0,-40 L-2.5,-35 Z"); 
+          implantBody.setAttribute("fill", "#94a3b8");
+          
+          var threads = document.createElementNS(ns, "path");
+          threads.setAttribute("d", "M-4.5,-18 L4.5,-20 M-4.5,-22 L4.5,-24 M-4,-26 L4,-28 M-3.5,-30 L3.5,-32 M-3,-34 L3,-36");
+          threads.setAttribute("stroke", "#ffffff");
+          threads.setAttribute("stroke-width", "1.5");
+          threads.setAttribute("fill", "none");
+
+          implantGroup.appendChild(collar);
+          implantGroup.appendChild(implantBody);
+          implantGroup.appendChild(threads);
+          implantFlipWrapper.appendChild(implantGroup);
+          wrapper.appendChild(implantFlipWrapper);
+          // ------------------------------
+
+          // Standard Tooth Body
+          var path = document.createElementNS(ns, "path");
+          path.setAttribute("d", getPath(tooth.type));
+          path.setAttribute("class", "tooth-shape");
+          wrapper.appendChild(path);
+          
+          // Veneer Outer Edge Arc
+          var veneerArc = document.createElementNS(ns, "path");
+          veneerArc.setAttribute("d", getVeneerArc(tooth.type));
+          veneerArc.setAttribute("class", "veneer-arc");
+          wrapper.appendChild(veneerArc);
+
+          g.appendChild(wrapper);
+
+          // Tooth Number ID
+          var txt = document.createElementNS(ns, "text");
+          txt.setAttribute("text-anchor", "middle");
+          txt.setAttribute("dominant-baseline", "central");
+          txt.setAttribute("class", "tooth-text");
+          txt.textContent = tooth.id;
+          g.appendChild(txt);
+
+          // --- Click & Paint Logic ---
+          g.addEventListener('click', function() {
+            if (!activeTool) {
+              alert("Please select an Implantology Property from the sidebar first.");
+              return;
+            }
+
+            // Toggling off the tool if it is clicked while already active
+            if (toothColors[tooth.id] === activeTool) {
+              delete toothColors[tooth.id];
+              g.classList.remove('has-indication', 'has-fixture', 'has-veneer');
+              g.querySelector('.tooth-shape').style.fill = '#f1f5f9';
+              g.querySelector('.tooth-text').style.fill = '#475569';
+            } 
+            else {
+              toothColors[tooth.id] = activeTool;
+              
+              // Always clear existing states before applying new ones
+              g.classList.remove('has-indication', 'has-fixture', 'has-veneer');
+              
+              if (INDICATIONS[activeTool].isVeneer) {
+                g.classList.add('has-veneer');
+                g.querySelector('.tooth-shape').style.fill = '#f1f5f9'; // Ensure tooth base stays clear
+                g.querySelector('.tooth-text').style.fill = '#475569';
+              } else {
+                g.classList.add('has-indication');
+                if (INDICATIONS[activeTool].hasScrew) g.classList.add('has-fixture');
+                g.querySelector('.tooth-shape').style.fill = INDICATIONS[activeTool].hex;
+                g.querySelector('.tooth-text').style.fill = INDICATIONS[activeTool].txt;
+              }
+            }
+          });
+
+          svgEl.appendChild(g);
+        });
+
+        // Initialize Toolbar buttons
+        Array.from(btns).forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            activeTool = this.dataset.type;
+            
+            textEl.textContent = INDICATIONS[activeTool].label;
+            textEl.style.color = activeTool === 'veneer' ? '#ec4899' : INDICATIONS[activeTool].hex;
+            
+            Array.from(btns).forEach(function(b) { b.classList.remove('active-sel'); });
+            this.classList.add('active-sel');
+          });
+        });
+
+        // Reset All Memory State
+        document.getElementById('reset-btn').addEventListener('click', function() {
+          activeTool = null;
+          toothColors = {};
+          
+          textEl.textContent = "Please select a tool...";
+          textEl.style.color = '#0f172a';
+          
+          var nodes = document.querySelectorAll('.tooth-node');
+          Array.from(nodes).forEach(function(node) {
+            node.classList.remove('has-indication', 'has-fixture', 'has-veneer');
+            node.querySelector('.tooth-shape').style.fill = '#f1f5f9';
+            node.querySelector('.tooth-text').style.fill = '#475569';
+          });
+          
+          Array.from(btns).forEach(function(btn) { btn.classList.remove('active-sel'); });
+        });
+
+      } catch (err) {
+        console.error("Critical rendering error:", err);
+        document.getElementById('active-tool-txt').textContent = "System Error: Could not render chart geometry.";
+      }
+    };
+  </script>
+</body>
+</html>

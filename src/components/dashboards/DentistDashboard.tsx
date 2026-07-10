@@ -51,12 +51,21 @@ const MATERIALS = [
 ];
 
 const getIndications = (treatmentType: string) => {
-  const base: Record<string, { hex: string; txt: string; label: string }> = {
+  const base: Record<string, { hex: string; txt: string; label: string; hasScrew?: boolean; isVeneer?: boolean }> = {
     none: { hex: '#ffffff', txt: '#64748b', label: 'Healthy / Clear' },
     coping: { hex: '#0d9488', txt: '#ffffff', label: 'Coping' },
     anatomic: { hex: '#9333ea', txt: '#ffffff', label: 'Anatomic Crown' },
     pontic: { hex: '#b91c1c', txt: '#ffffff', label: 'Pontic Segment' }
   };
+
+  if (treatmentType === 'Veneer' || treatmentType === 'Full Arch') {
+    base.veneer = { hex: '#f1f5f9', txt: '#475569', label: 'Porcelain Veneer', isVeneer: true };
+  }
+
+  if (treatmentType === 'Implant' || treatmentType === 'Full Arch' || treatmentType === 'Surgical Guide') {
+    base.implant = { hex: '#475569', txt: '#ffffff', label: 'Implant Placement', hasScrew: true };
+    base.abutment = { hex: '#eab308', txt: '#ffffff', label: 'Custom Abutment', hasScrew: true };
+  }
 
   if (!['CNB', 'FPD', 'Veneer'].includes(treatmentType)) {
     base.adjacent = { hex: '#f97316', txt: '#ffffff', label: 'Adjacent Element' };
@@ -71,19 +80,62 @@ const getIndications = (treatmentType: string) => {
 };
 
 const TEETH_DATA = [
-  { id: 18, type: 'molar', deg: 172 }, { id: 17, type: 'molar', deg: 161 }, { id: 16, type: 'molar', deg: 150 },
-  { id: 15, type: 'premolar', deg: 139 }, { id: 14, type: 'premolar', deg: 128 }, { id: 13, type: 'canine', deg: 117 },
-  { id: 12, type: 'incisor', deg: 106 }, { id: 11, type: 'incisor', deg: 94 }, { id: 21, type: 'incisor', deg: 86 },
-  { id: 22, type: 'incisor', deg: 74 }, { id: 23, type: 'canine', deg: 63 }, { id: 24, type: 'premolar', deg: 52 },
-  { id: 25, type: 'premolar', deg: 41 }, { id: 26, type: 'molar', deg: 30 }, { id: 27, type: 'molar', deg: 19 },
-  { id: 28, type: 'molar', deg: 8 },
-  { id: 48, type: 'molar', deg: 188 }, { id: 47, type: 'molar', deg: 199 }, { id: 46, type: 'molar', deg: 210 },
-  { id: 45, type: 'premolar', deg: 221 }, { id: 44, type: 'premolar', deg: 232 }, { id: 43, type: 'canine', deg: 243 },
-  { id: 42, type: 'incisor', deg: 254 }, { id: 41, type: 'incisor', deg: 266 }, { id: 31, type: 'incisor', deg: 274 },
-  { id: 32, type: 'incisor', deg: 286 }, { id: 33, type: 'canine', deg: 297 }, { id: 34, type: 'premolar', deg: 308 },
-  { id: 35, type: 'premolar', deg: 319 }, { id: 36, type: 'molar', deg: 330 }, { id: 37, type: 'molar', deg: 341 },
-  { id: 38, type: 'molar', deg: 352 }
+  // Upper Arch
+  { id: 18, q: 1, idx: 8, type: 'molar' }, { id: 17, q: 1, idx: 7, type: 'molar' }, { id: 16, q: 1, idx: 6, type: 'molar' }, { id: 15, q: 1, idx: 5, type: 'premolar' }, { id: 14, q: 1, idx: 4, type: 'premolar' }, { id: 13, q: 1, idx: 3, type: 'canine' }, { id: 12, q: 1, idx: 2, type: 'incisor' }, { id: 11, q: 1, idx: 1, type: 'incisor' },
+  { id: 21, q: 2, idx: 1, type: 'incisor' }, { id: 22, q: 2, idx: 2, type: 'incisor' }, { id: 23, q: 2, idx: 3, type: 'canine' }, { id: 24, q: 2, idx: 4, type: 'premolar' }, { id: 25, q: 2, idx: 5, type: 'premolar' }, { id: 26, q: 2, idx: 6, type: 'molar' }, { id: 27, q: 2, idx: 7, type: 'molar' }, { id: 28, q: 2, idx: 8, type: 'molar' },
+  // Lower Arch
+  { id: 48, q: 4, idx: 8, type: 'molar' }, { id: 47, q: 4, idx: 7, type: 'molar' }, { id: 46, q: 4, idx: 6, type: 'molar' }, { id: 45, q: 4, idx: 5, type: 'premolar' }, { id: 44, q: 4, idx: 4, type: 'premolar' }, { id: 43, q: 4, idx: 3, type: 'canine' }, { id: 42, q: 4, idx: 2, type: 'incisor' }, { id: 41, q: 4, idx: 1, type: 'incisor' },
+  { id: 31, q: 3, idx: 1, type: 'incisor' }, { id: 32, q: 3, idx: 2, type: 'incisor' }, { id: 33, q: 3, idx: 3, type: 'canine' }, { id: 34, q: 3, idx: 4, type: 'premolar' }, { id: 35, q: 3, idx: 5, type: 'premolar' }, { id: 36, q: 3, idx: 6, type: 'molar' }, { id: 37, q: 3, idx: 7, type: 'molar' }, { id: 38, q: 3, idx: 8, type: 'molar' }
 ];
+
+const T_ANGLES: Record<number, number> = { 1: 7, 2: 20, 3: 33, 4: 46, 5: 58, 6: 69, 7: 80, 8: 90 };
+const A_RAD = 130;
+const B_RAD = 220;
+const CENTER_X = 400;
+const UPPER_VERTEX_Y = 120;
+const LOWER_VERTEX_Y = 680;
+
+const getToothPosition = (id: number) => {
+  const tooth = TEETH_DATA.find(t => t.id === id);
+  if (!tooth) return { x: 0, y: 0, rot: 0 };
+  const { q, idx } = tooth;
+  const t_deg = T_ANGLES[idx];
+  const t_rad = t_deg * (Math.PI / 180);
+  
+  const dx = A_RAD * Math.sin(t_rad);
+  const dy = B_RAD * (1 - Math.cos(t_rad));
+  
+  let x = 0;
+  let y = 0;
+  let rot = 0;
+
+  if (q === 1) { // Upper Right
+    x = CENTER_X - dx;
+    y = UPPER_VERTEX_Y + dy;
+    rot = -t_deg; 
+  } else if (q === 2) { // Upper Left
+    x = CENTER_X + dx;
+    y = UPPER_VERTEX_Y + dy;
+    rot = t_deg;  
+  } else if (q === 3) { // Lower Left
+    x = CENTER_X + dx;
+    y = LOWER_VERTEX_Y - dy;
+    rot = 180 - t_deg; 
+  } else if (q === 4) { // Lower Right
+    x = CENTER_X - dx;
+    y = LOWER_VERTEX_Y - dy;
+    rot = 180 + t_deg; 
+  }
+
+  return { x, y, rot };
+};
+
+const getVeneerArc = (type: string) => {
+  if (type === 'molar') return "M -17 -17 C -6 -20, 6 -20, 17 -17";
+  if (type === 'premolar') return "M -14 -14 C -5 -16, 5 -16, 14 -14";
+  if (type === 'canine') return "M -11 -7 L 0 -18 L 11 -7";
+  return "M -13 -12 C -6 -14, 6 -14, 13 -12"; // Incisor
+};
 
 const ADJACENT_PAIRS = [
   // Upper
@@ -1236,30 +1288,25 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
 
                     <div className="md:col-span-2 flex items-center justify-center bg-background/50 border border-border rounded-lg p-2.5 relative min-h-[300px]">
                       <div className="w-full max-w-[420px] relative">
-                        <svg viewBox="0 0 800 540" className="w-full h-auto overflow-visible">
-                          <line x1="400" y1="20" x2="400" y2="520" stroke="#cbd5e1" strokeDasharray="4 4" strokeWidth="2" className="opacity-50" />
-                          <line x1="120" y1="270" x2="680" y2="270" stroke="#cbd5e1" strokeDasharray="4 4" strokeWidth="2" className="opacity-50" />
+                        <svg viewBox="0 0 800 800" className="w-full h-auto overflow-visible bg-slate-900 rounded-lg shadow-inner border border-slate-800 p-2">
+                          {/* Midline indicator */}
+                          <line x1="400" y1="40" x2="400" y2="760" stroke="#3e3d32" strokeDasharray="4 4" strokeWidth="2" className="opacity-50" />
                           
+                          {/* Bridge Connections (Connector lines and dots) */}
                           {ADJACENT_PAIRS.map(([idA, idB]) => {
                             const statusA = toothConfigs[idA];
                             const statusB = toothConfigs[idB];
                             if (!statusA || statusA === 'none' || !statusB || statusB === 'none') return null;
 
-                            const toothA = TEETH_DATA.find(t => t.id === idA)!;
-                            const toothB = TEETH_DATA.find(t => t.id === idB)!;
+                            const posA = getToothPosition(idA);
+                            const posB = getToothPosition(idB);
+                            const xA = posA.x;
+                            const yA = posA.y;
+                            const xB = posB.x;
+                            const yB = posB.y;
 
-                            const radA = (toothA.deg * Math.PI) / 180;
-                            const xA = 400 + 245 * Math.cos(radA);
-                            const yA = 270 - 215 * Math.sin(radA);
-
-                            const radB = (toothB.deg * Math.PI) / 180;
-                            const xB = 400 + 245 * Math.cos(radB);
-                            const yB = 270 - 215 * Math.sin(radB);
-
-                            const midAngle = (toothA.deg + toothB.deg) / 2;
-                            const radMid = (midAngle * Math.PI) / 180;
-                            const dotX = 400 + 275 * Math.cos(radMid);
-                            const dotY = 270 - 240 * Math.sin(radMid);
+                            const dotX = (xA + xB) / 2;
+                            const dotY = (yA + yB) / 2;
 
                             const connectionKey = `${idA}-${idB}`;
                             const isConnected = connections.includes(connectionKey);
@@ -1269,19 +1316,19 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                                 <path
                                   d={`M ${xA} ${yA} L ${dotX} ${dotY} L ${xB} ${yB}`}
                                   fill="none"
-                                  stroke={isConnected ? "#10b981" : "#cbd5e1"}
-                                  strokeWidth="2"
+                                  stroke={isConnected ? "#a6e22e" : "#3e3d32"}
+                                  strokeWidth="2.5"
                                   strokeDasharray={isConnected ? "none" : "3 3"}
                                   className="transition-colors duration-200"
                                 />
                                 <circle
                                   cx={dotX}
                                   cy={dotY}
-                                  r="6"
+                                  r="7"
                                   className="cursor-pointer transition-opacity duration-200 hover:opacity-80"
-                                  fill={isConnected ? "#10b981" : "#ffffff"}
-                                  stroke={isConnected ? "#059669" : "#cbd5e1"}
-                                  strokeWidth="2"
+                                  fill={isConnected ? "#a6e22e" : "#1e1f1c"}
+                                  stroke={isConnected ? "#a6e22e" : "#3e3d32"}
+                                  strokeWidth="2.5"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     setConnections(prev => {
@@ -1297,11 +1344,12 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                             );
                           })}
 
+                          {/* Individual Teeth Nodes */}
                           {TEETH_DATA.map(tooth => {
-                            const rad = (tooth.deg * Math.PI) / 180;
-                            const x = 400 + 245 * Math.cos(rad);
-                            const y = 270 - 215 * Math.sin(rad);
-                            const rot = (tooth.id >= 11 && tooth.id <= 28) ? tooth.deg - 90 : tooth.deg - 270;
+                            const pos = getToothPosition(tooth.id);
+                            const x = pos.x;
+                            const y = pos.y;
+                            const rot = pos.rot;
                             const status = toothConfigs[tooth.id] || 'none';
                             const info = currentIndications[status] || currentIndications.none;
 
@@ -1342,19 +1390,45 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                                 transform={`translate(${x}, ${y})`}
                               >
                                 <g transform={`rotate(${rot})`}>
+                                  {/* Interaction Hitbox */}
                                   <rect x="-26" y="-26" width="52" height="52" fill="transparent" />
+
+                                  {/* Implant Screw Fixture (Rotated inward to point towards mouth center) */}
+                                  {info.hasScrew && (
+                                    <g transform="rotate(180)" className="transition-opacity duration-200">
+                                      <path d="M-5,-12 L5,-12 L4,-16 L-4,-16 Z" fill="#66d9ef" />
+                                      <path d="M-4,-16 L4,-16 L2.5,-35 L0,-40 L-2.5,-35 Z" fill="#3e3d32" />
+                                      <path d="M-4.5,-18 L4.5,-20 M-4.5,-22 L4.5,-24 M-4,-26 L4,-28 M-3.5,-30 L3.5,-32 M-3,-34 L3,-36" stroke="#f8f8f2" strokeWidth="1.5" fill="none" />
+                                    </g>
+                                  )}
+                                  
+                                  {/* Standard Tooth Shape */}
                                   <path 
                                     d={getPath(tooth.type)} 
-                                    className={`transition-all duration-200 stroke-[1.5px] ${
-                                      status !== 'none' ? 'stroke-blue-600' : 'stroke-slate-400 group-hover:stroke-blue-400'
+                                    className={`transition-all duration-200 stroke-[2px] ${
+                                      status !== 'none' ? 'stroke-primary' : 'stroke-slate-500 group-hover:stroke-cyan-500'
                                     }`}
                                     style={{ fill: info.hex }} 
                                   />
+
+                                  {/* Porcelain Veneer Buccal/Outer Arc */}
+                                  {info.isVeneer && (
+                                    <path
+                                      d={getVeneerArc(tooth.type)}
+                                      fill="none"
+                                      stroke="#f92672"
+                                      strokeWidth="3.5"
+                                      strokeLinecap="round"
+                                      className="pointer-events-none transition-all duration-200"
+                                    />
+                                  )}
                                 </g>
+
+                                {/* Tooth Identifier Text */}
                                 <text 
                                   textAnchor="middle" 
                                   dominantBaseline="central" 
-                                  className="text-xs font-mono font-bold select-none pointer-events-none"
+                                  className="text-xs font-mono font-bold select-none pointer-events-none transition-colors duration-200"
                                   style={{ fill: info.txt }}
                                 >
                                   {tooth.id}
@@ -1364,11 +1438,11 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                           })}
                         </svg>
 
-                        <div className="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-[110px] bg-background/95 border border-border rounded p-1.5 shadow-sm text-left pointer-events-none select-none flex flex-col gap-1">
-                          <p className="text-[8px] font-bold text-muted-foreground uppercase border-b border-border pb-0.5 text-center">Indications</p>
+                        <div className="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-[125px] bg-[#1e1f1c]/95 border border-[#3e3d32] rounded p-2 shadow-lg text-left pointer-events-none select-none flex flex-col gap-1.5 backdrop-blur-sm">
+                          <p className="text-[9px] font-bold text-[#66d9ef] uppercase border-b border-[#3e3d32] pb-1 text-center tracking-wider">Indications</p>
                           {Object.entries(currentIndications).filter(([k]) => k !== 'none').map(([key, val]) => (
-                            <div key={key} className="flex items-center gap-1 text-[8px] font-semibold text-muted-foreground leading-none">
-                              <span className="w-2 h-2 rounded shrink-0 border border-black/10" style={{ backgroundColor: val.hex }} />
+                            <div key={key} className="flex items-center gap-1.5 text-[9px] font-semibold text-[#f8f8f2] leading-none">
+                              <span className="w-2.5 h-2.5 rounded shrink-0 border border-black/10" style={{ backgroundColor: val.hex }} />
                               {val.label}
                             </div>
                           ))}
