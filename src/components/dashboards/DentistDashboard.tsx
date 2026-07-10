@@ -1437,16 +1437,6 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                             );
                           })}
                         </svg>
-
-                        <div className="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-[125px] bg-[#1e1f1c]/95 border border-[#3e3d32] rounded p-2 shadow-lg text-left pointer-events-none select-none flex flex-col gap-1.5 backdrop-blur-sm">
-                          <p className="text-[9px] font-bold text-[#66d9ef] uppercase border-b border-[#3e3d32] pb-1 text-center tracking-wider">Indications</p>
-                          {Object.entries(currentIndications).filter(([k]) => k !== 'none').map(([key, val]) => (
-                            <div key={key} className="flex items-center gap-1.5 text-[9px] font-semibold text-[#f8f8f2] leading-none">
-                              <span className="w-2.5 h-2.5 rounded shrink-0 border border-black/10" style={{ backgroundColor: val.hex }} />
-                              {val.label}
-                            </div>
-                          ))}
-                        </div>
                       </div>
                     </div>
                   </div>
