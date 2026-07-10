@@ -54,28 +54,13 @@ const getIndications = (treatmentType: string) => {
   const base: Record<string, { hex: string; txt: string; label: string; hasScrew?: boolean; isVeneer?: boolean }> = {
     none: { hex: '#ffffff', txt: '#64748b', label: 'Healthy / Clear' },
     coping: { hex: '#0d9488', txt: '#ffffff', label: 'Coping' },
-    anatomic: { hex: '#9333ea', txt: '#ffffff', label: 'Anatomic Crown' },
-    pontic: { hex: '#b91c1c', txt: '#ffffff', label: 'Pontic Segment' }
+    crown: { hex: '#3b82f6', txt: '#ffffff', label: 'Crown' },
+    implant: { hex: '#475569', txt: '#ffffff', label: 'Implant Placement', hasScrew: true },
+    abutment: { hex: '#eab308', txt: '#ffffff', label: 'Custom Abutment', hasScrew: true },
+    fpd: { hex: '#059669', txt: '#ffffff', label: 'Fixed Partial Denture' },
+    pontic: { hex: '#b91c1c', txt: '#ffffff', label: 'Pontic' },
+    veneer: { hex: '#f1f5f9', txt: '#475569', label: 'Porcelain Veneer', isVeneer: true }
   };
-
-  if (treatmentType === 'Veneer' || treatmentType === 'Full Arch') {
-    base.veneer = { hex: '#f1f5f9', txt: '#475569', label: 'Porcelain Veneer', isVeneer: true };
-  }
-
-  if (treatmentType === 'Implant' || treatmentType === 'Full Arch' || treatmentType === 'Surgical Guide') {
-    base.implant = { hex: '#475569', txt: '#ffffff', label: 'Implant Placement', hasScrew: true };
-    base.abutment = { hex: '#eab308', txt: '#ffffff', label: 'Custom Abutment', hasScrew: true };
-  }
-
-  if (!['CNB', 'FPD', 'Veneer'].includes(treatmentType)) {
-    base.adjacent = { hex: '#f97316', txt: '#ffffff', label: 'Adjacent Element' };
-    base.antagonist = { hex: '#eab308', txt: '#ffffff', label: 'Antagonist Layer' };
-  }
-
-  if (treatmentType === 'Implant') {
-    base.screw_holes = { hex: '#3b82f6', txt: '#ffffff', label: 'Screw holes on selected tooth' };
-  }
-
   return base;
 };
 
@@ -128,6 +113,50 @@ const getToothPosition = (id: number) => {
   }
 
   return { x, y, rot };
+};
+
+const getBridgeButtonPosition = (idA: number, idB: number) => {
+  const toothA = TEETH_DATA.find(t => t.id === idA);
+  const toothB = TEETH_DATA.find(t => t.id === idB);
+  if (!toothA || !toothB) return { x: 0, y: 0 };
+  
+  const degA = T_ANGLES[toothA.idx];
+  const degB = T_ANGLES[toothB.idx];
+  
+  let midDeg = 0;
+  let q = toothA.q;
+  
+  if (toothA.q === toothB.q) {
+    midDeg = (degA + degB) / 2;
+  } else {
+    midDeg = 0; // crossing midline
+  }
+  
+  const t_rad = midDeg * (Math.PI / 180);
+  const A_RAD_DOT = 165;
+  const B_RAD_DOT = 265;
+  
+  const dx = A_RAD_DOT * Math.sin(t_rad);
+  const dy = B_RAD_DOT * (1 - Math.cos(t_rad));
+  
+  let x = 0;
+  let y = 0;
+
+  if (q === 1) { // Upper Right
+    x = CENTER_X - dx;
+    y = UPPER_VERTEX_Y - 45 + dy;
+  } else if (q === 2) { // Upper Left
+    x = CENTER_X + dx;
+    y = UPPER_VERTEX_Y - 45 + dy;
+  } else if (q === 3) { // Lower Left
+    x = CENTER_X + dx;
+    y = LOWER_VERTEX_Y + 45 - dy;
+  } else if (q === 4) { // Lower Right
+    x = CENTER_X - dx;
+    y = LOWER_VERTEX_Y + 45 - dy;
+  }
+
+  return { x, y };
 };
 
 const getVeneerArc = (type: string) => {
@@ -1298,51 +1327,53 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                             const statusB = toothConfigs[idB];
                             if (!statusA || statusA === 'none' || !statusB || statusB === 'none') return null;
 
-                            const posA = getToothPosition(idA);
-                            const posB = getToothPosition(idB);
-                            const xA = posA.x;
-                            const yA = posA.y;
-                            const xB = posB.x;
-                            const yB = posB.y;
+                             const posA = getToothPosition(idA);
+                             const posB = getToothPosition(idB);
+                             const xA = posA.x;
+                             const yA = posA.y;
+                             const xB = posB.x;
+                             const yB = posB.y;
 
-                            const dotX = (xA + xB) / 2;
-                            const dotY = (yA + yB) / 2;
+                             const posDot = getBridgeButtonPosition(idA, idB);
+                             const dotX = posDot.x;
+                             const dotY = posDot.y;
 
-                            const connectionKey = `${idA}-${idB}`;
-                            const isConnected = connections.includes(connectionKey);
+                             const connectionKey = `${idA}-${idB}`;
+                             const isConnected = connections.includes(connectionKey);
 
-                            return (
-                              <g key={connectionKey}>
-                                <path
-                                  d={`M ${xA} ${yA} L ${dotX} ${dotY} L ${xB} ${yB}`}
-                                  fill="none"
-                                  stroke={isConnected ? "#a6e22e" : "#3e3d32"}
-                                  strokeWidth="2.5"
-                                  strokeDasharray={isConnected ? "none" : "3 3"}
-                                  className="transition-colors duration-200"
-                                />
-                                <circle
-                                  cx={dotX}
-                                  cy={dotY}
-                                  r="7"
-                                  className="cursor-pointer transition-opacity duration-200 hover:opacity-80"
-                                  fill={isConnected ? "#a6e22e" : "#1e1f1c"}
-                                  stroke={isConnected ? "#a6e22e" : "#3e3d32"}
-                                  strokeWidth="2.5"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setConnections(prev => {
-                                      if (prev.includes(connectionKey)) {
-                                        return prev.filter(c => c !== connectionKey);
-                                      } else {
-                                        return [...prev, connectionKey];
-                                      }
-                                    });
-                                  }}
-                                />
-                              </g>
-                            );
-                          })}
+                             return (
+                               <g key={connectionKey}>
+                                 {isConnected && (
+                                   <path
+                                     d={`M ${xA} ${yA} L ${dotX} ${dotY} L ${xB} ${yB}`}
+                                     fill="none"
+                                     stroke="#a6e22e"
+                                     strokeWidth="2.5"
+                                     className="transition-colors duration-200"
+                                   />
+                                 )}
+                                 <circle
+                                   cx={dotX}
+                                   cy={dotY}
+                                   r="7"
+                                   className="cursor-pointer transition-opacity duration-200 hover:opacity-80"
+                                   fill={isConnected ? "#a6e22e" : "#1e1f1c"}
+                                   stroke={isConnected ? "#a6e22e" : "#3e3d32"}
+                                   strokeWidth="2.5"
+                                   onClick={(e) => {
+                                     e.stopPropagation();
+                                     setConnections(prev => {
+                                       if (prev.includes(connectionKey)) {
+                                         return prev.filter(c => c !== connectionKey);
+                                       } else {
+                                         return [...prev, connectionKey];
+                                        }
+                                     });
+                                   }}
+                                 />
+                               </g>
+                             );
+                           })}
 
                           {/* Individual Teeth Nodes */}
                           {TEETH_DATA.map(tooth => {
