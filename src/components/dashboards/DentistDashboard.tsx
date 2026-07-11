@@ -727,6 +727,13 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
               const status = toothConfigs[tooth.id] || 'none';
               const info = currentIndications[status] || currentIndications.none;
 
+              // Calculate radial offset coordinates for upright text labels (Center of ellipse is 400, 400)
+              const vx = x - 400;
+              const vy = y - 400;
+              const len = Math.sqrt(vx * vx + vy * vy) || 1;
+              const textOffsetX = (vx / len) * 44;
+              const textOffsetY = (vy / len) * 44;
+
               return (
                 <g 
                   key={tooth.id} 
@@ -786,11 +793,13 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                     )}
                   </g>
 
-                  {/* Tooth Identifier Text */}
+                  {/* Tooth Identifier Text (Offset radially outward and made highly readable) */}
                   <text 
                     textAnchor="middle" 
-                    y="35" 
-                    className="text-[11px] font-bold fill-slate-400 group-hover/tooth:fill-cyan-400 pointer-events-none select-none transition-colors"
+                    dominantBaseline="middle"
+                    x={textOffsetX}
+                    y={textOffsetY}
+                    className="text-[12px] font-bold fill-slate-300 group-hover/tooth:fill-cyan-400 pointer-events-none select-none transition-colors"
                   >
                     {tooth.id}
                   </text>
