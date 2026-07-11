@@ -265,6 +265,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
   const [toothConfigs, setToothConfigs] = useState<Record<number, string>>({});
   const [connections, setConnections] = useState<string[]>([]);
   const [activeIndication, setActiveIndication] = useState<string>('coping');
+  const [showArchLimitPopup, setShowArchLimitPopup] = useState<boolean>(false);
 
 
   // Advanced Charting states
