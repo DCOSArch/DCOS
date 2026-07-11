@@ -701,32 +701,30 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
               const xB = posB.x;
               const yB = posB.y;
 
-              const posDot = getBridgeButtonPosition(idA, idB);
-              const dotX = posDot.x;
-              const dotY = posDot.y;
+              // Place connector at exact midpoint between the two teeth
+              const midX = (xA + xB) / 2;
+              const midY = (yA + yB) / 2;
 
               const connectionKey = `${idA}-${idB}`;
               const isConnected = connections.includes(connectionKey);
 
               return (
                 <g key={connectionKey}>
+                  {/* Direct line between teeth when connected */}
                   {isConnected && (
-                    <path
-                      d={`M ${xA} ${yA} L ${dotX} ${dotY} L ${xB} ${yB}`}
-                      fill="none"
+                    <line
+                      x1={xA} y1={yA}
+                      x2={xB} y2={yB}
                       stroke="#a6e22e"
-                      strokeWidth="2.5"
+                      strokeWidth="2"
+                      strokeLinecap="round"
                       className="bridge-line-anim"
                     />
                   )}
-                  <circle
-                    cx={dotX}
-                    cy={dotY}
-                    r="7"
-                    className="cursor-pointer transition-opacity duration-200 hover:opacity-80"
-                    fill={isConnected ? "#a6e22e" : "#1e1f1c"}
-                    stroke={isConnected ? "#a6e22e" : "#3e3d32"}
-                    strokeWidth="2.5"
+                  {/* Compact diamond toggle at midpoint */}
+                  <g
+                    transform={`translate(${midX}, ${midY}) rotate(45)`}
+                    className="cursor-pointer"
                     onClick={(e) => {
                       e.stopPropagation();
                       const nextConnections = connections.includes(connectionKey)
@@ -734,7 +732,24 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                         : [...connections, connectionKey];
                       updateChartState(toothConfigs, nextConnections);
                     }}
-                  />
+                  >
+                    <rect
+                      x="-4" y="-4" width="8" height="8"
+                      rx="1.5"
+                      className="transition-all duration-200"
+                      fill={isConnected ? "#a6e22e" : "#1e1f1c"}
+                      stroke={isConnected ? "#a6e22e" : "#475569"}
+                      strokeWidth="1.5"
+                      opacity={isConnected ? 1 : 0.7}
+                    />
+                    {/* Tiny plus icon when not connected */}
+                    {!isConnected && (
+                      <g transform="rotate(-45)" stroke="#64748b" strokeWidth="1.2" strokeLinecap="round">
+                        <line x1="0" y1="-2" x2="0" y2="2" />
+                        <line x1="-2" y1="0" x2="2" y2="0" />
+                      </g>
+                    )}
+                  </g>
                 </g>
               );
             })}
