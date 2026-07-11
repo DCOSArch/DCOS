@@ -1,11 +1,11 @@
 'use client';
 
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 
-/* ---- Procedural Molar Model for Showcase ---- */
+/* ---- Procedural Anatomical Molar Model ---- */
 function MolarModel() {
   const groupRef = useRef<THREE.Group>(null);
 
@@ -14,45 +14,110 @@ function MolarModel() {
     groupRef.current.rotation.y = state.clock.elapsedTime * 0.15;
   });
 
+  // Sculpt a realistic organic molar tooth from a Sphere
+  const toothGeometry = useMemo(() => {
+    const geom = new THREE.SphereGeometry(0.55, 64, 64);
+    const pos = geom.attributes.position;
+    const v = new THREE.Vector3();
+
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i);
+      let x = v.x;
+      let y = v.y;
+      let z = v.z;
+
+      const theta = Math.atan2(z, x);
+      const rXZ = Math.sqrt(x * x + z * z);
+
+      if (y > -0.15) {
+        // --- CROWN REGION ---
+        // Make the crown slightly rounded-square in the X-Z plane
+        const squareFactor = 1.0 + 0.08 * Math.cos(4 * theta);
+        x *= squareFactor;
+        z *= squareFactor;
+
+        // Flare the crown outwards slightly
+        const flare = 1.0 + 0.1 * (y + 0.15);
+        x *= flare;
+        z *= flare;
+
+        // Sculpt 4 anatomical cusps
+        if (y > 0.05) {
+          const heightFactor = (y - 0.05) / 0.5;
+          // Four distinct cusps with a bit of organic asymmetry
+          const cuspWave = (Math.cos(theta * 4) * 0.065 + Math.sin(theta * 2) * 0.015) * heightFactor;
+          y += cuspWave;
+
+          // Central pit/fossa (depression in the center of the occlusal surface)
+          if (rXZ < 0.4) {
+            const fossaDepression = (0.4 - rXZ) * 0.16 * heightFactor;
+            y -= fossaDepression;
+          }
+        }
+      } else {
+        // --- ROOT REGION (Bifurcated Molar Roots) ---
+        // Cervical constriction (neck of the tooth)
+        const neckFactor = 0.86;
+        x *= neckFactor;
+        z *= neckFactor;
+
+        // Progress down the roots (t ranges from 0 to 1)
+        const t = Math.min(1, Math.abs(y + 0.15) / 0.4);
+        const shift = 0.22 * t;
+
+        // Bifurcated split: separate left and right root centers
+        if (x >= 0) {
+          x = (x - shift * 0.2) + shift;
+        } else {
+          x = (x + shift * 0.2) - shift;
+        }
+
+        // Taper roots towards the apex
+        const taper = 1.0 - t * 0.72;
+        if (x >= 0) {
+          const rootCenterX = shift;
+          x = rootCenterX + (x - rootCenterX) * taper;
+        } else {
+          const rootCenterX = -shift;
+          x = rootCenterX + (x - rootCenterX) * taper;
+        }
+        z *= taper;
+
+        // Anatomically curve the roots distally (slight curve on the X/Z axes)
+        x += 0.08 * t * t;
+        const bendZ = 0.04 * Math.sin(t * Math.PI);
+        z += bendZ;
+
+        // Furcation (the anatomical split crotch between the roots)
+        if (Math.abs(x) < shift) {
+          const distFromCenter = Math.abs(x);
+          const furcationLift = (shift - distFromCenter) * 0.35 * (1.0 - t);
+          y += furcationLift;
+        }
+
+        // Elongate roots
+        y = y - 0.12 * t;
+      }
+
+      pos.setXYZ(i, x, y, z);
+    }
+
+    geom.computeVertexNormals();
+    return geom;
+  }, []);
+
   return (
-    <group ref={groupRef} scale={1.25} position={[0, -0.2, 0]}>
-      {/* Crown base */}
-      <mesh position={[0, 0.1, 0]}>
-        <cylinderGeometry args={[0.7, 0.65, 0.7, 32, 1, false]} />
-        <meshStandardMaterial
-          color="#f6f4ed"
-          roughness={0.25}
-          metalness={0.05}
+    <group ref={groupRef} scale={1.3} position={[0, -0.1, 0]}>
+      <mesh geometry={toothGeometry}>
+        <meshPhysicalMaterial
+          color="#fbfaf6"
+          roughness={0.16}
+          metalness={0.02}
+          clearcoat={1.0}
+          clearcoatRoughness={0.08}
+          transmission={0.14}
+          thickness={0.6}
         />
-      </mesh>
-
-      {/* Molar Cusps */}
-      <mesh position={[0.35, 0.45, 0.35]}>
-        <sphereGeometry args={[0.24, 16, 16]} />
-        <meshStandardMaterial color="#f6f4ed" roughness={0.25} metalness={0.05} />
-      </mesh>
-      <mesh position={[-0.35, 0.45, 0.35]}>
-        <sphereGeometry args={[0.24, 16, 16]} />
-        <meshStandardMaterial color="#f6f4ed" roughness={0.25} metalness={0.05} />
-      </mesh>
-      <mesh position={[0.35, 0.45, -0.35]}>
-        <sphereGeometry args={[0.24, 16, 16]} />
-        <meshStandardMaterial color="#f6f4ed" roughness={0.25} metalness={0.05} />
-      </mesh>
-      <mesh position={[-0.35, 0.45, -0.35]}>
-        <sphereGeometry args={[0.24, 16, 16]} />
-        <meshStandardMaterial color="#f6f4ed" roughness={0.25} metalness={0.05} />
-      </mesh>
-
-      {/* Root left */}
-      <mesh position={[-0.25, -0.4, 0]} rotation={[0, 0, 0.18]}>
-        <coneGeometry args={[0.28, 0.7, 16]} />
-        <meshStandardMaterial color="#f2eff5" roughness={0.35} metalness={0.02} />
-      </mesh>
-      {/* Root right */}
-      <mesh position={[0.25, -0.4, 0]} rotation={[0, 0, -0.18]}>
-        <coneGeometry args={[0.28, 0.7, 16]} />
-        <meshStandardMaterial color="#f2eff5" roughness={0.35} metalness={0.02} />
       </mesh>
     </group>
   );
@@ -61,9 +126,9 @@ function MolarModel() {
 function ViewerScene() {
   return (
     <>
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[5, 5, 5]} intensity={1.2} />
-      <directionalLight position={[-3, 2, -3]} intensity={0.4} color="#66D9EF" />
+      <ambientLight intensity={0.55} />
+      <directionalLight position={[5, 6, 5]} intensity={1.3} />
+      <directionalLight position={[-3, 2, -3]} intensity={0.5} color="#66D9EF" />
       <MolarModel />
       <OrbitControls
         enableZoom={false}
