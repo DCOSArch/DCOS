@@ -1397,6 +1397,8 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
 
   const activeCasesCount = cases.filter(c => c.status !== 'DELIVERED').length;
   const completedCasesCount = cases.filter(c => c.status === 'DELIVERED').length;
+  const pendingCasesCount = cases.filter(c => c.status === 'PENDING').length;
+  const inProgressCasesCount = cases.filter(c => c.status === 'IN_PROGRESS' || c.status === 'QUALITY_CHECK' || c.status === 'DISPATCHED').length;
 
   const filteredCases = cases.filter(c => {
     if (filterStatus !== 'ALL' && c.status !== filterStatus) return false;
@@ -1421,9 +1423,28 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
             <CardTitle className="text-sm font-medium">Active Cases</CardTitle>
             <Activity className="h-4 w-4 text-blue-500" />
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{activeCasesCount}</div>
-            <p className="text-xs text-muted-foreground mt-1">Currently in production</p>
+          <CardContent className="flex flex-col justify-center h-full space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
+                <span className="text-sm text-muted-foreground">Pending</span>
+              </div>
+              <span className="font-semibold">{pendingCasesCount}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                <span className="text-sm text-muted-foreground">Active</span>
+              </div>
+              <span className="font-semibold">{inProgressCasesCount}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                <span className="text-sm text-muted-foreground">Completed</span>
+              </div>
+              <span className="font-semibold">{completedCasesCount}</span>
+            </div>
           </CardContent>
         </Card>
         <Card className="flex flex-col justify-center h-full">
