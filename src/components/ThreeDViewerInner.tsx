@@ -83,6 +83,7 @@ export default function ThreeDViewerInner({
   const [tempPin, setTempPin] = useState<{ position: [number, number, number]; normal: [number, number, number] | null } | null>(null);
   const [pinText, setPinText] = useState('');
   const [activeUrl, setActiveUrl] = useState<string | undefined>(stlUrl);
+  const [hoveredAnnoId, setHoveredAnnoId] = useState<string | null>(null);
 
   useEffect(() => {
     setAnnotations(initialAnnotations);
@@ -192,13 +193,17 @@ export default function ThreeDViewerInner({
 
           {annotations.filter(a => !a.isResolved).map((anno) => {
             const pinPos = offsetPosition(anno.position, anno.normal, 2.5);
+            const isHovered = hoveredAnnoId === anno.id;
             return (
               <group key={anno.id} position={pinPos}>
                 {/* 3D Billboard Pin displaying text/number */}
-                <Billboard>
+                <Billboard
+                  onPointerOver={(e) => { e.stopPropagation(); setHoveredAnnoId(anno.id); }}
+                  onPointerOut={() => setHoveredAnnoId(null)}
+                >
                   <mesh>
                     <sphereGeometry args={[1.2, 16, 16]} />
-                    <meshBasicMaterial color="#ef4444" depthTest={false} transparent opacity={0.95} />
+                    <meshBasicMaterial color={isHovered ? "#3b82f6" : "#ef4444"} depthTest={false} transparent opacity={0.95} />
                   </mesh>
                   <Text
                     fontSize={1.0}
@@ -212,14 +217,10 @@ export default function ThreeDViewerInner({
                   </Text>
                 </Billboard>
 
-                {/* HTML Detail Tooltip */}
-                <Html center distanceFactor={18} style={{ pointerEvents: 'auto' }}>
-                  <div className="flex flex-col items-center group/tooltip select-none pointer-events-none">
-                    {/* Tiny invisible anchor box to align positioning */}
-                    <div className="w-2 h-2 -mb-2" />
-                    
-                    {/* Hover Card */}
-                    <div className="hidden group-hover/tooltip:block hover:block absolute left-4 top-1/2 -translate-y-1/2 bg-slate-900/95 text-white p-3 rounded-lg shadow-xl text-xs min-w-[160px] border border-slate-800 pointer-events-auto">
+                {/* HTML Detail Tooltip (Only rendered when hovered for massive performance optimization) */}
+                {isHovered && (
+                  <Html center distanceFactor={18} style={{ pointerEvents: 'auto' }}>
+                    <div className="bg-slate-900/95 text-white p-3 rounded-lg shadow-xl text-xs min-w-[160px] border border-slate-800 pointer-events-auto">
                       <p className="font-semibold mb-2 text-slate-100">{anno.text}</p>
                       {!isReadOnly && (
                         <Button
@@ -232,8 +233,8 @@ export default function ThreeDViewerInner({
                         </Button>
                       )}
                     </div>
-                  </div>
-                </Html>
+                  </Html>
+                )}
               </group>
             );
           })}
