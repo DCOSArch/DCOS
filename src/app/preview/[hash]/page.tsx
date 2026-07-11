@@ -44,7 +44,7 @@ export default async function SmilePreviewPage({ params }: { params: { hash: str
           <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
             <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Interactive 3D Model</span>
             <span className="text-xs bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 px-2 py-1 rounded-full font-semibold">
-              HIPAA Compliant Viewer
+              GPDP Compliant Viewer
             </span>
           </div>
           

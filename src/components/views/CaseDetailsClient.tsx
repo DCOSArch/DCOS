@@ -1225,7 +1225,7 @@ export default function CaseDetailsClient({
           <DialogHeader>
             <DialogTitle>B2B2C Smile Preview Link</DialogTitle>
             <DialogDescription>
-              Share this secure, HIPAA-compliant 3D preview with your patient so they can approve the aesthetic design.
+              Share this secure, GPDP-compliant 3D preview with your patient so they can approve the aesthetic design.
             </DialogDescription>
           </DialogHeader>
           <div className="flex items-center space-x-2 mt-4">

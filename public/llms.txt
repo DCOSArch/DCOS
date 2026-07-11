@@ -1,0 +1,55 @@
+# DCOS — DentalConnect Operating System
+
+DCOS (DentalConnect OS) is a B2B SaaS dental operating system designed to connect dental clinics and fabrication laboratories on a single real-time collaboration channel. DCOS streamlines prescriptions, digital tooth charting, scanner integrations, 3D model annotations, and pre-purchased material inventory tracking.
+
+---
+
+## Core Capabilities & Workflows
+
+### 1. FDI Guided Digital Prescriptions
+- **Tooth Charting Matrix**: Clinicians use a digital tooth selector mapping to standard FDI notations.
+- **Structured Rx Delivery**: Eliminates paper omissions by requiring material catalogs, prep type, implant systems, and shade selections.
+- **Auto-validation**: Prescriptions undergo automatic verification checks before sending to laboratories.
+
+### 2. Scanner Watcher Integration
+- **Folder Watcher Utility**: Directly integrates with local scanner exports (e.g. iTero, 3Shape, Carestream, Medit) via the browser's File System Access API.
+- **Zero-Click STL Upload**: Auto-detects newly finalized `.stl` or `.ply` scans inside specified local paths and attaches them to the patient case.
+
+### 3. Dual-Layer Case Timeline
+- **Role-based Event Streams**: Technicians see granular internal states (milling started, ceramic build-up, sintering, quality control).
+- **Dentist Updates**: Doctor-visible feed updates with major delivery milestones, keeping communication clear and distraction-free.
+
+### 4. Spatial 3D Annotations
+- **Vertex Normal Pinning**: Drop red comment pins directly on exact 3D coordinates of uploaded STL models.
+- **Visual Resolutions**: Technician views the precise prepare boundary or margins at identical camera angles, eliminating vague phone clarifications.
+
+### 5. B2B2C Patient Smile Preview
+- **Secure Previews**: Share read-only aesthetic previews of restorations with patients using a temporary, unauthenticated sharing link.
+- **GPDP Privacy Shield**: Preview routes mask patient identities and clinical records, conforming with personal data policies.
+- **Link Expiry**: Sharing tokens automatically expire after 72 hours.
+
+### 6. Automated Inventory Sync
+- **Stock Allocations**: Auto-deducts pre-purchased laboratory material blocks (e.g. IPS e.max, zirconia) when technician moves Kanban card to production.
+- **Postgres Triggers**: Transactions are validated and executed via isolated schema triggers, ensuring ledger integrity.
+
+---
+
+## Compliance & Architecture
+
+### GPDP Compliance (India)
+DCOS is built around the Digital Personal Data Protection Act, 2023 (GPDP) guidelines for India:
+- **Data Processor Role**: Strictly processes personal data on behalf of clinics and labs (Data Fiduciaries).
+- **Row-Level Security (RLS)**: Enforces table query tenant checks. Dentists access only clinic patients; labs access assigned cases.
+- **Data Isolation**: Separates patient identity markers from clinical case files.
+- **Temporary Scan Access**: Serves scan resources using presigned cloud bucket URLs with 60-minute expiries.
+
+### Technical Stack
+- **Frontend**: Next.js App Router, Tailwind CSS, GSAP Animation Suite, Lenis Smooth Scroll.
+- **3D Graphics**: React Three Fiber (R3F), Three.js WebGL.
+- **Database & Auth**: Supabase PostgreSQL with Row-Level Security, JWT Cookie-based SSR Session Management.
+
+---
+
+## Search Index Keywords
+
+`Dental clinic software`, `dental laboratory software`, `dental lab portal`, `dental clinic lab collaboration`, `FDI tooth charting`, `scanner folder watcher`, `iTero watcher integration`, `3Shape watch folder`, `3D STL annotation tool`, `dental CAD preview link`, `GPDP compliance dental`, `patient smile preview`, `Zirconia block inventory sync`, `dental clinic messaging`, `porcelain crown workflow`, `veneer prep boundary annotations`, `dental lab Kanban board`, `dental lab inventory trigger`, `Supabase postgres RLS dental`.
