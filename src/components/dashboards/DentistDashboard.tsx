@@ -701,9 +701,15 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
               const xB = posB.x;
               const yB = posB.y;
 
-              // Place connector at exact midpoint between the two teeth
+              // Place connector at midpoint, then offset inward toward arch center
               const midX = (xA + xB) / 2;
               const midY = (yA + yB) / 2;
+              const toCenter_x = 400 - midX;
+              const toCenter_y = 400 - midY;
+              const dist = Math.sqrt(toCenter_x * toCenter_x + toCenter_y * toCenter_y) || 1;
+              const inwardOffset = 28;
+              const connX = midX + (toCenter_x / dist) * inwardOffset;
+              const connY = midY + (toCenter_y / dist) * inwardOffset;
 
               const connectionKey = `${idA}-${idB}`;
               const isConnected = connections.includes(connectionKey);
@@ -721,9 +727,9 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                       className="bridge-line-anim"
                     />
                   )}
-                  {/* Compact diamond toggle at midpoint */}
+                  {/* Compact diamond toggle — offset inward from teeth */}
                   <g
-                    transform={`translate(${midX}, ${midY}) rotate(45)`}
+                    transform={`translate(${connX}, ${connY}) rotate(45)`}
                     className="cursor-pointer"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -733,9 +739,12 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                       updateChartState(toothConfigs, nextConnections);
                     }}
                   >
+                    {/* Invisible larger hit area for easy clicking */}
+                    <rect x="-10" y="-10" width="20" height="20" fill="transparent" />
+                    {/* Visible diamond */}
                     <rect
-                      x="-4" y="-4" width="8" height="8"
-                      rx="1.5"
+                      x="-5" y="-5" width="10" height="10"
+                      rx="2"
                       className="transition-all duration-200"
                       fill={isConnected ? "#a6e22e" : "#1e1f1c"}
                       stroke={isConnected ? "#a6e22e" : "#475569"}
@@ -744,9 +753,22 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                     />
                     {/* Tiny plus icon when not connected */}
                     {!isConnected && (
-                      <g transform="rotate(-45)" stroke="#64748b" strokeWidth="1.2" strokeLinecap="round">
-                        <line x1="0" y1="-2" x2="0" y2="2" />
-                        <line x1="-2" y1="0" x2="2" y2="0" />
+                      <g transform="rotate(-45)" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round">
+                        <line x1="0" y1="-2.5" x2="0" y2="2.5" />
+                        <line x1="-2.5" y1="0" x2="2.5" y2="0" />
+                      </g>
+                    )}
+                    {/* Checkmark when connected */}
+                    {isConnected && (
+                      <g transform="rotate(-45)">
+                        <polyline
+                          points="-2,-0.5 -0.5,2 2.5,-2"
+                          fill="none"
+                          stroke="#1e1f1c"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
                       </g>
                     )}
                   </g>
