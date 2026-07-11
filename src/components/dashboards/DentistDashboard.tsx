@@ -243,7 +243,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
   const [toothConfigs, setToothConfigs] = useState<Record<number, string>>({});
   const [connections, setConnections] = useState<string[]>([]);
   const [activeIndication, setActiveIndication] = useState<string>('coping');
-  const [showArchLimitPopup, setShowArchLimitPopup] = useState<boolean>(false);
+
 
   // Advanced Charting states
   const [zoom, setZoom] = useState(1);
@@ -446,7 +446,10 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         }, 0);
         
         if (jawCount >= 6 && !updated[toothId]) {
-          setShowArchLimitPopup(true);
+          toast.warning("Maximum Teeth Selected", {
+            description: "A maximum of 6 teeth per jaw can be selected for this treatment type. For more restorations in a single jaw, set Treatment Type to Full Arch in Step 1.",
+            duration: 6000,
+          });
           return;
         }
       }
@@ -576,6 +579,23 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
             animation: ripple 0.5s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
           }
         `}} />
+
+        {/* Bridge & Charting Legend (Top Left) */}
+        <div className="absolute top-3 left-3 z-10 bg-slate-900/90 backdrop-blur border border-slate-800 rounded-lg p-2 text-[10px] text-slate-300 space-y-1.5 select-none max-w-[170px] pointer-events-none">
+          <p className="font-bold text-[8px] uppercase tracking-wider text-slate-400 mb-1">Bridge Controls</p>
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded bg-[#1e1f1c] border border-slate-500 flex items-center justify-center font-bold text-[8px] text-slate-400 rotate-45 shrink-0"><span className="-rotate-45">+</span></span>
+            <span>Click to add bridge</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded bg-[#06b6d4] border border-[#06b6d4] flex items-center justify-center font-bold text-[8px] text-slate-900 rotate-45 shrink-0"><span className="-rotate-45">✓</span></span>
+            <span>Active Bridge</span>
+          </div>
+          <div className="flex items-center gap-2 pt-0.5">
+            <div className="w-5 h-1.5 bg-[#06b6d4] border border-[#0f172a] rounded-full shrink-0" />
+            <span>Bridge Connection</span>
+          </div>
+        </div>
 
         {/* Floating Canvas Controls (Top Right) */}
         <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-slate-900/80 backdrop-blur border border-slate-800 rounded-lg p-1">
@@ -805,16 +825,25 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
 
               return (
                 <g key={connectionKey}>
-                  {/* Direct line between teeth when connected */}
+                  {/* Direct line between teeth when connected (with thick dark outline to prevent color bleeding) */}
                   {isConnected && (
-                    <line
-                      x1={xA} y1={yA}
-                      x2={xB} y2={yB}
-                      stroke="#a6e22e"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      className="bridge-line-anim"
-                    />
+                    <>
+                      <line
+                        x1={xA} y1={yA}
+                        x2={xB} y2={yB}
+                        stroke="#0f172a"
+                        strokeWidth="5.5"
+                        strokeLinecap="round"
+                      />
+                      <line
+                        x1={xA} y1={yA}
+                        x2={xB} y2={yB}
+                        stroke="#06b6d4"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        className="bridge-line-anim"
+                      />
+                    </>
                   )}
                   {/* Compact diamond toggle — offset inward from teeth */}
                   <g
@@ -835,8 +864,8 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                       x="-5" y="-5" width="10" height="10"
                       rx="2"
                       className="transition-all duration-200"
-                      fill={isConnected ? "#a6e22e" : "#1e1f1c"}
-                      stroke={isConnected ? "#a6e22e" : "#475569"}
+                      fill={isConnected ? "#06b6d4" : "#1e1f1c"}
+                      stroke={isConnected ? "#06b6d4" : "#475569"}
                       strokeWidth="1.5"
                       opacity={isConnected ? 1 : 0.7}
                     />
@@ -853,7 +882,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                         <polyline
                           points="-2,-0.5 -0.5,2 2.5,-2"
                           fill="none"
-                          stroke="#1e1f1c"
+                          stroke="#0f172a"
                           strokeWidth="1.5"
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -2360,26 +2389,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         </DialogContent>
       </Dialog>
 
-      {/* Jaw Limit Popup */}
-      <Dialog open={showArchLimitPopup} onOpenChange={setShowArchLimitPopup}>
-        <DialogContent className="sm:max-w-md border-border bg-background">
-          <DialogHeader>
-            <DialogTitle className="text-foreground flex items-center gap-2">
-              <Activity className="h-5 w-5 text-amber-500" />
-              Maximum Teeth Selected
-            </DialogTitle>
-            <DialogDescription className="text-muted-foreground pt-2">
-              A maximum of 6 teeth per jaw can be selected for this treatment type. 
-              If you require more restorations in a single jaw, we recommend changing the Treatment Type to <strong>Full Arch</strong> in Step 1.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="mt-4">
-            <Button onClick={() => setShowArchLimitPopup(false)} className="bg-blue-600 hover:bg-blue-700 text-white w-full">
-              Got it
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
 
       {/* Fullscreen Charting View */}
       {isFullscreen && (
