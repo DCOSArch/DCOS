@@ -3,16 +3,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recha
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Case } from '@/types';
 
-// Vibrant palette for restoration types
-const CHART_COLORS = [
-  '#3b82f6', // blue-500
-  '#10b981', // emerald-500
-  '#f59e0b', // yellow-500
-  '#8b5cf6', // violet-500
-  '#ec4899', // pink-500
-  '#06b6d4', // cyan-500
-  '#f43f5e', // rose-500
-];
+
 
 type TimeFilter = 'day' | 'week' | 'month' | 'year' | 'lifetime';
 
@@ -63,11 +54,23 @@ export default function SummaryChart({ cases }: { cases: Case[] }) {
     });
 
     // 3. Format for recharts
+    const INDICATION_COLORS: Record<string, string> = {
+      'Coping': '#0d9488',
+      'Crown': '#3b82f6',
+      'Implant': '#475569',
+      'Abutment': '#eab308',
+      'Fpd': '#059669',
+      'Pontic': '#b91c1c',
+      'Veneer': '#94a3b8'
+    };
+
+    const FALLBACK_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#f43f5e'];
+
     return Object.entries(typeCounts)
       .map(([name, value], index) => ({
-        name,
+        name: name === 'Fpd' ? 'FPD' : name, // Better casing for FPD
         value,
-        color: CHART_COLORS[index % CHART_COLORS.length]
+        color: INDICATION_COLORS[name] || FALLBACK_COLORS[index % FALLBACK_COLORS.length]
       }))
       .sort((a, b) => b.value - a.value); // sort largest first
   }, [cases, timeFilter]);
