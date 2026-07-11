@@ -14,8 +14,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Dental ConnectOS",
-  description: "Complete Dental Practice Management System",
+  title: "DCOS — The Operating System for Modern Dentistry",
+  description: "B2B collaboration platform connecting dental clinics and fabrication laboratories on a single real-time channel. Streamline prescriptions, 3D annotations, and inventory tracking.",
+  other: {
+    "google-site-verification": process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || "",
+  }
 };
 
 export default function RootLayout({
@@ -23,6 +26,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+
   return (
     <html
       lang="en"
@@ -44,6 +49,27 @@ export default function RootLayout({
             `,
           }}
         />
+        {/* Google Analytics */}
+        {gaId && (
+          <>
+            <script
+              async
+              src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
+            />
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `
+                  window.dataLayer = window.dataLayer || [];
+                  function gtag(){dataLayer.push(arguments);}
+                  gtag('js', new Date());
+                  gtag('config', '${gaId}', {
+                    page_path: window.location.pathname,
+                  });
+                `,
+              }}
+            />
+          </>
+        )}
       </head>
       <body className="min-h-full flex flex-col">
         {children}
