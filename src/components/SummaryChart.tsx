@@ -44,14 +44,14 @@ export default function SummaryChart({ cases }: { cases: Case[] }) {
     filteredCases.forEach(c => {
       if (!c.instructions) return;
       
-      const match = c.instructions.match(/\[Design Parameters\]:\s*(\{.*\})/);
+      const match = c.instructions.match(/\[Design Parameters\]:\s*(\{[\s\S]*\})/);
       if (match && match[1]) {
         try {
           const params = JSON.parse(match[1]);
           if (params.toothConfigs) {
-            Object.values(params.toothConfigs).forEach((config: any) => {
-              if (config && config.indication && config.indication !== 'none') {
-                const type = config.indication.charAt(0).toUpperCase() + config.indication.slice(1);
+            Object.values(params.toothConfigs).forEach((indication: any) => {
+              if (typeof indication === 'string' && indication !== 'none') {
+                const type = indication.charAt(0).toUpperCase() + indication.slice(1);
                 typeCounts[type] = (typeCounts[type] || 0) + 1;
               }
             });

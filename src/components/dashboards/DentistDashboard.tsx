@@ -1420,7 +1420,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         <SummaryChart cases={cases} />
         <Card className="flex flex-col justify-center h-full">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Cases</CardTitle>
+            <CardTitle className="text-sm font-medium">Case Breakdown</CardTitle>
             <Activity className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent className="flex flex-col justify-center h-full space-y-3">
