@@ -248,9 +248,12 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
   // Advanced Charting states
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [isPanning, setIsPanning] = useState(false);
-  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const [isPanModeActive, setIsPanModeActive] = useState(false);
+  // Refs for zero-rerender panning — direct DOM manipulation during drag
+  const svgContainerRef = useRef<HTMLDivElement>(null);
+  const panRef = useRef({ x: 0, y: 0 });
+  const panStartRef = useRef({ x: 0, y: 0 });
+  const isPanningRef = useRef(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [hoveredTooth, setHoveredTooth] = useState<number | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
@@ -356,22 +359,37 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
       (e.target as SVGElement).id === 'midline-indicator';
     
     if (isBackground || isPanModeActive) {
-      setIsPanning(true);
-      setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+      isPanningRef.current = true;
+      panStartRef.current = { x: e.clientX - panRef.current.x, y: e.clientY - panRef.current.y };
+      // Remove transition during drag for instant response
+      if (svgContainerRef.current) {
+        svgContainerRef.current.style.transition = 'none';
+      }
     }
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (isPanning) {
-      setPan({
-        x: e.clientX - panStart.x,
-        y: e.clientY - panStart.y
-      });
+    if (isPanningRef.current) {
+      // Direct DOM mutation — zero React re-renders
+      const newX = e.clientX - panStartRef.current.x;
+      const newY = e.clientY - panStartRef.current.y;
+      panRef.current = { x: newX, y: newY };
+      if (svgContainerRef.current) {
+        svgContainerRef.current.style.transform = `translate(${newX}px, ${newY}px) scale(${zoom})`;
+      }
     }
   };
 
   const handleMouseUp = () => {
-    setIsPanning(false);
+    if (isPanningRef.current) {
+      isPanningRef.current = false;
+      // Sync final position back to React state (single re-render)
+      setPan({ ...panRef.current });
+      // Restore transition for zoom button animations
+      if (svgContainerRef.current) {
+        svgContainerRef.current.style.transition = '';
+      }
+    }
   };
 
   const handleToothMouseDown = (toothId: number, e: React.MouseEvent) => {
@@ -586,6 +604,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
             onClick={() => {
               setZoom(1);
               setPan({ x: 0, y: 0 });
+              panRef.current = { x: 0, y: 0 };
             }}
             title="Reset View"
             className="p-1.5 hover:bg-slate-850 text-slate-300 hover:text-white rounded transition-colors"
@@ -649,11 +668,13 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
 
         {/* Main SVG workspace */}
         <div 
-          className="w-full max-w-[520px] aspect-square transition-transform duration-75"
+          ref={svgContainerRef}
+          className="w-full max-w-[520px] aspect-square transition-transform duration-100"
           style={{
             transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
             transformOrigin: 'center center',
-            cursor: isPanModeActive ? (isPanning ? 'grabbing' : 'grab') : 'default'
+            cursor: isPanModeActive ? (isPanningRef.current ? 'grabbing' : 'grab') : 'default',
+            willChange: 'transform'
           }}
         >
           <svg 
