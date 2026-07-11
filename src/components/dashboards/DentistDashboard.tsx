@@ -783,13 +783,15 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                     )}
                   </g>
 
-                  {/* Tooth Identifier Text (Offset radially outward and made highly readable) */}
+                  {/* Tooth Identifier Text (Centered inside the tooth shape with auto-contrast) */}
                   <text 
                     textAnchor="middle" 
                     dominantBaseline="middle"
-                    x={textOffsetX}
-                    y={textOffsetY}
-                    className="text-[12px] font-bold fill-slate-300 group-hover/tooth:fill-cyan-400 pointer-events-none select-none transition-colors"
+                    x="0"
+                    y="1"
+                    className={`text-[10px] font-extrabold pointer-events-none select-none transition-colors ${
+                      status === 'none' ? 'fill-slate-600 dark:fill-slate-400' : 'fill-white'
+                    }`}
                   >
                     {tooth.id}
                   </text>
@@ -810,44 +812,28 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
               const xB = posB.x;
               const yB = posB.y;
 
-              // Place connector at midpoint, then offset inward toward arch center
-              const midX = (xA + xB) / 2;
-              const midY = (yA + yB) / 2;
-              const toCenter_x = 400 - midX;
-              const toCenter_y = 400 - midY;
-              const dist = Math.sqrt(toCenter_x * toCenter_x + toCenter_y * toCenter_y) || 1;
-              const inwardOffset = 28;
-              const connX = midX + (toCenter_x / dist) * inwardOffset;
-              const connY = midY + (toCenter_y / dist) * inwardOffset;
+              // Use original orbital positioning logic for bridge dots
+              const posDot = getBridgeButtonPosition(idA, idB);
+              const dotX = posDot.x;
+              const dotY = posDot.y;
 
               const connectionKey = `${idA}-${idB}`;
               const isConnected = connections.includes(connectionKey);
 
               return (
                 <g key={connectionKey}>
-                  {/* Direct line between teeth when connected (with thick dark outline to prevent color bleeding) */}
+                  {/* Routed line from tooth center through dot and back to adjacent tooth center */}
                   {isConnected && (
-                    <>
-                      <line
-                        x1={xA} y1={yA}
-                        x2={xB} y2={yB}
-                        stroke="#0f172a"
-                        strokeWidth="5.5"
-                        strokeLinecap="round"
-                      />
-                      <line
-                        x1={xA} y1={yA}
-                        x2={xB} y2={yB}
-                        stroke="#06b6d4"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        className="bridge-line-anim"
-                      />
-                    </>
+                    <path
+                      d={`M ${xA} ${yA} L ${dotX} ${dotY} L ${xB} ${yB}`}
+                      fill="none"
+                      stroke="#a6e22e"
+                      strokeWidth="2.5"
+                      className="bridge-line-anim"
+                    />
                   )}
-                  {/* Compact diamond toggle — offset inward from teeth */}
+                  {/* Circular button trigger */}
                   <g
-                    transform={`translate(${connX}, ${connY}) rotate(45)`}
                     className="cursor-pointer"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -858,35 +844,22 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                     }}
                   >
                     {/* Invisible larger hit area for easy clicking */}
-                    <rect x="-10" y="-10" width="20" height="20" fill="transparent" />
-                    {/* Visible diamond */}
-                    <rect
-                      x="-5" y="-5" width="10" height="10"
-                      rx="2"
+                    <circle cx={dotX} cy={dotY} r="16" fill="transparent" />
+                    {/* Visible circle */}
+                    <circle
+                      cx={dotX}
+                      cy={dotY}
+                      r="7.5"
+                      fill={isConnected ? "#a6e22e" : "#1e1f1c"}
+                      stroke={isConnected ? "#a6e22e" : "#475569"}
+                      strokeWidth={isConnected ? "1" : "1.5"}
                       className="transition-all duration-200"
-                      fill={isConnected ? "#06b6d4" : "#1e1f1c"}
-                      stroke={isConnected ? "#06b6d4" : "#475569"}
-                      strokeWidth="1.5"
-                      opacity={isConnected ? 1 : 0.7}
                     />
                     {/* Tiny plus icon when not connected */}
                     {!isConnected && (
-                      <g transform="rotate(-45)" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round">
-                        <line x1="0" y1="-2.5" x2="0" y2="2.5" />
-                        <line x1="-2.5" y1="0" x2="2.5" y2="0" />
-                      </g>
-                    )}
-                    {/* Checkmark when connected */}
-                    {isConnected && (
-                      <g transform="rotate(-45)">
-                        <polyline
-                          points="-2,-0.5 -0.5,2 2.5,-2"
-                          fill="none"
-                          stroke="#0f172a"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
+                      <g stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round">
+                        <line x1={dotX} y1={dotY - 2.5} x2={dotX} y2={dotY + 2.5} />
+                        <line x1={dotX - 2.5} y1={dotY} x2={dotX + 2.5} y2={dotY} />
                       </g>
                     )}
                   </g>
