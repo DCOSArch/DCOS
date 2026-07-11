@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Activity, CheckCircle2, UploadCloud, FileBox, Filter, FileText, Box, Building2, ChevronRight, ChevronLeft, Camera } from 'lucide-react';
+import { Plus, Activity, CheckCircle2, UploadCloud, FileBox, Filter, FileText, Box, Building2, ChevronRight, ChevronLeft, Camera, Minus, RotateCcw, Hand, Maximize2, Minimize2, Undo, Redo, Trash2 } from 'lucide-react';
 import { Case, User, DoctorInventoryItem } from '@/types';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -244,6 +244,598 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
   const [connections, setConnections] = useState<string[]>([]);
   const [activeIndication, setActiveIndication] = useState<string>('coping');
   const [showArchLimitPopup, setShowArchLimitPopup] = useState<boolean>(false);
+
+  // Advanced Charting states
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const [isPanModeActive, setIsPanModeActive] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [hoveredTooth, setHoveredTooth] = useState<number | null>(null);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const [isPaintDragging, setIsPaintDragging] = useState(false);
+  const [paintMode, setPaintMode] = useState<'ADD' | 'REMOVE' | null>(null);
+  const [ripples, setRipples] = useState<{ id: string; x: number; y: number; color: string }[]>([]);
+
+  // History Stack (Undo/Redo)
+  const [history, setHistory] = useState<{ toothConfigs: Record<number, string>; connections: string[] }[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+
+  // Sync initial history
+  useEffect(() => {
+    setHistory([{ toothConfigs: {}, connections: [] }]);
+    setHistoryIndex(0);
+  }, []);
+
+  const pushHistory = (newConfigs: Record<number, string>, newConnections: string[]) => {
+    const nextHistory = history.slice(0, historyIndex + 1);
+    nextHistory.push({
+      toothConfigs: JSON.parse(JSON.stringify(newConfigs)),
+      connections: [...newConnections]
+    });
+    if (nextHistory.length > 40) {
+      nextHistory.shift();
+    }
+    setHistory(nextHistory);
+    setHistoryIndex(nextHistory.length - 1);
+  };
+
+  const updateChartState = (newConfigs: Record<number, string>, newConnections: string[]) => {
+    setToothConfigs(newConfigs);
+    setConnections(newConnections);
+    pushHistory(newConfigs, newConnections);
+  };
+
+  const handleUndo = () => {
+    if (historyIndex > 0) {
+      const prevIndex = historyIndex - 1;
+      setHistoryIndex(prevIndex);
+      setToothConfigs(history[prevIndex].toothConfigs);
+      setConnections(history[prevIndex].connections);
+    }
+  };
+
+  const handleRedo = () => {
+    if (historyIndex < history.length - 1) {
+      const nextIndex = historyIndex + 1;
+      setHistoryIndex(nextIndex);
+      setToothConfigs(history[nextIndex].toothConfigs);
+      setConnections(history[nextIndex].connections);
+    }
+  };
+
+  const handleClearAll = () => {
+    updateChartState({}, []);
+  };
+
+  const addRipple = (x: number, y: number, color: string) => {
+    const newRipple = {
+      id: Math.random().toString(36).substr(2, 9),
+      x,
+      y,
+      color
+    };
+    setRipples(prev => [...prev, newRipple]);
+    setTimeout(() => {
+      setRipples(prev => prev.filter(r => r.id !== newRipple.id));
+    }, 500);
+  };
+
+  // Keyboard shortcut Ctrl+Z
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault();
+        handleUndo();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [historyIndex, history]);
+
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const zoomFactor = 1.1;
+    let newZoom = zoom;
+    if (e.deltaY < 0) {
+      newZoom = Math.min(zoom * zoomFactor, 3);
+    } else {
+      newZoom = Math.max(zoom / zoomFactor, 0.8);
+    }
+    setZoom(newZoom);
+  };
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    const isBackground = 
+      e.target === e.currentTarget || 
+      (e.target as SVGElement).id === 'svg-background' || 
+      (e.target as SVGElement).tagName === 'svg' ||
+      (e.target as SVGElement).id === 'midline-indicator';
+    
+    if (isBackground || isPanModeActive) {
+      setIsPanning(true);
+      setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (isPanning) {
+      setPan({
+        x: e.clientX - panStart.x,
+        y: e.clientY - panStart.y
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsPanning(false);
+  };
+
+  const handleToothMouseDown = (toothId: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isPanModeActive) return;
+
+    const currentStatus = toothConfigs[toothId] || 'none';
+    const targetMode = currentStatus === activeIndication ? 'REMOVE' : 'ADD';
+    setPaintMode(targetMode);
+    setIsPaintDragging(true);
+    
+    applyPaint(toothId, targetMode);
+  };
+
+  const handleToothMouseEnter = (toothId: number) => {
+    if (isPaintDragging && paintMode && !isPanModeActive) {
+      applyPaint(toothId, paintMode);
+    }
+  };
+
+  const handleGlobalMouseUp = () => {
+    setIsPaintDragging(false);
+    setPaintMode(null);
+  };
+
+  useEffect(() => {
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => {
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [isPaintDragging]);
+
+  const applyPaint = (toothId: number, mode: 'ADD' | 'REMOVE') => {
+    const updated = { ...toothConfigs };
+    if (mode === 'REMOVE') {
+      if (updated[toothId] === activeIndication) {
+        delete updated[toothId];
+        const pos = getToothPosition(toothId);
+        addRipple(pos.x, pos.y, '#ef4444');
+        updateChartState(updated, connections);
+      }
+    } else {
+      if (updated[toothId] === activeIndication) {
+        return;
+      }
+      
+      if (['CNB', 'FPD', 'Veneer', 'Implant'].includes(treatmentType)) {
+        const isUpper = toothId < 30;
+        const jawCount = Object.keys(updated).reduce((count, idStr) => {
+          const id = parseInt(idStr);
+          if (isUpper && id < 30) return count + 1;
+          if (!isUpper && id >= 30) return count + 1;
+          return count;
+        }, 0);
+        
+        if (jawCount >= 6 && !updated[toothId]) {
+          setShowArchLimitPopup(true);
+          return;
+        }
+      }
+      
+      updated[toothId] = activeIndication;
+      const pos = getToothPosition(toothId);
+      const currentIndications = getIndications(treatmentType);
+      const color = currentIndications[activeIndication]?.hex || '#3b82f6';
+      addRipple(pos.x, pos.y, color);
+      updateChartState(updated, connections);
+    }
+  };
+
+  const getToothQuadrantName = (id: number) => {
+    const tooth = TEETH_DATA.find(t => t.id === id);
+    if (!tooth) return '';
+    const { q } = tooth;
+    const quadrantNames: Record<number, string> = {
+      1: 'Upper Right - Q1',
+      2: 'Upper Left - Q2',
+      3: 'Lower Left - Q3',
+      4: 'Lower Right - Q4'
+    };
+    return quadrantNames[q];
+  };
+
+  const getToothAnatomicalName = (id: number) => {
+    const tooth = TEETH_DATA.find(t => t.id === id);
+    if (!tooth) return '';
+    const { q, idx } = tooth;
+    const names: Record<number, string> = {
+      1: 'Central Incisor',
+      2: 'Lateral Incisor',
+      3: 'Canine',
+      4: 'First Premolar',
+      5: 'Second Premolar',
+      6: 'First Molar',
+      7: 'Second Molar',
+      8: 'Third Molar'
+    };
+    const jaw = (q === 1 || q === 2) ? 'Maxillary' : 'Mandibular';
+    const side = (q === 1 || q === 4) ? 'Right' : 'Left';
+    return `${jaw} ${side} ${names[idx]}`;
+  };
+
+  const renderToolsSidebar = () => {
+    const currentIndications = getIndications(treatmentType);
+    return (
+      <div className="space-y-4">
+        <div className="space-y-1.5">
+          <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Restoration Tools</p>
+          <div className="grid gap-1.5">
+            {Object.entries(currentIndications).filter(([k]) => k !== 'none').map(([key, info]) => {
+              const isSelected = activeIndication === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setActiveIndication(key)}
+                  className={`w-full text-left px-2.5 py-1.5 rounded-md border text-xs font-semibold flex items-center gap-2 transition-all ${
+                    isSelected
+                      ? 'border-blue-600 bg-blue-600/10 text-foreground'
+                      : 'border-border bg-background hover:bg-muted text-foreground'
+                  }`}
+                >
+                  <span className="w-3.5 h-3.5 rounded border border-black/10 shrink-0" style={{ backgroundColor: info.hex }} />
+                  {info.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {selectedTeeth.length > 0 && (
+          <div className="text-[10px] text-muted-foreground border-t border-border pt-2.5 flex flex-col gap-1.5">
+            <span>Configured teeth:</span>
+            <div className="flex flex-wrap gap-1">
+              {selectedTeeth.map(t => (
+                <span key={t} className="px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-blue-600 font-semibold">
+                  {t}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderChartingCanvas = (isFullscreenMode: boolean) => {
+    const currentIndications = getIndications(treatmentType);
+    return (
+      <div 
+        className={`chart-container w-full h-full relative flex items-center justify-center bg-slate-950 select-none overflow-hidden ${isFullscreenMode ? '' : 'min-h-[400px] md:min-h-[480px] rounded-lg border border-slate-800'}`}
+        onWheel={handleWheel}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+      >
+        <style dangerouslySetInnerHTML={{ __html: `
+          @keyframes drawBridge {
+            from {
+              stroke-dashoffset: 120;
+            }
+            to {
+              stroke-dashoffset: 0;
+            }
+          }
+          .bridge-line-anim {
+            stroke-dasharray: 120;
+            stroke-dashoffset: 120;
+            animation: drawBridge 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+          }
+          
+          @keyframes ripple {
+            0% {
+              transform: scale(0.6);
+              opacity: 0.8;
+            }
+            100% {
+              transform: scale(1.8);
+              opacity: 0;
+            }
+          }
+          .ripple-effect {
+            animation: ripple 0.5s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+          }
+        `}} />
+
+        {/* Floating Canvas Controls (Top Right) */}
+        <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-slate-900/80 backdrop-blur border border-slate-800 rounded-lg p-1">
+          <button
+            type="button"
+            onClick={() => {
+              setZoom(z => Math.min(z + 0.2, 3));
+            }}
+            title="Zoom In"
+            className="p-1.5 hover:bg-slate-850 text-slate-300 hover:text-white rounded transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setZoom(z => Math.max(z - 0.2, 0.8));
+            }}
+            title="Zoom Out"
+            className="p-1.5 hover:bg-slate-850 text-slate-300 hover:text-white rounded transition-colors"
+          >
+            <Minus className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setZoom(1);
+              setPan({ x: 0, y: 0 });
+            }}
+            title="Reset View"
+            className="p-1.5 hover:bg-slate-850 text-slate-300 hover:text-white rounded transition-colors"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+          </button>
+          <div className="w-px h-4 bg-slate-800 mx-1" />
+          <button
+            type="button"
+            onClick={() => setIsPanModeActive(!isPanModeActive)}
+            title={isPanModeActive ? "Switch to Paint Mode" : "Switch to Pan Mode"}
+            className={`p-1.5 rounded transition-colors ${isPanModeActive ? 'bg-blue-600 text-white' : 'hover:bg-slate-850 text-slate-300 hover:text-white'}`}
+          >
+            <Hand className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsFullscreen(!isFullscreenMode)}
+            title={isFullscreenMode ? "Exit Fullscreen" : "Fullscreen Mode"}
+            className="p-1.5 hover:bg-slate-850 text-slate-300 hover:text-white rounded transition-colors"
+          >
+            {isFullscreenMode ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+          </button>
+        </div>
+
+        {/* Undo/Redo & Clear controls (Bottom Left) */}
+        <div className="absolute bottom-3 left-3 z-10 flex items-center gap-1 bg-slate-900/80 backdrop-blur border border-slate-800 rounded-lg p-1">
+          <button
+            type="button"
+            disabled={historyIndex <= 0}
+            onClick={handleUndo}
+            title="Undo (Ctrl+Z)"
+            className="p-1.5 hover:bg-slate-850 text-slate-300 hover:text-white rounded transition-colors disabled:opacity-40 disabled:hover:bg-transparent"
+          >
+            <Undo className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            disabled={historyIndex >= history.length - 1}
+            onClick={handleRedo}
+            title="Redo"
+            className="p-1.5 hover:bg-slate-850 text-slate-300 hover:text-white rounded transition-colors disabled:opacity-40 disabled:hover:bg-transparent"
+          >
+            <Redo className="w-3.5 h-3.5" />
+          </button>
+          <div className="w-px h-4 bg-slate-800 mx-1" />
+          <button
+            type="button"
+            onClick={handleClearAll}
+            title="Clear All Charting"
+            className="p-1.5 hover:bg-red-950 hover:text-red-400 text-slate-400 rounded transition-colors"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Paint mode indicator (Bottom Right) */}
+        <div className="absolute bottom-3 right-3 z-10 text-[10px] text-slate-500 bg-slate-900/55 backdrop-blur px-2.5 py-1 rounded border border-slate-800/60 font-medium">
+          {isPanModeActive ? 'Pan Mode' : isPaintDragging ? `Painting (${paintMode})` : 'Paint Mode (Click & Drag)'}
+        </div>
+
+        {/* Main SVG workspace */}
+        <div 
+          className="w-full max-w-[520px] aspect-square transition-transform duration-75"
+          style={{
+            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+            transformOrigin: 'center center',
+            cursor: isPanModeActive ? (isPanning ? 'grabbing' : 'grab') : 'default'
+          }}
+        >
+          <svg 
+            viewBox="0 0 800 800" 
+            className="w-full h-full overflow-visible"
+            id="svg-chart"
+          >
+            {/* Background rect to capture events */}
+            <rect id="svg-background" width="800" height="800" fill="transparent" />
+
+            {/* Midline indicator */}
+            <line id="midline-indicator" x1="400" y1="40" x2="400" y2="760" stroke="#3e3d32" strokeDasharray="4 4" strokeWidth="2" className="opacity-50" />
+            
+            {/* Bridge Connections */}
+            {ADJACENT_PAIRS.map(([idA, idB]) => {
+              const statusA = toothConfigs[idA];
+              const statusB = toothConfigs[idB];
+              if (!statusA || statusA === 'none' || !statusB || statusB === 'none') return null;
+
+              const posA = getToothPosition(idA);
+              const posB = getToothPosition(idB);
+              const xA = posA.x;
+              const yA = posA.y;
+              const xB = posB.x;
+              const yB = posB.y;
+
+              const posDot = getBridgeButtonPosition(idA, idB);
+              const dotX = posDot.x;
+              const dotY = posDot.y;
+
+              const connectionKey = `${idA}-${idB}`;
+              const isConnected = connections.includes(connectionKey);
+
+              return (
+                <g key={connectionKey}>
+                  {isConnected && (
+                    <path
+                      d={`M ${xA} ${yA} L ${dotX} ${dotY} L ${xB} ${yB}`}
+                      fill="none"
+                      stroke="#a6e22e"
+                      strokeWidth="2.5"
+                      className="bridge-line-anim"
+                    />
+                  )}
+                  <circle
+                    cx={dotX}
+                    cy={dotY}
+                    r="7"
+                    className="cursor-pointer transition-opacity duration-200 hover:opacity-80"
+                    fill={isConnected ? "#a6e22e" : "#1e1f1c"}
+                    stroke={isConnected ? "#a6e22e" : "#3e3d32"}
+                    strokeWidth="2.5"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const nextConnections = connections.includes(connectionKey)
+                        ? connections.filter(c => c !== connectionKey)
+                        : [...connections, connectionKey];
+                      updateChartState(toothConfigs, nextConnections);
+                    }}
+                  />
+                </g>
+              );
+            })}
+
+            {/* Individual Teeth Nodes */}
+            {TEETH_DATA.map(tooth => {
+              const pos = getToothPosition(tooth.id);
+              const x = pos.x;
+              const y = pos.y;
+              const rot = pos.rot;
+              const status = toothConfigs[tooth.id] || 'none';
+              const info = currentIndications[status] || currentIndications.none;
+
+              return (
+                <g 
+                  key={tooth.id} 
+                  className="cursor-pointer group/tooth"
+                  onMouseDown={(e) => handleToothMouseDown(tooth.id, e)}
+                  onMouseEnter={() => handleToothMouseEnter(tooth.id)}
+                  onMouseMove={(e) => {
+                    const container = e.currentTarget.closest('.chart-container');
+                    if (container) {
+                      const containerRect = container.getBoundingClientRect();
+                      setTooltipPos({
+                        x: e.clientX - containerRect.left,
+                        y: e.clientY - containerRect.top
+                      });
+                    }
+                    setHoveredTooth(tooth.id);
+                  }}
+                  onMouseLeave={() => setHoveredTooth(null)}
+                  transform={`translate(${x}, ${y})`}
+                >
+                  <g 
+                    transform={`rotate(${rot})`}
+                    className="transition-transform duration-250 ease-out origin-center group-hover/tooth:scale-[1.12]"
+                    style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
+                  >
+                    {/* Interaction Hitbox */}
+                    <rect x="-26" y="-26" width="52" height="52" fill="transparent" />
+
+                    {/* Implant Screw */}
+                    {info.hasScrew && (
+                      <g transform="rotate(180)" className="transition-opacity duration-200">
+                        <path d="M-5,-12 L5,-12 L4,-16 L-4,-16 Z" fill="#66d9ef" />
+                        <path d="M-4,-16 L4,-16 L2.5,-35 L0,-40 L-2.5,-35 Z" fill="#3e3d32" />
+                        <path d="M-4.5,-18 L4.5,-20 M-4.5,-22 L4.5,-24 M-4,-26 L4,-28 M-3.5,-30 L3.5,-32 M-3,-34 L3,-36" stroke="#f8f8f2" strokeWidth="1.5" fill="none" />
+                      </g>
+                    )}
+                    
+                    {/* Standard Tooth Shape */}
+                    <path 
+                      d={getPath(tooth.type)} 
+                      className={`transition-all duration-200 stroke-[2px] ${
+                        status !== 'none' ? 'stroke-blue-400' : 'stroke-slate-500 group-hover/tooth:stroke-cyan-400'
+                      }`}
+                      style={{ fill: info.hex }} 
+                    />
+
+                    {/* Veneer */}
+                    {info.isVeneer && (
+                      <path
+                        d={getVeneerArc(tooth.type)}
+                        fill="none"
+                        stroke="#f92672"
+                        strokeWidth="3.5"
+                        strokeLinecap="round"
+                        className="pointer-events-none transition-all duration-200"
+                      />
+                    )}
+                  </g>
+
+                  {/* Tooth Identifier Text */}
+                  <text 
+                    textAnchor="middle" 
+                    y="35" 
+                    className="text-[11px] font-bold fill-slate-400 group-hover/tooth:fill-cyan-400 pointer-events-none select-none transition-colors"
+                  >
+                    {tooth.id}
+                  </text>
+                </g>
+              );
+            })}
+
+            {/* Ripples */}
+            {ripples.map(r => (
+              <circle
+                key={r.id}
+                cx={r.x}
+                cy={r.y}
+                r="30"
+                fill="none"
+                stroke={r.color}
+                strokeWidth="3"
+                className="ripple-effect pointer-events-none"
+                style={{ transformOrigin: `${r.x}px ${r.y}px` }}
+              />
+            ))}
+          </svg>
+        </div>
+
+        {/* Custom Tooltip */}
+        {hoveredTooth !== null && (
+          <div 
+            className="absolute pointer-events-none z-30 bg-slate-900/95 border border-slate-800 text-white shadow-xl rounded-lg px-3 py-2 text-xs transition-all duration-75 flex flex-col gap-0.5"
+            style={{ left: tooltipPos.x + 12, top: tooltipPos.y - 50 }}
+          >
+            <div className="font-bold flex items-center gap-1.5 text-slate-100">
+              <span>Tooth {hoveredTooth}</span>
+              <span className="text-[10px] text-slate-400 font-normal">({getToothQuadrantName(hoveredTooth)})</span>
+            </div>
+            <div className="text-[10px] text-slate-400 capitalize">{getToothAnatomicalName(hoveredTooth)}</div>
+            <div className="mt-1 font-semibold text-blue-400 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: currentIndications[toothConfigs[hoveredTooth] || 'none']?.hex || '#ffffff' }} />
+              <span>{currentIndications[toothConfigs[hoveredTooth] || 'none']?.label || 'Healthy / Clear'}</span>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const [occlusalClearance, setOcclusalClearance] = useState('Medium');
   const [contactDesign, setContactDesign] = useState('Normal');
   const [connectorDesign, setConnectorDesign] = useState('Anatomical');
@@ -1323,192 +1915,12 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
 
                 {!isTeethNotSpecified ? (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border border-border rounded-lg p-3 bg-muted/10">
-                    <div className="md:col-span-1 border-b md:border-b-0 md:border-r border-border pb-3 md:pb-0 md:pr-3 space-y-4">
-                      <div className="space-y-1.5">
-                        <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Restoration Tools</p>
-                        <div className="grid gap-1.5">
-                          {Object.entries(currentIndications).filter(([k]) => k !== 'none').map(([key, info]) => {
-                            const isSelected = activeIndication === key;
-                            return (
-                              <button
-                                key={key}
-                                type="button"
-                                onClick={() => setActiveIndication(key)}
-                                className={`w-full text-left px-2.5 py-1.5 rounded-md border text-xs font-semibold flex items-center gap-2 transition-all ${
-                                  isSelected
-                                    ? 'border-blue-600 bg-blue-600/10 text-foreground'
-                                    : 'border-border bg-background hover:bg-muted text-foreground'
-                                }`}
-                              >
-                                <span className="w-3.5 h-3.5 rounded border border-black/10 shrink-0" style={{ backgroundColor: info.hex }} />
-                                {info.label}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      {selectedTeeth.length > 0 && (
-                        <div className="text-[10px] text-muted-foreground border-t border-border pt-2.5">
-                          Configured teeth: <span className="font-semibold text-blue-600">{selectedTeeth.join(', ')}</span>
-                        </div>
-                      )}
+                    <div className="md:col-span-1 border-b md:border-b-0 md:border-r border-border pb-3 md:pb-0 md:pr-3">
+                      {renderToolsSidebar()}
                     </div>
 
-                    <div className="md:col-span-2 flex items-center justify-center bg-background/50 border border-border rounded-lg p-2.5 relative min-h-[300px]">
-                      <div className="w-full max-w-[420px] relative">
-                        <svg viewBox="0 0 800 800" className="w-full h-auto overflow-visible bg-slate-900 rounded-lg shadow-inner border border-slate-800 p-2">
-                          {/* Midline indicator */}
-                          <line x1="400" y1="40" x2="400" y2="760" stroke="#3e3d32" strokeDasharray="4 4" strokeWidth="2" className="opacity-50" />
-                          
-                          {/* Bridge Connections (Connector lines and dots) */}
-                          {ADJACENT_PAIRS.map(([idA, idB]) => {
-                            const statusA = toothConfigs[idA];
-                            const statusB = toothConfigs[idB];
-                            if (!statusA || statusA === 'none' || !statusB || statusB === 'none') return null;
-
-                             const posA = getToothPosition(idA);
-                             const posB = getToothPosition(idB);
-                             const xA = posA.x;
-                             const yA = posA.y;
-                             const xB = posB.x;
-                             const yB = posB.y;
-
-                             const posDot = getBridgeButtonPosition(idA, idB);
-                             const dotX = posDot.x;
-                             const dotY = posDot.y;
-
-                             const connectionKey = `${idA}-${idB}`;
-                             const isConnected = connections.includes(connectionKey);
-
-                             return (
-                               <g key={connectionKey}>
-                                 {isConnected && (
-                                   <path
-                                     d={`M ${xA} ${yA} L ${dotX} ${dotY} L ${xB} ${yB}`}
-                                     fill="none"
-                                     stroke="#a6e22e"
-                                     strokeWidth="2.5"
-                                     className="transition-colors duration-200"
-                                   />
-                                 )}
-                                 <circle
-                                   cx={dotX}
-                                   cy={dotY}
-                                   r="7"
-                                   className="cursor-pointer transition-opacity duration-200 hover:opacity-80"
-                                   fill={isConnected ? "#a6e22e" : "#1e1f1c"}
-                                   stroke={isConnected ? "#a6e22e" : "#3e3d32"}
-                                   strokeWidth="2.5"
-                                   onClick={(e) => {
-                                     e.stopPropagation();
-                                     setConnections(prev => {
-                                       if (prev.includes(connectionKey)) {
-                                         return prev.filter(c => c !== connectionKey);
-                                       } else {
-                                         return [...prev, connectionKey];
-                                        }
-                                     });
-                                   }}
-                                 />
-                               </g>
-                             );
-                           })}
-
-                          {/* Individual Teeth Nodes */}
-                          {TEETH_DATA.map(tooth => {
-                            const pos = getToothPosition(tooth.id);
-                            const x = pos.x;
-                            const y = pos.y;
-                            const rot = pos.rot;
-                            const status = toothConfigs[tooth.id] || 'none';
-                            const info = currentIndications[status] || currentIndications.none;
-
-                            return (
-                              <g 
-                                key={tooth.id} 
-                                className="cursor-pointer group"
-                                onClick={() => {
-                                  if (!activeIndication) return;
-                                  
-                                  setToothConfigs(prev => {
-                                    const updated = { ...prev };
-                                    
-                                    if (updated[tooth.id] === activeIndication) {
-                                      delete updated[tooth.id];
-                                      return updated;
-                                    }
-                                    
-                                    if (['CNB', 'FPD', 'Veneer', 'Implant'].includes(treatmentType)) {
-                                      const isUpper = tooth.id < 30;
-                                      const jawCount = Object.keys(updated).reduce((count, idStr) => {
-                                        const id = parseInt(idStr);
-                                        if (isUpper && id < 30) return count + 1;
-                                        if (!isUpper && id >= 30) return count + 1;
-                                        return count;
-                                      }, 0);
-                                      
-                                      if (jawCount >= 6 && !updated[tooth.id]) {
-                                        setShowArchLimitPopup(true);
-                                        return updated;
-                                      }
-                                    }
-                                    
-                                    updated[tooth.id] = activeIndication;
-                                    return updated;
-                                  });
-                                }}
-                                transform={`translate(${x}, ${y})`}
-                              >
-                                <g transform={`rotate(${rot})`}>
-                                  {/* Interaction Hitbox */}
-                                  <rect x="-26" y="-26" width="52" height="52" fill="transparent" />
-
-                                  {/* Implant Screw Fixture (Rotated inward to point towards mouth center) */}
-                                  {info.hasScrew && (
-                                    <g transform="rotate(180)" className="transition-opacity duration-200">
-                                      <path d="M-5,-12 L5,-12 L4,-16 L-4,-16 Z" fill="#66d9ef" />
-                                      <path d="M-4,-16 L4,-16 L2.5,-35 L0,-40 L-2.5,-35 Z" fill="#3e3d32" />
-                                      <path d="M-4.5,-18 L4.5,-20 M-4.5,-22 L4.5,-24 M-4,-26 L4,-28 M-3.5,-30 L3.5,-32 M-3,-34 L3,-36" stroke="#f8f8f2" strokeWidth="1.5" fill="none" />
-                                    </g>
-                                  )}
-                                  
-                                  {/* Standard Tooth Shape */}
-                                  <path 
-                                    d={getPath(tooth.type)} 
-                                    className={`transition-all duration-200 stroke-[2px] ${
-                                      status !== 'none' ? 'stroke-primary' : 'stroke-slate-500 group-hover:stroke-cyan-500'
-                                    }`}
-                                    style={{ fill: info.hex }} 
-                                  />
-
-                                  {/* Porcelain Veneer Buccal/Outer Arc */}
-                                  {info.isVeneer && (
-                                    <path
-                                      d={getVeneerArc(tooth.type)}
-                                      fill="none"
-                                      stroke="#f92672"
-                                      strokeWidth="3.5"
-                                      strokeLinecap="round"
-                                      className="pointer-events-none transition-all duration-200"
-                                    />
-                                  )}
-                                </g>
-
-                                {/* Tooth Identifier Text */}
-                                <text 
-                                  textAnchor="middle" 
-                                  dominantBaseline="central" 
-                                  className="text-xs font-mono font-bold select-none pointer-events-none transition-colors duration-200"
-                                  style={{ fill: info.txt }}
-                                >
-                                  {tooth.id}
-                                </text>
-                              </g>
-                            );
-                          })}
-                        </svg>
-                      </div>
+                    <div className="md:col-span-2">
+                      {renderChartingCanvas(false)}
                     </div>
                   </div>
                 ) : (
@@ -1901,6 +2313,36 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Fullscreen Charting View */}
+      {isFullscreen && (
+        <div className="fixed inset-0 z-[100] bg-slate-950 flex flex-col p-6 animate-in fade-in duration-200">
+          <div className="flex justify-between items-center mb-4 shrink-0">
+            <div>
+              <h2 className="text-lg font-bold text-white">Interactive Tooth Charting Workspace</h2>
+              <p className="text-xs text-slate-400">Click & Drag to paint. Scroll/Pinch to zoom. Drag background to pan. Undo changes with Ctrl+Z.</p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsFullscreen(false)}
+              className="border-slate-800 text-slate-300 hover:text-white bg-slate-900 hover:bg-slate-850"
+            >
+              Exit Fullscreen
+            </Button>
+          </div>
+          <div className="flex-1 flex gap-4 min-h-0">
+            {/* Sidebar inside fullscreen */}
+            <div className="w-64 bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-4 overflow-y-auto shrink-0">
+              {renderToolsSidebar()}
+            </div>
+            {/* Interactive Canvas inside fullscreen */}
+            <div className="flex-1 bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden relative">
+              {renderChartingCanvas(true)}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
