@@ -73,6 +73,28 @@ const TEETH_DATA = [
   { id: 31, q: 3, idx: 1, type: 'incisor' }, { id: 32, q: 3, idx: 2, type: 'incisor' }, { id: 33, q: 3, idx: 3, type: 'canine' }, { id: 34, q: 3, idx: 4, type: 'premolar' }, { id: 35, q: 3, idx: 5, type: 'premolar' }, { id: 36, q: 3, idx: 6, type: 'molar' }, { id: 37, q: 3, idx: 7, type: 'molar' }, { id: 38, q: 3, idx: 8, type: 'molar' }
 ];
 
+const UPPER_ARCH_ORDER = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
+const LOWER_ARCH_ORDER = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38];
+
+const getArchMaxGroupSize = (orderedArch: number[], configs: Record<number, string>) => {
+  let maxGroup = 0;
+  let currentGroup = 0;
+  for (const id of orderedArch) {
+    if (configs[id] && configs[id] !== 'none') {
+      currentGroup++;
+    } else {
+      if (currentGroup > maxGroup) {
+        maxGroup = currentGroup;
+      }
+      currentGroup = 0;
+    }
+  }
+  if (currentGroup > maxGroup) {
+    maxGroup = currentGroup;
+  }
+  return maxGroup;
+};
+
 const T_ANGLES: Record<number, number> = { 1: 7, 2: 20, 3: 33, 4: 46, 5: 58, 6: 69, 7: 80, 8: 90 };
 const A_RAD = 130;
 const B_RAD = 220;
@@ -437,17 +459,13 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
       }
       
       if (['CNB', 'FPD', 'Veneer', 'Implant'].includes(treatmentType)) {
-        const isUpper = toothId < 30;
-        const jawCount = Object.keys(updated).reduce((count, idStr) => {
-          const id = parseInt(idStr);
-          if (isUpper && id < 30) return count + 1;
-          if (!isUpper && id >= 30) return count + 1;
-          return count;
-        }, 0);
+        const simulated = { ...updated, [toothId]: activeIndication };
+        const upperMax = getArchMaxGroupSize(UPPER_ARCH_ORDER, simulated);
+        const lowerMax = getArchMaxGroupSize(LOWER_ARCH_ORDER, simulated);
         
-        if (jawCount >= 6 && !updated[toothId]) {
+        if ((upperMax > 6 || lowerMax > 6) && (!updated[toothId] || updated[toothId] === 'none')) {
           toast.warning("Maximum Teeth Selected", {
-            description: "A maximum of 6 teeth per jaw can be selected for this treatment type. For more restorations in a single jaw, set Treatment Type to Full Arch in Step 1.",
+            description: "A maximum of 6 teeth in a single contiguous group can be selected for this treatment type. For a larger group of restorations, set Treatment Type to Full Arch in Step 1.",
             duration: 6000,
           });
           return;
@@ -939,7 +957,17 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         return selectedFile !== null && uploadState !== 'analyzing';
       case 2:
         if (treatmentType === 'Full Arch') return true;
-        return Object.values(toothConfigs).some(v => v !== 'none') || isTeethNotSpecified;
+        const hasSelection = Object.values(toothConfigs).some(v => v !== 'none') || isTeethNotSpecified;
+        if (!hasSelection) return false;
+        
+        if (['CNB', 'FPD', 'Veneer', 'Implant'].includes(treatmentType)) {
+          const upperMax = getArchMaxGroupSize(UPPER_ARCH_ORDER, toothConfigs);
+          const lowerMax = getArchMaxGroupSize(LOWER_ARCH_ORDER, toothConfigs);
+          if (upperMax > 6 || lowerMax > 6) {
+            return false;
+          }
+        }
+        return true;
       case 3:
         return isDesignNotSpecified || (material !== '' && shade !== '');
       case 4:
@@ -950,7 +978,12 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
   };
 
   useEffect(() => {
-    setSelectedTeeth(Object.keys(toothConfigs).map(Number).sort((a, b) => a - b));
+    setSelectedTeeth(
+      Object.keys(toothConfigs)
+        .map(Number)
+        .filter(id => toothConfigs[id] !== 'none')
+        .sort((a, b) => a - b)
+    );
   }, [toothConfigs]);
 
   const renderShadeGrid = (onSelect: (shade: string) => void, selectedShade?: string) => {
@@ -1147,6 +1180,16 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
       return;
     }
 
+    if (['CNB', 'FPD', 'Veneer', 'Implant'].includes(treatmentType)) {
+      const upperMax = getArchMaxGroupSize(UPPER_ARCH_ORDER, toothConfigs);
+      const lowerMax = getArchMaxGroupSize(LOWER_ARCH_ORDER, toothConfigs);
+      if (upperMax > 6 || lowerMax > 6) {
+        setShowArchLimitPopup(true);
+        alert('A maximum of 6 teeth in a single contiguous group can be selected for this treatment type.');
+        return;
+      }
+    }
+
     setUploadState('analyzing');
 
     try {
@@ -1199,10 +1242,11 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         connectorDesign,
         ponticDesign,
       };
-      if (Object.keys(toothConfigs).length > 0) {
-        designParams.toothConfigs = Object.fromEntries(
-          Object.entries(toothConfigs).map(([k, v]) => [k, v])
-        );
+      const filteredConfigs = Object.fromEntries(
+        Object.entries(toothConfigs).filter(([_, v]) => v !== 'none')
+      );
+      if (Object.keys(filteredConfigs).length > 0) {
+        designParams.toothConfigs = filteredConfigs;
       }
       if (connections.length > 0) {
         designParams.connections = connections;
@@ -1730,11 +1774,20 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                 <div className="grid gap-2">
                   <Label htmlFor="treatmentType" className="text-foreground">Treatment Type <span className="text-red-500">*</span></Label>
                   <Select value={treatmentType} onValueChange={(val) => {
-                    setTreatmentType(val || '');
-                    if (val !== 'Implant') {
+                    const newType = val || '';
+                    setTreatmentType(newType);
+                    if (newType !== 'Implant') {
                       setImplantBrand('');
                       setScanBodyModel('');
                       setAnalogLogistics('');
+                    }
+                    
+                    if (['CNB', 'FPD', 'Veneer', 'Implant'].includes(newType)) {
+                      const upperMax = getArchMaxGroupSize(UPPER_ARCH_ORDER, toothConfigs);
+                      const lowerMax = getArchMaxGroupSize(LOWER_ARCH_ORDER, toothConfigs);
+                      if (upperMax > 6 || lowerMax > 6) {
+                        setShowArchLimitPopup(true);
+                      }
                     }
                   }}>
                     <SelectTrigger className="border-border text-foreground bg-background">
@@ -2360,7 +2413,26 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         </DialogContent>
       </Dialog>
 
-
+      {/* Jaw Limit Popup */}
+      <Dialog open={showArchLimitPopup} onOpenChange={setShowArchLimitPopup}>
+        <DialogContent className="sm:max-w-md border-border bg-background">
+          <DialogHeader>
+            <DialogTitle className="text-foreground flex items-center gap-2">
+              <Activity className="h-5 w-5 text-amber-500" />
+              Maximum Teeth Selected
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground pt-2">
+              A maximum of 6 teeth in a single contiguous group can be selected for this treatment type. 
+              If you require a larger group of restorations, we recommend changing the Treatment Type to <strong>Full Arch</strong> in Step 1.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4">
+            <Button onClick={() => setShowArchLimitPopup(false)} className="bg-blue-600 hover:bg-blue-700 text-white w-full">
+              Got it
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Fullscreen Charting View */}
       {isFullscreen && (
