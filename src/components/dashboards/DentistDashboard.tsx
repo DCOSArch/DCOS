@@ -783,15 +783,13 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                     )}
                   </g>
 
-                  {/* Tooth Identifier Text (Centered inside the tooth shape with auto-contrast) */}
+                  {/* Tooth Identifier Text (Centered inside the tooth shape in high-contrast dark navy blue) */}
                   <text 
                     textAnchor="middle" 
                     dominantBaseline="middle"
                     x="0"
                     y="1"
-                    className={`text-[10px] font-extrabold pointer-events-none select-none transition-colors ${
-                      status === 'none' ? 'fill-slate-600 dark:fill-slate-400' : 'fill-white'
-                    }`}
+                    className="text-[10px] font-extrabold fill-[#091e3a] pointer-events-none select-none"
                   >
                     {tooth.id}
                   </text>
