@@ -688,94 +688,6 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
             {/* Midline indicator */}
             <line id="midline-indicator" x1="400" y1="40" x2="400" y2="760" stroke="#3e3d32" strokeDasharray="4 4" strokeWidth="2" className="opacity-50" />
             
-            {/* Bridge Connections */}
-            {ADJACENT_PAIRS.map(([idA, idB]) => {
-              const statusA = toothConfigs[idA];
-              const statusB = toothConfigs[idB];
-              if (!statusA || statusA === 'none' || !statusB || statusB === 'none') return null;
-
-              const posA = getToothPosition(idA);
-              const posB = getToothPosition(idB);
-              const xA = posA.x;
-              const yA = posA.y;
-              const xB = posB.x;
-              const yB = posB.y;
-
-              // Place connector at midpoint, then offset inward toward arch center
-              const midX = (xA + xB) / 2;
-              const midY = (yA + yB) / 2;
-              const toCenter_x = 400 - midX;
-              const toCenter_y = 400 - midY;
-              const dist = Math.sqrt(toCenter_x * toCenter_x + toCenter_y * toCenter_y) || 1;
-              const inwardOffset = 28;
-              const connX = midX + (toCenter_x / dist) * inwardOffset;
-              const connY = midY + (toCenter_y / dist) * inwardOffset;
-
-              const connectionKey = `${idA}-${idB}`;
-              const isConnected = connections.includes(connectionKey);
-
-              return (
-                <g key={connectionKey}>
-                  {/* Direct line between teeth when connected */}
-                  {isConnected && (
-                    <line
-                      x1={xA} y1={yA}
-                      x2={xB} y2={yB}
-                      stroke="#a6e22e"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      className="bridge-line-anim"
-                    />
-                  )}
-                  {/* Compact diamond toggle — offset inward from teeth */}
-                  <g
-                    transform={`translate(${connX}, ${connY}) rotate(45)`}
-                    className="cursor-pointer"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const nextConnections = connections.includes(connectionKey)
-                        ? connections.filter(c => c !== connectionKey)
-                        : [...connections, connectionKey];
-                      updateChartState(toothConfigs, nextConnections);
-                    }}
-                  >
-                    {/* Invisible larger hit area for easy clicking */}
-                    <rect x="-10" y="-10" width="20" height="20" fill="transparent" />
-                    {/* Visible diamond */}
-                    <rect
-                      x="-5" y="-5" width="10" height="10"
-                      rx="2"
-                      className="transition-all duration-200"
-                      fill={isConnected ? "#a6e22e" : "#1e1f1c"}
-                      stroke={isConnected ? "#a6e22e" : "#475569"}
-                      strokeWidth="1.5"
-                      opacity={isConnected ? 1 : 0.7}
-                    />
-                    {/* Tiny plus icon when not connected */}
-                    {!isConnected && (
-                      <g transform="rotate(-45)" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round">
-                        <line x1="0" y1="-2.5" x2="0" y2="2.5" />
-                        <line x1="-2.5" y1="0" x2="2.5" y2="0" />
-                      </g>
-                    )}
-                    {/* Checkmark when connected */}
-                    {isConnected && (
-                      <g transform="rotate(-45)">
-                        <polyline
-                          points="-2,-0.5 -0.5,2 2.5,-2"
-                          fill="none"
-                          stroke="#1e1f1c"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                    )}
-                  </g>
-                </g>
-              );
-            })}
-
             {/* Individual Teeth Nodes */}
             {TEETH_DATA.map(tooth => {
               const pos = getToothPosition(tooth.id);
@@ -861,6 +773,94 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                   >
                     {tooth.id}
                   </text>
+                </g>
+              );
+            })}
+
+            {/* Bridge Connections (Rendered AFTER teeth so they capture clicks cleanly) */}
+            {ADJACENT_PAIRS.map(([idA, idB]) => {
+              const statusA = toothConfigs[idA];
+              const statusB = toothConfigs[idB];
+              if (!statusA || statusA === 'none' || !statusB || statusB === 'none') return null;
+
+              const posA = getToothPosition(idA);
+              const posB = getToothPosition(idB);
+              const xA = posA.x;
+              const yA = posA.y;
+              const xB = posB.x;
+              const yB = posB.y;
+
+              // Place connector at midpoint, then offset inward toward arch center
+              const midX = (xA + xB) / 2;
+              const midY = (yA + yB) / 2;
+              const toCenter_x = 400 - midX;
+              const toCenter_y = 400 - midY;
+              const dist = Math.sqrt(toCenter_x * toCenter_x + toCenter_y * toCenter_y) || 1;
+              const inwardOffset = 28;
+              const connX = midX + (toCenter_x / dist) * inwardOffset;
+              const connY = midY + (toCenter_y / dist) * inwardOffset;
+
+              const connectionKey = `${idA}-${idB}`;
+              const isConnected = connections.includes(connectionKey);
+
+              return (
+                <g key={connectionKey}>
+                  {/* Direct line between teeth when connected */}
+                  {isConnected && (
+                    <line
+                      x1={xA} y1={yA}
+                      x2={xB} y2={yB}
+                      stroke="#a6e22e"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      className="bridge-line-anim"
+                    />
+                  )}
+                  {/* Compact diamond toggle — offset inward from teeth */}
+                  <g
+                    transform={`translate(${connX}, ${connY}) rotate(45)`}
+                    className="cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const nextConnections = connections.includes(connectionKey)
+                        ? connections.filter(c => c !== connectionKey)
+                        : [...connections, connectionKey];
+                      updateChartState(toothConfigs, nextConnections);
+                    }}
+                  >
+                    {/* Invisible larger hit area for easy clicking */}
+                    <rect x="-10" y="-10" width="20" height="20" fill="transparent" />
+                    {/* Visible diamond */}
+                    <rect
+                      x="-5" y="-5" width="10" height="10"
+                      rx="2"
+                      className="transition-all duration-200"
+                      fill={isConnected ? "#a6e22e" : "#1e1f1c"}
+                      stroke={isConnected ? "#a6e22e" : "#475569"}
+                      strokeWidth="1.5"
+                      opacity={isConnected ? 1 : 0.7}
+                    />
+                    {/* Tiny plus icon when not connected */}
+                    {!isConnected && (
+                      <g transform="rotate(-45)" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round">
+                        <line x1="0" y1="-2.5" x2="0" y2="2.5" />
+                        <line x1="-2.5" y1="0" x2="2.5" y2="0" />
+                      </g>
+                    )}
+                    {/* Checkmark when connected */}
+                    {isConnected && (
+                      <g transform="rotate(-45)">
+                        <polyline
+                          points="-2,-0.5 -0.5,2 2.5,-2"
+                          fill="none"
+                          stroke="#1e1f1c"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </g>
+                    )}
+                  </g>
                 </g>
               );
             })}
