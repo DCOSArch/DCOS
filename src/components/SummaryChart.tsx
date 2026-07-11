@@ -44,7 +44,7 @@ export default function SummaryChart({ cases }: { cases: Case[] }) {
     filteredCases.forEach(c => {
       if (!c.instructions) return;
       
-      const match = c.instructions.match(/\[Design Parameters\]:\s*(\{.*\})/);
+      const match = c.instructions.match(/\[Design Parameters\]:\s*(\{[\s\S]*\})/);
       if (match && match[1]) {
         try {
           const params = JSON.parse(match[1]);
