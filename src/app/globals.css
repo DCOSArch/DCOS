@@ -1,25 +1,37 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --primary: #2563eb;
-  --primary-foreground: #ffffff;
-  --card: #ffffff;
-  --card-foreground: #171717;
-  --popover: #ffffff;
-  --popover-foreground: #171717;
-  --muted: #f3f4f6;
-  --muted-foreground: #4b5563;
-  --border: #e5e7eb;
-  --input: #e5e7eb;
-  --ring: #2563eb;
-  --secondary: #f3f4f6;
-  --secondary-foreground: #171717;
-  --accent: #f3f4f6;
-  --accent-foreground: #171717;
-  --destructive: #dc2626;
-  --destructive-foreground: #ffffff;
+  --background: #F7F7F2;
+  --foreground: #1D2A33;
+  --primary: #176B68;
+  --primary-foreground: #FFFFFF;
+  --card: #FFFFFF;
+  --card-foreground: #1D2A33;
+  --popover: #FFFFFF;
+  --popover-foreground: #1D2A33;
+  --muted: #F1F3EE;
+  --muted-foreground: #66757D;
+  --border: #DCE2DF;
+  --input: #DCE2DF;
+  --ring: #176B68;
+  --secondary: #DCEDEA;
+  --secondary-foreground: #176B68;
+  --accent: #EAF2F0;
+  --accent-foreground: #1D2A33;
+  --destructive: #B24743;
+  --destructive-foreground: #FFFFFF;
+
+  /* Custom palette matching design.md */
+  --primary-hover: #0F5755;
+  --primary-soft: #DCEDEA;
+  --clinical-blue: #366C9B;
+  --success: #26734D;
+  --success-soft: #E4F2E9;
+  --attention: #A76715;
+  --attention-soft: #FFF3DC;
+  --critical: #B24743;
+  --critical-soft: #FBE9E7;
+  --accent-coral: #B85B52;
 }
 
 /* Monokai Theme for Dark Mode */
@@ -27,31 +39,43 @@
   --background: #272822; /* Monokai editor background */
   --foreground: #F8F8F2; /* Monokai white/fg */
   
-  --primary: #F92672; /* Monokai Pink */
-  --primary-foreground: #FFFFFF;
+  --primary: #66D9EF; /* Monokai Cyan */
+  --primary-foreground: #272822;
   
-  --card: #1E1F1C; /* Darker editor sidebar/gutter bg */
+  --card: #30312B; /* Raised surface */
   --card-foreground: #F8F8F2;
   
-  --popover: #1E1F1C;
+  --popover: #30312B;
   --popover-foreground: #F8F8F2;
   
-  --muted: #3E3D32; /* Monokai line highlight / darker gray */
-  --muted-foreground: #75715E; /* Monokai comment gray */
+  --muted: #3A3B33; /* Surface subtle */
+  --muted-foreground: #B5B5A5; /* Ink muted */
   
-  --border: #3E3D32;
-  --input: #3E3D32;
+  --border: #4A4B40; /* Hairline */
+  --input: #4A4B40;
   
-  --ring: #66D9EF; /* Monokai cyan/blue */
+  --ring: #66D9EF;
   
-  --secondary: #66D9EF; /* Monokai cyan/blue */
-  --secondary-foreground: #272822;
+  --secondary: #3A3B33;
+  --secondary-foreground: #F8F8F2;
   
-  --accent: #A6E22E; /* Monokai lime green */
-  --accent-foreground: #272822;
+  --accent: #3A3B33;
+  --accent-foreground: #F8F8F2;
   
-  --destructive: #FD971F; /* Monokai orange */
+  --destructive: #FF6B6B; /* Monokai red */
   --destructive-foreground: #272822;
+
+  /* Custom palette matching design.md for dark mode */
+  --primary-hover: #8BE4F4;
+  --primary-soft: rgba(102, 217, 239, 0.15);
+  --clinical-blue: #66D9EF;
+  --success: #A6E22E;
+  --success-soft: rgba(166, 226, 46, 0.15);
+  --attention: #FD971F;
+  --attention-soft: rgba(253, 151, 31, 0.15);
+  --critical: #FF6B6B;
+  --critical-soft: rgba(255, 107, 107, 0.15);
+  --accent-coral: #F92672; /* Monokai pink brand accent */
 }
 
 @theme inline {
@@ -59,6 +83,16 @@
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
+  --color-clinical-blue: var(--clinical-blue);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-attention: var(--attention);
+  --color-attention-soft: var(--attention-soft);
+  --color-critical: var(--critical);
+  --color-critical-soft: var(--critical-soft);
+  --color-accent-coral: var(--accent-coral);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);

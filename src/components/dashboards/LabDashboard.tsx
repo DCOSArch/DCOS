@@ -307,14 +307,14 @@ export default function LabDashboard({ initialCases, initialInventory, available
                             <div className="flex justify-between items-center gap-1.5 min-w-0">
                               <h4 className="font-semibold text-xs text-foreground truncate">{caseItem.patientName}</h4>
                               {caseItem.patientGender === 'MALE' && (
-                                <Badge className="bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100 text-[8px] px-1 py-0 h-3.5 shrink-0 scale-90 origin-right">M</Badge>
+                                <Badge className="bg-muted text-muted-foreground border-border hover:bg-muted text-[8px] px-1 py-0 h-3.5 shrink-0 scale-90 origin-right">M</Badge>
                               )}
                               {caseItem.patientGender === 'FEMALE' && (
-                                <Badge className="bg-pink-100 text-pink-800 border-pink-200 hover:bg-pink-100 text-[8px] px-1 py-0 h-3.5 shrink-0 scale-90 origin-right">F</Badge>
+                                <Badge className="bg-muted text-muted-foreground border-border hover:bg-muted text-[8px] px-1 py-0 h-3.5 shrink-0 scale-90 origin-right">F</Badge>
                               )}
                             </div>
-                            <div className="mt-1.5 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100/50 dark:border-blue-900/30 rounded px-1.5 py-1">
-                              <p className="text-[10px] font-medium text-blue-800 dark:text-blue-300 leading-none truncate">{caseItem.requestedTreatment}</p>
+                             <div className="mt-1.5 bg-primary-soft/50 border border-primary/20 rounded px-1.5 py-1">
+                              <p className="text-[10px] font-medium text-primary leading-none truncate">{caseItem.requestedTreatment}</p>
                             </div>
                             
                             <div className="mt-2 pt-1.5 border-t border-border/50 flex items-center justify-between text-[10px] text-muted-foreground">
@@ -340,9 +340,9 @@ export default function LabDashboard({ initialCases, initialInventory, available
 
       <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
         <DialogTrigger 
-          render={<Button className="fixed bottom-6 right-6 md:bottom-10 md:right-10 h-14 w-14 rounded-full shadow-xl bg-blue-600 hover:bg-blue-700 p-0 z-50" />}
+          render={<Button className="fixed bottom-6 right-6 md:bottom-10 md:right-10 h-14 w-14 rounded-full shadow-xl bg-primary hover:bg-primary-hover p-0 z-50" />}
         >
-            <Plus className="h-6 w-6" />
+            <Plus className="h-6 w-6 text-primary-foreground" />
         </DialogTrigger>
         <DialogContent className="sm:max-w-[550px]">
           <DialogHeader>
@@ -411,7 +411,7 @@ export default function LabDashboard({ initialCases, initialInventory, available
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>Cancel</Button>
-            <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleSubmitCase} disabled={uploadState === 'uploading'}>
+             <Button className="bg-primary hover:bg-primary-hover text-primary-foreground font-medium" onClick={handleSubmitCase} disabled={uploadState === 'uploading'}>
               {uploadState === 'uploading' ? 'Saving...' : 'Submit Case'}
             </Button>
           </DialogFooter>

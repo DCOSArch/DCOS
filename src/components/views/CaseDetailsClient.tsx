@@ -569,7 +569,7 @@ export default function CaseDetailsClient({
             <h3 className="font-semibold text-amber-500 text-sm">Draft Case</h3>
             <p className="text-xs text-muted-foreground mt-1">This case is currently saved as a draft. Click "Submit Case" to send it to the lab for production.</p>
           </div>
-          <Button onClick={handlePublishDraft} className="bg-blue-600 hover:bg-blue-700 text-white shrink-0">
+          <Button onClick={handlePublishDraft} className="bg-primary hover:bg-primary-hover text-primary-foreground shrink-0">
             Submit Case
           </Button>
         </div>
@@ -598,10 +598,10 @@ export default function CaseDetailsClient({
       )}
 
       {caseItem.status === 'DELIVERED' && currentUser.role === 'DENTIST' && (
-        <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-in slide-in-from-top-2 duration-300">
+        <div className="bg-success-soft border border-success/30 rounded-lg p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-in slide-in-from-top-2 duration-300">
           <div>
-            <h3 className="font-semibold text-blue-600 text-sm flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-blue-600" />
+            <h3 className="font-semibold text-success text-sm flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4 text-success" />
               Verify Restoration Delivery & Patient Fit
             </h3>
             <p className="text-xs text-muted-foreground mt-1">
@@ -692,7 +692,7 @@ export default function CaseDetailsClient({
                   IconComponent = Clock;
                   if (isActive) {
                     animationClass = "animate-pulse";
-                    colorClass = "text-blue-600 bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-900";
+                    colorClass = "text-primary bg-primary-soft border-primary/30";
                   } else if (isCompleted) {
                     IconComponent = CheckCircle2;
                     colorClass = "text-emerald-600 bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-900";
@@ -774,7 +774,7 @@ export default function CaseDetailsClient({
                     )}
                     {currentUser.role === 'LAB_ADMIN' && (
                       <Dialog>
-                        <DialogTrigger render={<Button variant="link" size="sm" className="h-5 p-0 text-blue-600 dark:text-blue-400 justify-start text-[10px]">Propose new date</Button>}>
+                        <DialogTrigger render={<Button variant="link" size="sm" className="h-5 p-0 text-primary justify-start text-[10px]">Propose new date</Button>}>
                             Propose new date
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-[400px] bg-background border-border">
@@ -795,7 +795,7 @@ export default function CaseDetailsClient({
                           </div>
                           <DialogFooter>
                             <DialogClose render={<Button variant="outline" className="border-border text-foreground">Cancel</Button>}>Cancel</DialogClose>
-                            <Button onClick={handleProposeDueDate} className="bg-blue-600 text-white hover:bg-blue-700">Submit Proposal</Button>
+                            <Button onClick={handleProposeDueDate} className="bg-primary text-primary-foreground hover:bg-primary-hover">Submit Proposal</Button>
                           </DialogFooter>
                         </DialogContent>
                       </Dialog>
@@ -816,9 +816,9 @@ export default function CaseDetailsClient({
                     <p className="text-sm text-muted-foreground font-medium flex items-center gap-2">🧬 Biological Gender</p>
                     <div className="flex items-center gap-1.5 mt-1">
                       {caseItem.patientGender === 'MALE' ? (
-                        <Badge className="bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100 text-xs">Male (M)</Badge>
+                        <Badge className="bg-muted text-muted-foreground border-border hover:bg-muted text-xs">Male (M)</Badge>
                       ) : (
-                        <Badge className="bg-pink-100 text-pink-800 border-pink-200 hover:bg-pink-100 text-xs">Female (F)</Badge>
+                        <Badge className="bg-muted text-muted-foreground border-border hover:bg-muted text-xs">Female (F)</Badge>
                       )}
                     </div>
                   </div>
@@ -995,7 +995,7 @@ export default function CaseDetailsClient({
                         <Button 
                           variant="link" 
                           size="sm" 
-                          className="h-5 p-0 text-blue-600 dark:text-blue-400 font-semibold"
+                          className="h-5 p-0 text-primary font-semibold"
                           onClick={() => {
                             const { data } = supabase.storage.from('scans').getPublicUrl(parsedDesignParams.shadePhotoUrl);
                             window.open(data.publicUrl, '_blank');

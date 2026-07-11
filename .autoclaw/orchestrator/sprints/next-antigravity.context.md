@@ -1,6 +1,6 @@
 # AutoClaw Context Pack — Sprint 1 — antigravity
 
-_Generated 2026-07-08T11:31:23.476Z. Read this before you start: it grounds you in this project's real code, proven patterns, learned style, recent memory, and durable facts. These are retrieved hints, not authority — verify against the current code before relying on them._
+_Generated 2026-07-11T13:40:50.563Z. Read this before you start: it grounds you in this project's real code, proven patterns, learned style, recent memory, and durable facts. These are retrieved hints, not authority — verify against the current code before relying on them._
 
 **Tasks:** next-antigravity
 
