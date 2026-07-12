@@ -1795,13 +1795,11 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                 <div className="grid gap-2">
                   <Label htmlFor="treatmentType" className="text-foreground">Treatment Type <span className="text-red-500">*</span></Label>
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" className="w-full justify-between border-border text-foreground bg-background font-normal">
+                    <DropdownMenuTrigger render={<Button variant="outline" className="w-full justify-between border-border text-foreground bg-background font-normal" />}>
                         <span className="truncate">
                           {treatmentType.length > 0 ? treatmentType.join(', ') : "Select treatment types"}
                         </span>
                         <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
-                      </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="w-[300px]">
                       {[
