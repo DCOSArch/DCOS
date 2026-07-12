@@ -244,6 +244,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
   const [implantBrand, setImplantBrand] = useState('');
   const [scanBodyModel, setScanBodyModel] = useState('');
   const [analogLogistics, setAnalogLogistics] = useState('');
+  const [implantBarNeeded, setImplantBarNeeded] = useState('');
   const [dentureType, setDentureType] = useState('');
 
   const [currentStep, setCurrentStep] = useState(0);
@@ -950,7 +951,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
           patientGender !== '';
 
         if (treatmentType.includes('Implant')) {
-          if (implantBrand === '' || scanBodyModel === '' || analogLogistics === '') return false;
+          if (implantBrand === '' || scanBodyModel === '' || analogLogistics === '' || implantBarNeeded === '') return false;
         }
         if (treatmentType.includes('Denture')) {
           if (dentureType === '') return false;
@@ -1290,7 +1291,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         instructions: enhancedInstructions || null,
         patient_age: patientAge ? parseInt(patientAge, 10) : null,
         patient_gender: patientGender || null,
-        implant_brand: treatmentType.includes('Implant') ? implantBrand : null,
+        implant_brand: treatmentType.includes('Implant') ? (implantBarNeeded !== 'No bar needed' && implantBarNeeded !== '' ? `${implantBrand} (Bar: ${implantBarNeeded})` : implantBrand) : null,
         scan_body_model: treatmentType.includes('Implant') ? scanBodyModel : null,
         analog_logistics: treatmentType.includes('Implant') ? analogLogistics : null
       };
@@ -1665,6 +1666,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
             setImplantBrand('');
             setScanBodyModel('');
             setAnalogLogistics('');
+            setImplantBarNeeded('');
             setCurrentStep(0);
             setCustomShadeEnabled(false);
             setCervicalShade('A2');
@@ -1831,6 +1833,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                               setImplantBrand('');
                               setScanBodyModel('');
                               setAnalogLogistics('');
+                              setImplantBarNeeded('');
                             }
                             if (!newTypes.includes('Denture')) {
                               setDentureType('');
@@ -1883,17 +1886,32 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                         </Select>
                       </div>
                     </div>
-                    <div className="grid gap-1.5">
-                      <Label htmlFor="analogLogistics" className="text-xs">Prosthetic Components Logistics <span className="text-red-500">*</span></Label>
-                      <Select value={analogLogistics} onValueChange={(val) => setAnalogLogistics(val || '')}>
-                        <SelectTrigger className="border-border text-foreground h-8 text-xs bg-background">
-                          <SelectValue placeholder="Select who provides analogs/parts" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Doctor Provided">Doctor Provided (Component sent to lab)</SelectItem>
-                          <SelectItem value="Lab Provided">Lab Provided (Lab supplies component)</SelectItem>
-                        </SelectContent>
-                      </Select>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="grid gap-1.5">
+                        <Label htmlFor="analogLogistics" className="text-xs">Prosthetic Components Logistics <span className="text-red-500">*</span></Label>
+                        <Select value={analogLogistics} onValueChange={(val) => setAnalogLogistics(val || '')}>
+                          <SelectTrigger className="border-border text-foreground h-8 text-xs bg-background">
+                            <SelectValue placeholder="Select who provides analogs/parts" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Doctor Provided">Doctor Provided (Component sent to lab)</SelectItem>
+                            <SelectItem value="Lab Provided">Lab Provided (Lab supplies component)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid gap-1.5">
+                        <Label htmlFor="implantBarNeeded" className="text-xs">Bar Needed <span className="text-red-500">*</span></Label>
+                        <Select value={implantBarNeeded} onValueChange={(val) => setImplantBarNeeded(val || '')}>
+                          <SelectTrigger className="border-border text-foreground h-8 text-xs bg-background">
+                            <SelectValue placeholder="Select bar option" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="I-bar">I-bar</SelectItem>
+                            <SelectItem value="Full Mouth bar">Full Mouth bar</SelectItem>
+                            <SelectItem value="No bar needed">No bar needed</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   </div>
                 )}
