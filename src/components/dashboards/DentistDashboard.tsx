@@ -11,7 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Activity, CheckCircle2, UploadCloud, FileBox, Filter, FileText, Box, Building2, ChevronRight, ChevronLeft, Camera, Minus, RotateCcw, Hand, Maximize2, Minimize2, Undo, Redo, Trash2 } from 'lucide-react';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
+import { Plus, Activity, CheckCircle2, UploadCloud, FileBox, Filter, FileText, Box, Building2, ChevronRight, ChevronLeft, Camera, Minus, RotateCcw, Hand, Maximize2, Minimize2, Undo, Redo, Trash2, ChevronDown } from 'lucide-react';
 import { Case, User, DoctorInventoryItem } from '@/types';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -50,7 +51,7 @@ const MATERIALS = [
   { value: 'Titanium Abutment', label: 'Titanium Custom Abutment' },
 ];
 
-const getIndications = (treatmentType: string) => {
+const getIndications = () => {
   const base: Record<string, { hex: string; txt: string; label: string; hasScrew?: boolean; isVeneer?: boolean }> = {
     none: { hex: '#ffffff', txt: '#64748b', label: 'Healthy / Clear' },
     coping: { hex: '#0d9488', txt: '#ffffff', label: 'Coping' },
@@ -224,7 +225,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
   const [validationDimensions, setValidationDimensions] = useState<{ x: number; y: number; z: number } | null>(null);
 
   const [patientName, setPatientName] = useState('');
-  const [treatmentType, setTreatmentType] = useState('');
+  const [treatmentType, setTreatmentType] = useState<string[]>([]);
   const [urgency, setUrgency] = useState<Case['urgency']>('NORMAL');
   const [selectedLabId, setSelectedLabId] = useState<string>(availableLabs.length > 0 ? availableLabs[0].id : '');
   const [dueDate, setDueDate] = useState<string>('');
@@ -459,14 +460,14 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         return;
       }
       
-      if (['CNB', 'FPD', 'Veneer', 'Implant'].includes(treatmentType)) {
+      if (treatmentType.some(t => ['CNB', 'FPD', 'Veneer', 'Implant'].includes(t))) {
         const simulated = { ...updated, [toothId]: activeIndication };
         const upperMax = getArchMaxGroupSize(UPPER_ARCH_ORDER, simulated);
         const lowerMax = getArchMaxGroupSize(LOWER_ARCH_ORDER, simulated);
         
         if ((upperMax > 6 || lowerMax > 6) && (!updated[toothId] || updated[toothId] === 'none')) {
           toast.warning("Maximum Teeth Selected", {
-            description: "A maximum of 6 teeth in a single contiguous group can be selected for this treatment type. For a larger group of restorations, set Treatment Type to Full Arch in Step 1.",
+            description: "A maximum of 6 teeth in a single contiguous group can be selected.",
             duration: 6000,
           });
           return;
@@ -475,7 +476,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
       
       updated[toothId] = activeIndication;
       const pos = getToothPosition(toothId);
-      const currentIndications = getIndications(treatmentType);
+      const currentIndications = getIndications();
       const color = currentIndications[activeIndication]?.hex || '#3b82f6';
       addRipple(pos.x, pos.y, color);
       updateChartState(updated, connections);
@@ -515,7 +516,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
   };
 
   const renderToolsSidebar = () => {
-    const currentIndications = getIndications(treatmentType);
+    const currentIndications = getIndications();
     return (
       <div className="space-y-4">
         <div className="space-y-1.5">
@@ -559,7 +560,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
   };
 
   const renderChartingCanvas = (isFullscreenMode: boolean) => {
-    const currentIndications = getIndications(treatmentType);
+    const currentIndications = getIndications();
     return (
       <div 
         className={`chart-container w-full h-full relative flex items-center justify-center bg-slate-950 select-none overflow-hidden ${isFullscreenMode ? '' : 'min-h-[400px] md:min-h-[480px] rounded-lg border border-slate-800'}`}
@@ -941,27 +942,26 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         const isBasicComplete =
           patientName.trim().length > 0 &&
           selectedLabId !== '' &&
-          treatmentType.trim().length > 0 &&
+          treatmentType.length > 0 &&
           patientAge.trim().length > 0 &&
           !isNaN(Number(patientAge)) &&
           Number(patientAge) > 0 &&
           patientGender !== '';
 
-        if (treatmentType === 'Implant') {
+        if (treatmentType.includes('Implant')) {
           return isBasicComplete && implantBrand !== '' && scanBodyModel !== '' && analogLogistics !== '';
         }
         return isBasicComplete;
       case 1:
-        if (treatmentType === 'Surgical Guide') {
+        if (treatmentType.includes('Surgical Guide')) {
           return selectedFile !== null && selectedDicomFile !== null && uploadState !== 'analyzing';
         }
         return selectedFile !== null && uploadState !== 'analyzing';
       case 2:
-        if (treatmentType === 'Full Arch') return true;
         const hasSelection = Object.values(toothConfigs).some(v => v !== 'none') || isTeethNotSpecified;
         if (!hasSelection) return false;
         
-        if (['CNB', 'FPD', 'Veneer', 'Implant'].includes(treatmentType)) {
+        if (treatmentType.some(t => ['CNB', 'FPD', 'Veneer', 'Implant'].includes(t))) {
           const upperMax = getArchMaxGroupSize(UPPER_ARCH_ORDER, toothConfigs);
           const lowerMax = getArchMaxGroupSize(LOWER_ARCH_ORDER, toothConfigs);
           if (upperMax > 6 || lowerMax > 6) {
@@ -1176,17 +1176,16 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
       return;
     }
 
-    if (treatmentType === 'Surgical Guide' && !selectedDicomFile) {
-      alert('Please upload a DICOM / CBCT scan file for surgical guide fabrication.');
+    if (treatmentType.includes('Surgical Guide') && !selectedDicomFile) {
+      alert('Please upload DICOM file for surgical guide.');
       return;
     }
 
-    if (['CNB', 'FPD', 'Veneer', 'Implant'].includes(treatmentType)) {
+    if (treatmentType.some(t => ['CNB', 'FPD', 'Veneer', 'Implant'].includes(t))) {
       const upperMax = getArchMaxGroupSize(UPPER_ARCH_ORDER, toothConfigs);
       const lowerMax = getArchMaxGroupSize(LOWER_ARCH_ORDER, toothConfigs);
       if (upperMax > 6 || lowerMax > 6) {
-        setShowArchLimitPopup(true);
-        alert('A maximum of 6 teeth in a single contiguous group can be selected for this treatment type.');
+        alert('A maximum of 6 teeth in a single contiguous group can be selected.');
         return;
       }
     }
@@ -1277,7 +1276,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         lab_id: selectedLabId,
         status: isDraft ? 'DRAFT' : 'PENDING',
         urgency,
-        requested_treatment: treatmentType || 'Not Specified',
+        requested_treatment: treatmentType.join(', ') || 'Not Specified',
         material: isDesignNotSpecified ? 'Not Specified' : material,
         scan_url: scanUrl,
         dicom_url: dicomUrl,
@@ -1287,9 +1286,9 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         instructions: enhancedInstructions || null,
         patient_age: patientAge ? parseInt(patientAge, 10) : null,
         patient_gender: patientGender || null,
-        implant_brand: treatmentType === 'Implant' ? implantBrand : null,
-        scan_body_model: treatmentType === 'Implant' ? scanBodyModel : null,
-        analog_logistics: treatmentType === 'Implant' ? analogLogistics : null
+        implant_brand: treatmentType.includes('Implant') ? implantBrand : null,
+        scan_body_model: treatmentType.includes('Implant') ? scanBodyModel : null,
+        analog_logistics: treatmentType.includes('Implant') ? analogLogistics : null
       };
 
       const { data: insertedCase, error: insertError } = await supabase
@@ -1356,7 +1355,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
       setIsCreateModalOpen(false);
 
       setPatientName('');
-      setTreatmentType('');
+      setTreatmentType([]);
       setUrgency('NORMAL');
       setDueDate('');
       setSelectedFile(null);
@@ -1405,7 +1404,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
     return true;
   });
 
-  const currentIndications = getIndications(treatmentType);
+  const currentIndications = getIndications();
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out relative">
@@ -1644,7 +1643,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
             setUploadState('idle');
             setSelectedFile(null);
             setPatientName('');
-            setTreatmentType('');
+            setTreatmentType([]);
             setUrgency('NORMAL');
             setDueDate('');
             setValidationWarnings([]);
@@ -1795,38 +1794,58 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
 
                 <div className="grid gap-2">
                   <Label htmlFor="treatmentType" className="text-foreground">Treatment Type <span className="text-red-500">*</span></Label>
-                  <Select value={treatmentType} onValueChange={(val) => {
-                    const newType = val || '';
-                    setTreatmentType(newType);
-                    if (newType !== 'Implant') {
-                      setImplantBrand('');
-                      setScanBodyModel('');
-                      setAnalogLogistics('');
-                    }
-                    
-                    if (['CNB', 'FPD', 'Veneer', 'Implant'].includes(newType)) {
-                      const upperMax = getArchMaxGroupSize(UPPER_ARCH_ORDER, toothConfigs);
-                      const lowerMax = getArchMaxGroupSize(LOWER_ARCH_ORDER, toothConfigs);
-                      if (upperMax > 6 || lowerMax > 6) {
-                        setShowArchLimitPopup(true);
-                      }
-                    }
-                  }}>
-                    <SelectTrigger className="border-border text-foreground bg-background">
-                      <SelectValue placeholder="Select treatment type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="CNB">CNB (Crown and Bridge)</SelectItem>
-                      <SelectItem value="FPD">FPD (Fixed Partial Denture)</SelectItem>
-                      <SelectItem value="Veneer">Veneer</SelectItem>
-                      <SelectItem value="Implant">Implant</SelectItem>
-                      <SelectItem value="Full Arch">Full Arch (CNB 6+ / FPD 6+ / Implant)</SelectItem>
-                      <SelectItem value="Surgical Guide">Surgical Guide</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="w-full justify-between border-border text-foreground bg-background font-normal">
+                        <span className="truncate">
+                          {treatmentType.length > 0 ? treatmentType.join(', ') : "Select treatment types"}
+                        </span>
+                        <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-[300px]">
+                      {[
+                        { id: 'CNB', label: 'CNB (Crown and Bridge)' },
+                        { id: 'FPD', label: 'FPD (Fixed Partial Denture)' },
+                        { id: 'Veneer', label: 'Veneer' },
+                        { id: 'Implant', label: 'Implant' },
+                        { id: 'Surgical Guide', label: 'Surgical Guide' }
+                      ].map(type => (
+                        <DropdownMenuCheckboxItem
+                          key={type.id}
+                          checked={treatmentType.includes(type.id)}
+                          onCheckedChange={(checked) => {
+                            let newTypes = [...treatmentType];
+                            if (checked) {
+                              newTypes.push(type.id);
+                            } else {
+                              newTypes = newTypes.filter(t => t !== type.id);
+                            }
+                            setTreatmentType(newTypes);
+                            
+                            if (!newTypes.includes('Implant')) {
+                              setImplantBrand('');
+                              setScanBodyModel('');
+                              setAnalogLogistics('');
+                            }
+                            
+                            if (newTypes.some(t => ['CNB', 'FPD', 'Veneer', 'Implant'].includes(t))) {
+                              const upperMax = getArchMaxGroupSize(UPPER_ARCH_ORDER, toothConfigs);
+                              const lowerMax = getArchMaxGroupSize(LOWER_ARCH_ORDER, toothConfigs);
+                              if (upperMax > 6 || lowerMax > 6) {
+                                setShowArchLimitPopup(true);
+                              }
+                            }
+                          }}
+                        >
+                          {type.label}
+                        </DropdownMenuCheckboxItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
 
-                {treatmentType === 'Implant' && (
+                {treatmentType.includes('Implant') && (
                   <div className="border border-border rounded-lg p-3 space-y-3 bg-muted/20 animate-in slide-in-from-top-2 duration-200">
                     <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Implant Workflow Configurations</p>
                     <div className="grid grid-cols-2 gap-3">
@@ -1978,7 +1997,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                   )}
                 </div>
 
-                {treatmentType === 'Surgical Guide' && (
+                {treatmentType.includes('Surgical Guide') && (
                   <div className="border-t border-border pt-4 mt-4">
                     <Label className="text-foreground mb-2 block">Upload DICOM / CBCT Scan (DCM/ZIP) <span className="text-red-500">*</span></Label>
                     <input
@@ -2022,17 +2041,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                   {/* Step 2: Model */}
                   <div className="w-full flex-shrink-0 px-1">
                     <div className="space-y-4 animate-in fade-in duration-300">
-                {treatmentType === 'Full Arch' ? (
-                  <div className="border border-dashed border-border rounded-lg p-10 text-center text-muted-foreground flex flex-col items-center justify-center gap-3 bg-muted/10">
-                    <div className="w-12 h-12 rounded-full bg-blue-600/10 flex items-center justify-center">
-                      <CheckCircle2 className="w-6 h-6 text-blue-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-semibold text-foreground">Tooth Charting Not Required</h3>
-                      <p className="text-xs mt-1">Individual tooth charting is skipped for Full Arch cases.<br/>Click Next to proceed to Materials.</p>
-                    </div>
-                  </div>
-                ) : (
+                {false ? null : (
                   <>
                     <div className="flex justify-between items-center mb-1">
                   <Label className="text-foreground font-semibold text-sm">Tooth Charting & Restoration Properties</Label>
@@ -2444,8 +2453,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
               Maximum Teeth Selected
             </DialogTitle>
             <DialogDescription className="text-muted-foreground pt-2">
-              A maximum of 6 teeth in a single contiguous group can be selected for this treatment type. 
-              If you require a larger group of restorations, we recommend changing the Treatment Type to <strong>Full Arch</strong> in Step 1.
+              A maximum of 6 teeth in a single contiguous group can be selected.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="mt-4">
