@@ -109,10 +109,10 @@ const getToothPosition = (id: number) => {
   const { q, idx } = tooth;
   const t_deg = T_ANGLES[idx];
   const t_rad = t_deg * (Math.PI / 180);
-  
+
   const dx = A_RAD * Math.sin(t_rad);
   const dy = B_RAD * (1 - Math.cos(t_rad));
-  
+
   let x = 0;
   let y = 0;
   let rot = 0;
@@ -120,19 +120,19 @@ const getToothPosition = (id: number) => {
   if (q === 1) { // Upper Right
     x = CENTER_X - dx;
     y = UPPER_VERTEX_Y + dy;
-    rot = -t_deg; 
+    rot = -t_deg;
   } else if (q === 2) { // Upper Left
     x = CENTER_X + dx;
     y = UPPER_VERTEX_Y + dy;
-    rot = t_deg;  
+    rot = t_deg;
   } else if (q === 3) { // Lower Left
     x = CENTER_X + dx;
     y = LOWER_VERTEX_Y - dy;
-    rot = 180 - t_deg; 
+    rot = 180 - t_deg;
   } else if (q === 4) { // Lower Right
     x = CENTER_X - dx;
     y = LOWER_VERTEX_Y - dy;
-    rot = 180 + t_deg; 
+    rot = 180 + t_deg;
   }
 
   return { x, y, rot };
@@ -142,26 +142,26 @@ const getBridgeButtonPosition = (idA: number, idB: number) => {
   const toothA = TEETH_DATA.find(t => t.id === idA);
   const toothB = TEETH_DATA.find(t => t.id === idB);
   if (!toothA || !toothB) return { x: 0, y: 0 };
-  
+
   const degA = T_ANGLES[toothA.idx];
   const degB = T_ANGLES[toothB.idx];
-  
+
   let midDeg = 0;
   let q = toothA.q;
-  
+
   if (toothA.q === toothB.q) {
     midDeg = (degA + degB) / 2;
   } else {
     midDeg = 0; // crossing midline
   }
-  
+
   const t_rad = midDeg * (Math.PI / 180);
   const A_RAD_DOT = 165;
   const B_RAD_DOT = 265;
-  
+
   const dx = A_RAD_DOT * Math.sin(t_rad);
   const dy = B_RAD_DOT * (1 - Math.cos(t_rad));
-  
+
   let x = 0;
   let y = 0;
 
@@ -220,7 +220,8 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
 
-  const [uploadState, setUploadState] = useState<'idle' | 'analyzing' | 'warning'>('idle');
+  const [uploadState, setUploadState] = useState<'idle' | 'analyzing' | 'uploading' | 'warning'>('idle');
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [validationWarnings, setValidationWarnings] = useState<string[]>([]);
   const [validationDimensions, setValidationDimensions] = useState<{ x: number; y: number; z: number } | null>(null);
 
@@ -378,12 +379,12 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
   };
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    const isBackground = 
-      e.target === e.currentTarget || 
-      (e.target as SVGElement).id === 'svg-background' || 
+    const isBackground =
+      e.target === e.currentTarget ||
+      (e.target as SVGElement).id === 'svg-background' ||
       (e.target as SVGElement).tagName === 'svg' ||
       (e.target as SVGElement).id === 'midline-indicator';
-    
+
     if (isBackground || isPanModeActive) {
       isPanningRef.current = true;
       panStartRef.current = { x: e.clientX - panRef.current.x, y: e.clientY - panRef.current.y };
@@ -426,7 +427,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
     const targetMode = currentStatus === activeIndication ? 'REMOVE' : 'ADD';
     setPaintMode(targetMode);
     setIsPaintDragging(true);
-    
+
     applyPaint(toothId, targetMode);
   };
 
@@ -461,12 +462,12 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
       if (updated[toothId] === activeIndication) {
         return;
       }
-      
+
       if (treatmentType.some(t => ['CNB', 'Denture', 'Veneer', 'Implant'].includes(t))) {
         const simulated = { ...updated, [toothId]: activeIndication };
         const upperMax = getArchMaxGroupSize(UPPER_ARCH_ORDER, simulated);
         const lowerMax = getArchMaxGroupSize(LOWER_ARCH_ORDER, simulated);
-        
+
         if ((upperMax > 6 || lowerMax > 6) && (!updated[toothId] || updated[toothId] === 'none')) {
           toast.warning("Maximum Teeth Selected", {
             description: "A maximum of 6 teeth in a single contiguous group can be selected.",
@@ -475,7 +476,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
           return;
         }
       }
-      
+
       updated[toothId] = activeIndication;
       const pos = getToothPosition(toothId);
       const currentIndications = getIndications();
@@ -531,11 +532,10 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                   key={key}
                   type="button"
                   onClick={() => setActiveIndication(key)}
-                  className={`w-full text-left px-2.5 py-1.5 rounded-md border text-xs font-semibold flex items-center gap-2 transition-all ${
-                    isSelected
-                      ? 'border-blue-600 bg-blue-600/10 text-foreground'
-                      : 'border-border bg-background hover:bg-muted text-foreground'
-                  }`}
+                  className={`w-full text-left px-2.5 py-1.5 rounded-md border text-xs font-semibold flex items-center gap-2 transition-all ${isSelected
+                    ? 'border-blue-600 bg-blue-600/10 text-foreground'
+                    : 'border-border bg-background hover:bg-muted text-foreground'
+                    }`}
                 >
                   <span className="w-3.5 h-3.5 rounded border border-black/10 shrink-0" style={{ backgroundColor: info.hex }} />
                   {info.label}
@@ -564,7 +564,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
   const renderChartingCanvas = (isFullscreenMode: boolean) => {
     const currentIndications = getIndications();
     return (
-      <div 
+      <div
         className={`chart-container w-full h-full relative flex items-center justify-center bg-slate-950 select-none overflow-hidden ${isFullscreenMode ? '' : 'min-h-[400px] md:min-h-[480px] rounded-lg border border-slate-800'}`}
         onWheel={handleWheel}
         onMouseDown={handleMouseDown}
@@ -572,7 +572,8 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
       >
-        <style dangerouslySetInnerHTML={{ __html: `
+        <style dangerouslySetInnerHTML={{
+          __html: `
           @keyframes drawBridge {
             from {
               stroke-dashoffset: 120;
@@ -709,7 +710,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         </div>
 
         {/* Main SVG workspace */}
-        <div 
+        <div
           ref={svgContainerRef}
           className="w-full max-w-[520px] aspect-square transition-transform duration-100"
           style={{
@@ -719,8 +720,8 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
             willChange: 'transform'
           }}
         >
-          <svg 
-            viewBox="0 0 800 800" 
+          <svg
+            viewBox="0 0 800 800"
             className="w-full h-full overflow-visible"
             id="svg-chart"
           >
@@ -729,7 +730,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
 
             {/* Midline indicator */}
             <line id="midline-indicator" x1="400" y1="40" x2="400" y2="760" stroke="#3e3d32" strokeDasharray="4 4" strokeWidth="2" className="opacity-50" />
-            
+
             {/* Individual Teeth Nodes */}
             {TEETH_DATA.map(tooth => {
               const pos = getToothPosition(tooth.id);
@@ -747,8 +748,8 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
               const textOffsetY = (vy / len) * 44;
 
               return (
-                <g 
-                  key={tooth.id} 
+                <g
+                  key={tooth.id}
                   className="cursor-pointer group/tooth"
                   onMouseDown={(e) => handleToothMouseDown(tooth.id, e)}
                   onMouseEnter={() => handleToothMouseEnter(tooth.id)}
@@ -766,7 +767,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                   onMouseLeave={() => setHoveredTooth(null)}
                   transform={`translate(${x}, ${y})`}
                 >
-                  <g 
+                  <g
                     transform={`rotate(${rot})`}
                     className="transition-transform duration-250 ease-out origin-center group-hover/tooth:scale-[1.12]"
                     style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
@@ -782,14 +783,13 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                         <path d="M-4.5,-18 L4.5,-20 M-4.5,-22 L4.5,-24 M-4,-26 L4,-28 M-3.5,-30 L3.5,-32 M-3,-34 L3,-36" stroke="#f8f8f2" strokeWidth="1.5" fill="none" />
                       </g>
                     )}
-                    
+
                     {/* Standard Tooth Shape */}
-                    <path 
-                      d={getPath(tooth.type)} 
-                      className={`transition-all duration-200 stroke-[2px] ${
-                        status !== 'none' ? 'stroke-blue-400' : 'stroke-slate-500 group-hover/tooth:stroke-cyan-400'
-                      }`}
-                      style={{ fill: info.hex }} 
+                    <path
+                      d={getPath(tooth.type)}
+                      className={`transition-all duration-200 stroke-[2px] ${status !== 'none' ? 'stroke-blue-400' : 'stroke-slate-500 group-hover/tooth:stroke-cyan-400'
+                        }`}
+                      style={{ fill: info.hex }}
                     />
 
                     {/* Veneer */}
@@ -806,8 +806,8 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                   </g>
 
                   {/* Tooth Identifier Text (Centered inside the tooth shape in high-contrast dark navy blue) */}
-                  <text 
-                    textAnchor="middle" 
+                  <text
+                    textAnchor="middle"
                     dominantBaseline="middle"
                     x="0"
                     y="1"
@@ -906,7 +906,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
 
         {/* Custom Tooltip */}
         {hoveredTooth !== null && (
-          <div 
+          <div
             className="absolute pointer-events-none z-30 bg-slate-900/95 border border-slate-800 text-white shadow-xl rounded-lg px-3 py-2 text-xs transition-all duration-75 flex flex-col gap-0.5"
             style={{ left: tooltipPos.x + 12, top: tooltipPos.y - 50 }}
           >
@@ -940,7 +940,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
 
   const isStepComplete = (stepIndex: number): boolean => {
     switch (stepIndex) {
-      case 0: 
+      case 0:
         const isBasicComplete =
           patientName.trim().length > 0 &&
           selectedLabId !== '' &&
@@ -965,7 +965,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
       case 2:
         const hasSelection = Object.values(toothConfigs).some(v => v !== 'none') || isTeethNotSpecified;
         if (!hasSelection) return false;
-        
+
         if (treatmentType.some(t => ['CNB', 'Denture', 'Veneer', 'Implant'].includes(t))) {
           const upperMax = getArchMaxGroupSize(UPPER_ARCH_ORDER, toothConfigs);
           const lowerMax = getArchMaxGroupSize(LOWER_ARCH_ORDER, toothConfigs);
@@ -1195,50 +1195,72 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
       }
     }
 
-    setUploadState('analyzing');
+    setUploadState('uploading');
+    setUploadProgress(0);
 
     try {
-      let scanUrl = null;
-      if (selectedFile) {
-        const fileName = `${Date.now()}_${selectedFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-        const { data, error } = await supabase.storage
-          .from('scans')
-          .upload(fileName, selectedFile);
+      // Collect all files to upload
+      const filesToUpload: { file: File; contentType: string; label: string }[] = [];
+      if (selectedFile) filesToUpload.push({ file: selectedFile, contentType: 'application/octet-stream', label: 'scan' });
+      if (selectedDicomFile) filesToUpload.push({ file: selectedDicomFile, contentType: 'application/dicom', label: 'dicom' });
+      if (shadePhotoFile) filesToUpload.push({ file: shadePhotoFile, contentType: shadePhotoFile.type || 'image/jpeg', label: 'shade' });
 
-        if (error) {
-          console.error('Storage upload error (ignoring and proceeding):', error);
-          alert('Warning: File upload failed (e.g. storage bucket issue). The case will still be created without the file.');
-        } else {
-          scanUrl = data.path;
+      // Upload all files with combined progress
+      const totalSize = filesToUpload.reduce((sum, f) => sum + f.file.size, 0);
+      let uploadedBytes = 0;
+      const uploadResults: Record<string, string | null> = {};
+
+      for (const { file, contentType, label } of filesToUpload) {
+        const fileStartBytes = uploadedBytes;
+        const fileProgress = (pct: number) => {
+          const fileBytesUploaded = (pct / 100) * file.size;
+          const overallPct = Math.round(((fileStartBytes + fileBytesUploaded) / totalSize) * 100);
+          setUploadProgress(overallPct);
+        };
+
+        try {
+          const res = await fetch('/api/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename: file.name, contentType }),
+          });
+          if (!res.ok) {
+            const errBody = await res.json().catch(() => ({}));
+            throw new Error(errBody.error || `Presign failed (${res.status})`);
+          }
+          const { url: signedUrl, key } = await res.json();
+
+          await new Promise<void>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('PUT', signedUrl, true);
+            xhr.setRequestHeader('Content-Type', contentType);
+            xhr.upload.onprogress = (e) => {
+              if (e.lengthComputable) {
+                fileProgress(Math.round((e.loaded / e.total) * 100));
+              }
+            };
+            xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`R2 PUT failed: ${xhr.status}`)));
+            xhr.onerror = () => reject(new Error('Network error during upload'));
+            xhr.send(file);
+          });
+
+          uploadResults[label] = key;
+        } catch (err: any) {
+          console.error(`${label} upload error:`, err);
+          uploadResults[label] = null;
         }
+        uploadedBytes += file.size;
       }
 
-      let dicomUrl = null;
-      if (selectedDicomFile) {
-        const dicomFileName = `dicom/${Date.now()}_${selectedDicomFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-        const { data, error } = await supabase.storage
-          .from('scans')
-          .upload(dicomFileName, selectedDicomFile);
+      const scanUrl = uploadResults['scan'] ?? null;
+      const dicomUrl = uploadResults['dicom'] ?? null;
+      const shadePhotoUrl = uploadResults['shade'] ?? null;
 
-        if (error) {
-          console.error('DICOM Storage upload error:', error);
-          alert('Warning: DICOM file upload failed.');
-        } else {
-          dicomUrl = data.path;
-        }
+      if (selectedFile && !scanUrl) {
+        alert('Warning: Scan file upload failed. The case will be created without the file.');
       }
-
-      let shadePhotoUrl = null;
-      if (shadePhotoFile) {
-        const shadePhotoFileName = `shade_photos/${Date.now()}_${shadePhotoFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-        const { data: shadeData, error: shadeError } = await supabase.storage
-          .from('scans')
-          .upload(shadePhotoFileName, shadePhotoFile);
-        if (shadeError) {
-          console.error('Shade photo upload error:', shadeError);
-        } else {
-          shadePhotoUrl = shadeData.path;
-        }
+      if (selectedDicomFile && !dicomUrl) {
+        alert('Warning: DICOM file upload failed.');
       }
 
       const designParams: Record<string, any> = {
@@ -1712,22 +1734,20 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                     type="button"
                     disabled={!isSelectable}
                     onClick={() => setCurrentStep(idx)}
-                    className={`flex items-center gap-3 w-full text-left p-2.5 rounded-lg transition-all focus:outline-none relative group ${
-                      isCurrent
-                        ? 'bg-primary/10 text-primary font-semibold'
-                        : isDone
+                    className={`flex items-center gap-3 w-full text-left p-2.5 rounded-lg transition-all focus:outline-none relative group ${isCurrent
+                      ? 'bg-primary/10 text-primary font-semibold'
+                      : isDone
                         ? 'text-emerald-600 hover:bg-muted dark:text-emerald-400'
                         : 'text-muted-foreground hover:bg-muted'
-                    } ${!isSelectable ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+                      } ${!isSelectable ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
                   >
                     {/* Step indicator circle */}
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 text-xs font-semibold shrink-0 transition-colors ${
-                      isCurrent
-                        ? 'border-primary bg-primary text-primary-foreground'
-                        : isDone
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 text-xs font-semibold shrink-0 transition-colors ${isCurrent
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : isDone
                         ? 'border-emerald-500 bg-emerald-500/10 text-emerald-500'
                         : 'border-muted-foreground/30'
-                    }`}>
+                      }`}>
                       {idx + 1}
                     </div>
 
@@ -1762,689 +1782,689 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                   {/* Step 0: Admin */}
                   <div className="w-full flex-shrink-0 px-1">
                     <div className="space-y-4 animate-in fade-in duration-300">
-                <div className="grid gap-2">
-                  <Label htmlFor="patientName" className="text-foreground">Patient Name <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="patientName"
-                    placeholder="e.g. John Doe"
-                    value={patientName}
-                    onChange={(e) => setPatientName(e.target.value)}
-                    className="border-border text-foreground bg-background"
-                  />
-                  <p className="text-xs text-muted-foreground">Or upload a scan file in the next step to auto-extract the name.</p>
-                </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="patientName" className="text-foreground">Patient Name <span className="text-red-500">*</span></Label>
+                        <Input
+                          id="patientName"
+                          placeholder="e.g. John Doe"
+                          value={patientName}
+                          onChange={(e) => setPatientName(e.target.value)}
+                          className="border-border text-foreground bg-background"
+                        />
+                        <p className="text-xs text-muted-foreground">Or upload a scan file in the next step to auto-extract the name.</p>
+                      </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="patientAge" className="text-foreground">Patient Age <span className="text-red-500">*</span></Label>
-                    <Input
-                      id="patientAge"
-                      type="number"
-                      placeholder="Age"
-                      value={patientAge}
-                      onChange={(e) => setPatientAge(e.target.value)}
-                      className="border-border text-foreground bg-background"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="patientGender" className="text-foreground">Patient Gender <span className="text-red-500">*</span></Label>
-                    <Select value={patientGender} onValueChange={(val) => setPatientGender((val as any) || '')}>
-                      <SelectTrigger className="border-border text-foreground bg-background">
-                        <SelectValue placeholder="Gender" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="MALE">Male</SelectItem>
-                        <SelectItem value="FEMALE">Female</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="patientAge" className="text-foreground">Patient Age <span className="text-red-500">*</span></Label>
+                          <Input
+                            id="patientAge"
+                            type="number"
+                            placeholder="Age"
+                            value={patientAge}
+                            onChange={(e) => setPatientAge(e.target.value)}
+                            className="border-border text-foreground bg-background"
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="patientGender" className="text-foreground">Patient Gender <span className="text-red-500">*</span></Label>
+                          <Select value={patientGender} onValueChange={(val) => setPatientGender((val as any) || '')}>
+                            <SelectTrigger className="border-border text-foreground bg-background">
+                              <SelectValue placeholder="Gender" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="MALE">Male</SelectItem>
+                              <SelectItem value="FEMALE">Female</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
 
-                <div className="grid gap-2">
-                  <Label htmlFor="treatmentType" className="text-foreground">Treatment Type <span className="text-red-500">*</span></Label>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger render={<Button variant="outline" className="w-full justify-between border-border text-foreground bg-background font-normal" />}>
-                        <span className="truncate">
-                          {treatmentType.length > 0 ? treatmentType.join(', ') : "Select treatment types"}
-                        </span>
-                        <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-[300px]">
-                      {[
-                        { id: 'CNB', label: 'CNB (Crown and Bridge)' },
-                        { id: 'Denture', label: 'Denture' },
-                        { id: 'Veneer', label: 'Veneer' },
-                        { id: 'Implant', label: 'Implant' },
-                        { id: 'Surgical Guide', label: 'Surgical Guide' }
-                      ].map(type => (
-                        <DropdownMenuCheckboxItem
-                          key={type.id}
-                          checked={treatmentType.includes(type.id)}
-                          onCheckedChange={(checked) => {
-                            let newTypes = [...treatmentType];
-                            if (checked) {
-                              newTypes.push(type.id);
-                            } else {
-                              newTypes = newTypes.filter(t => t !== type.id);
-                            }
-                            setTreatmentType(newTypes);
-                            
-                            if (!newTypes.includes('Implant')) {
-                              setImplantBrand('');
-                              setScanBodyModel('');
-                              setAnalogLogistics('');
-                              setImplantBarNeeded('');
-                            }
-                            if (!newTypes.includes('Denture')) {
-                              setDentureType('');
-                            }
-                            
-                            if (newTypes.some(t => ['CNB', 'Denture', 'Veneer', 'Implant'].includes(t))) {
-                              const upperMax = getArchMaxGroupSize(UPPER_ARCH_ORDER, toothConfigs);
-                              const lowerMax = getArchMaxGroupSize(LOWER_ARCH_ORDER, toothConfigs);
-                              if (upperMax > 6 || lowerMax > 6) {
-                                setShowArchLimitPopup(true);
-                              }
-                            }
-                          }}
-                        >
-                          {type.label}
-                        </DropdownMenuCheckboxItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="treatmentType" className="text-foreground">Treatment Type <span className="text-red-500">*</span></Label>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger render={<Button variant="outline" className="w-full justify-between border-border text-foreground bg-background font-normal" />}>
+                            <span className="truncate">
+                              {treatmentType.length > 0 ? treatmentType.join(', ') : "Select treatment types"}
+                            </span>
+                            <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent className="w-[300px]">
+                            {[
+                              { id: 'CNB', label: 'CNB (Crown and Bridge)' },
+                              { id: 'Denture', label: 'Denture' },
+                              { id: 'Veneer', label: 'Veneer' },
+                              { id: 'Implant', label: 'Implant' },
+                              { id: 'Surgical Guide', label: 'Surgical Guide' }
+                            ].map(type => (
+                              <DropdownMenuCheckboxItem
+                                key={type.id}
+                                checked={treatmentType.includes(type.id)}
+                                onCheckedChange={(checked) => {
+                                  let newTypes = [...treatmentType];
+                                  if (checked) {
+                                    newTypes.push(type.id);
+                                  } else {
+                                    newTypes = newTypes.filter(t => t !== type.id);
+                                  }
+                                  setTreatmentType(newTypes);
 
-                {treatmentType.includes('Implant') && (
-                  <div className="border border-border rounded-lg p-3 space-y-3 bg-muted/20 animate-in slide-in-from-top-2 duration-200">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Implant Workflow Configurations</p>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="grid gap-1.5">
-                        <Label htmlFor="implantBrand" className="text-xs">Implant Brand <span className="text-red-500">*</span></Label>
-                        <Select value={implantBrand} onValueChange={(val) => setImplantBrand(val || '')}>
-                          <SelectTrigger className="border-border text-foreground h-8 text-xs bg-background">
-                            <SelectValue placeholder="Brand" />
+                                  if (!newTypes.includes('Implant')) {
+                                    setImplantBrand('');
+                                    setScanBodyModel('');
+                                    setAnalogLogistics('');
+                                    setImplantBarNeeded('');
+                                  }
+                                  if (!newTypes.includes('Denture')) {
+                                    setDentureType('');
+                                  }
+
+                                  if (newTypes.some(t => ['CNB', 'Denture', 'Veneer', 'Implant'].includes(t))) {
+                                    const upperMax = getArchMaxGroupSize(UPPER_ARCH_ORDER, toothConfigs);
+                                    const lowerMax = getArchMaxGroupSize(LOWER_ARCH_ORDER, toothConfigs);
+                                    if (upperMax > 6 || lowerMax > 6) {
+                                      setShowArchLimitPopup(true);
+                                    }
+                                  }
+                                }}
+                              >
+                                {type.label}
+                              </DropdownMenuCheckboxItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+
+                      {treatmentType.includes('Implant') && (
+                        <div className="border border-border rounded-lg p-3 space-y-3 bg-muted/20 animate-in slide-in-from-top-2 duration-200">
+                          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Implant Workflow Configurations</p>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="grid gap-1.5">
+                              <Label htmlFor="implantBrand" className="text-xs">Implant Brand <span className="text-red-500">*</span></Label>
+                              <Select value={implantBrand} onValueChange={(val) => setImplantBrand(val || '')}>
+                                <SelectTrigger className="border-border text-foreground h-8 text-xs bg-background">
+                                  <SelectValue placeholder="Brand" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Osstem">Osstem</SelectItem>
+                                  <SelectItem value="Dentium">Dentium</SelectItem>
+                                  <SelectItem value="Nobel Biocare">Nobel Biocare</SelectItem>
+                                  <SelectItem value="Straumann">Straumann</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="grid gap-1.5">
+                              <Label htmlFor="scanBodyModel" className="text-xs">Scan Body Type <span className="text-red-500">*</span></Label>
+                              <Select value={scanBodyModel} onValueChange={(val) => setScanBodyModel(val || '')}>
+                                <SelectTrigger className="border-border text-foreground h-8 text-xs bg-background">
+                                  <SelectValue placeholder="Scan Body" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Short">Short</SelectItem>
+                                  <SelectItem value="Long">Long</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="grid gap-1.5">
+                              <Label htmlFor="analogLogistics" className="text-xs">Prosthetic Components Logistics <span className="text-red-500">*</span></Label>
+                              <Select value={analogLogistics} onValueChange={(val) => setAnalogLogistics(val || '')}>
+                                <SelectTrigger className="border-border text-foreground h-8 text-xs bg-background">
+                                  <SelectValue placeholder="Select who provides analogs/parts" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Doctor Provided">Doctor Provided (Component sent to lab)</SelectItem>
+                                  <SelectItem value="Lab Provided">Lab Provided (Lab supplies component)</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="grid gap-1.5">
+                              <Label htmlFor="implantBarNeeded" className="text-xs">Bar Needed <span className="text-red-500">*</span></Label>
+                              <Select value={implantBarNeeded} onValueChange={(val) => setImplantBarNeeded(val || '')}>
+                                <SelectTrigger className="border-border text-foreground h-8 text-xs bg-background">
+                                  <SelectValue placeholder="Select bar option" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="I-bar">I-bar</SelectItem>
+                                  <SelectItem value="Full Mouth bar">Full Mouth bar</SelectItem>
+                                  <SelectItem value="No bar needed">No bar needed</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {treatmentType.includes('Denture') && (
+                        <div className="border border-border rounded-lg p-3 space-y-3 bg-muted/20 animate-in slide-in-from-top-2 duration-200">
+                          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Denture Workflow Configurations</p>
+                          <div className="grid grid-cols-1 gap-3">
+                            <div className="grid gap-1.5">
+                              <Label htmlFor="dentureType" className="text-xs">Type of Denture <span className="text-red-500">*</span></Label>
+                              <Select value={dentureType} onValueChange={(val) => setDentureType(val || '')}>
+                                <SelectTrigger className="border-border text-foreground h-8 text-xs bg-background">
+                                  <SelectValue placeholder="Select type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Fixed Partial Denture">Fixed Partial Denture</SelectItem>
+                                  <SelectItem value="Removable Partial Denture">Removable Partial Denture</SelectItem>
+                                  <SelectItem value="Complete Denture">Complete Denture</SelectItem>
+                                  <SelectItem value="Full Mouth Denture">Full Mouth Denture</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="grid gap-2">
+                        <Label htmlFor="lab" className="text-foreground">Assign to Laboratory <span className="text-red-500">*</span></Label>
+                        <Select value={selectedLabId} onValueChange={(val) => setSelectedLabId(val || '')} disabled>
+                          <SelectTrigger className="border-border text-foreground">
+                            <SelectValue placeholder="Select a laboratory" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Osstem">Osstem</SelectItem>
-                            <SelectItem value="Dentium">Dentium</SelectItem>
-                            <SelectItem value="Nobel Biocare">Nobel Biocare</SelectItem>
-                            <SelectItem value="Straumann">Straumann</SelectItem>
+                            {availableLabs.map(lab => (
+                              <SelectItem key={lab.id} value={lab.id}>{lab.name}</SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
-                      <div className="grid gap-1.5">
-                        <Label htmlFor="scanBodyModel" className="text-xs">Scan Body Type <span className="text-red-500">*</span></Label>
-                        <Select value={scanBodyModel} onValueChange={(val) => setScanBodyModel(val || '')}>
-                          <SelectTrigger className="border-border text-foreground h-8 text-xs bg-background">
-                            <SelectValue placeholder="Scan Body" />
+                      <div className="grid gap-2">
+                        <Label htmlFor="urgency" className="text-foreground">Urgency <span className="text-red-500">*</span></Label>
+                        <Select value={urgency} onValueChange={(val) => setUrgency((val as Case['urgency']) || 'NORMAL')}>
+                          <SelectTrigger className="border-border text-foreground">
+                            <SelectValue placeholder="Select urgency" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Short">Short</SelectItem>
-                            <SelectItem value="Long">Long</SelectItem>
+                            <SelectItem value="LOW">Low</SelectItem>
+                            <SelectItem value="NORMAL">Normal</SelectItem>
+                            <SelectItem value="HIGH">High</SelectItem>
+                            <SelectItem value="URGENT">Urgent</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="grid gap-1.5">
-                        <Label htmlFor="analogLogistics" className="text-xs">Prosthetic Components Logistics <span className="text-red-500">*</span></Label>
-                        <Select value={analogLogistics} onValueChange={(val) => setAnalogLogistics(val || '')}>
-                          <SelectTrigger className="border-border text-foreground h-8 text-xs bg-background">
-                            <SelectValue placeholder="Select who provides analogs/parts" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Doctor Provided">Doctor Provided (Component sent to lab)</SelectItem>
-                            <SelectItem value="Lab Provided">Lab Provided (Lab supplies component)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="grid gap-1.5">
-                        <Label htmlFor="implantBarNeeded" className="text-xs">Bar Needed <span className="text-red-500">*</span></Label>
-                        <Select value={implantBarNeeded} onValueChange={(val) => setImplantBarNeeded(val || '')}>
-                          <SelectTrigger className="border-border text-foreground h-8 text-xs bg-background">
-                            <SelectValue placeholder="Select bar option" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="I-bar">I-bar</SelectItem>
-                            <SelectItem value="Full Mouth bar">Full Mouth bar</SelectItem>
-                            <SelectItem value="No bar needed">No bar needed</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {treatmentType.includes('Denture') && (
-                  <div className="border border-border rounded-lg p-3 space-y-3 bg-muted/20 animate-in slide-in-from-top-2 duration-200">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Denture Workflow Configurations</p>
-                    <div className="grid grid-cols-1 gap-3">
-                      <div className="grid gap-1.5">
-                        <Label htmlFor="dentureType" className="text-xs">Type of Denture <span className="text-red-500">*</span></Label>
-                        <Select value={dentureType} onValueChange={(val) => setDentureType(val || '')}>
-                          <SelectTrigger className="border-border text-foreground h-8 text-xs bg-background">
-                            <SelectValue placeholder="Select type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Fixed Partial Denture">Fixed Partial Denture</SelectItem>
-                            <SelectItem value="Removable Partial Denture">Removable Partial Denture</SelectItem>
-                            <SelectItem value="Complete Denture">Complete Denture</SelectItem>
-                            <SelectItem value="Full Mouth Denture">Full Mouth Denture</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div className="grid gap-2">
-                  <Label htmlFor="lab" className="text-foreground">Assign to Laboratory <span className="text-red-500">*</span></Label>
-                  <Select value={selectedLabId} onValueChange={(val) => setSelectedLabId(val || '')} disabled>
-                    <SelectTrigger className="border-border text-foreground">
-                      <SelectValue placeholder="Select a laboratory" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableLabs.map(lab => (
-                        <SelectItem key={lab.id} value={lab.id}>{lab.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="urgency" className="text-foreground">Urgency <span className="text-red-500">*</span></Label>
-                  <Select value={urgency} onValueChange={(val) => setUrgency((val as Case['urgency']) || 'NORMAL')}>
-                    <SelectTrigger className="border-border text-foreground">
-                      <SelectValue placeholder="Select urgency" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="LOW">Low</SelectItem>
-                      <SelectItem value="NORMAL">Normal</SelectItem>
-                      <SelectItem value="HIGH">High</SelectItem>
-                      <SelectItem value="URGENT">Urgent</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
                     </div>
                   </div>
 
                   {/* Step 1: Scan */}
                   <div className="w-full flex-shrink-0 px-1">
                     <div className="space-y-4 animate-in fade-in duration-300">
-                <div>
-                  <Label className="text-foreground mb-2 block">Upload 3D Scan (STL/PLY) <span className="text-red-500">*</span></Label>
-                  <input
-                    type="file"
-                    accept=".stl,.ply"
-                    className="hidden"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                  />
+                      <div>
+                        <Label className="text-foreground mb-2 block">Upload 3D Scan (STL/PLY) <span className="text-red-500">*</span></Label>
+                        <input
+                          type="file"
+                          accept=".stl,.ply"
+                          className="hidden"
+                          ref={fileInputRef}
+                          onChange={handleFileChange}
+                        />
 
-                  {uploadState === 'idle' && !selectedFile && (
-                    <div
-                      onClick={handleUploadClick}
-                      className="border-2 border-dashed border-border rounded-lg p-10 flex flex-col items-center justify-center text-center bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
-                    >
-                      <UploadCloud className="h-10 w-10 text-muted-foreground mb-3" />
-                      <p className="text-sm font-medium text-foreground">Drag & Drop STL/PLY Files Here</p>
-                      <p className="text-xs text-muted-foreground mt-1">or click to browse from your computer</p>
-                    </div>
-                  )}
-
-                  {selectedFile && (
-                    <div className="space-y-4">
-                      <div
-                        onClick={handleUploadClick}
-                        className="border-2 border-blue-600/40 rounded-lg p-4 flex items-center gap-4 bg-blue-600/5 cursor-pointer hover:bg-blue-600/10 transition-colors"
-                      >
-                        <div className="w-10 h-10 rounded-full bg-blue-600/20 flex items-center justify-center shrink-0">
-                          <FileText className="h-5 w-5 text-blue-600" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">{selectedFile.name}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB • Click to replace
-                          </p>
-                        </div>
-                      </div>
-
-                      {uploadState === 'analyzing' && (
-                        <div className="border border-border rounded-lg p-6 flex flex-col items-center justify-center text-center bg-muted/20">
-                          <Activity className="h-8 w-8 text-blue-600 mb-2 animate-pulse" />
-                          <p className="text-sm font-medium text-foreground">Analyzing STL geometry bounds...</p>
-                          <div className="w-full max-w-xs bg-muted rounded-full h-1 mt-3 overflow-hidden">
-                            <div className="bg-blue-600 h-1 rounded-full animate-[progress_2s_ease-in-out_infinite]" style={{ width: '60%' }}></div>
+                        {uploadState === 'idle' && !selectedFile && (
+                          <div
+                            onClick={handleUploadClick}
+                            className="border-2 border-dashed border-border rounded-lg p-10 flex flex-col items-center justify-center text-center bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
+                          >
+                            <UploadCloud className="h-10 w-10 text-muted-foreground mb-3" />
+                            <p className="text-sm font-medium text-foreground">Drag & Drop STL/PLY Files Here</p>
+                            <p className="text-xs text-muted-foreground mt-1">or click to browse from your computer</p>
                           </div>
-                        </div>
-                      )}
+                        )}
 
-                      {uploadState === 'warning' && (
-                        <div className="border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/20 rounded-lg p-4">
-                          <h4 className="text-sm font-semibold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
-                            <Activity className="h-4 w-4 text-amber-600 dark:text-amber-500" />
-                            Pre-Flight Analysis Alerts
-                          </h4>
-                          <ul className="list-disc pl-5 mt-2 space-y-1">
-                            {validationWarnings.map((warn, i) => (
-                              <li key={i} className="text-xs text-amber-700 dark:text-amber-400">{warn}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
+                        {selectedFile && (
+                          <div className="space-y-4">
+                            <div
+                              onClick={handleUploadClick}
+                              className="border-2 border-blue-600/40 rounded-lg p-4 flex items-center gap-4 bg-blue-600/5 cursor-pointer hover:bg-blue-600/10 transition-colors"
+                            >
+                              <div className="w-10 h-10 rounded-full bg-blue-600/20 flex items-center justify-center shrink-0">
+                                <FileText className="h-5 w-5 text-blue-600" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-foreground truncate">{selectedFile.name}</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                  {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB • Click to replace
+                                </p>
+                              </div>
+                            </div>
 
-                      {validationDimensions && (
-                        <div className="border border-border rounded-lg p-3 bg-muted/20 text-xs flex justify-around text-foreground">
-                          <div><span className="font-semibold">Width (X):</span> {validationDimensions.x.toFixed(1)} mm</div>
-                          <div><span className="font-semibold">Length (Y):</span> {validationDimensions.y.toFixed(1)} mm</div>
-                          <div><span className="font-semibold">Height (Z):</span> {validationDimensions.z.toFixed(1)} mm</div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                            {uploadState === 'analyzing' && (
+                              <div className="border border-border rounded-lg p-6 flex flex-col items-center justify-center text-center bg-muted/20">
+                                <Activity className="h-8 w-8 text-blue-600 mb-2 animate-pulse" />
+                                <p className="text-sm font-medium text-foreground">Analyzing STL geometry bounds...</p>
+                                <div className="w-full max-w-xs bg-muted rounded-full h-1 mt-3 overflow-hidden">
+                                  <div className="bg-blue-600 h-1 rounded-full animate-[progress_2s_ease-in-out_infinite]" style={{ width: '60%' }}></div>
+                                </div>
+                              </div>
+                            )}
 
-                {treatmentType.includes('Surgical Guide') && (
-                  <div className="border-t border-border pt-4 mt-4">
-                    <Label className="text-foreground mb-2 block">Upload DICOM / CBCT Scan (DCM/ZIP) <span className="text-red-500">*</span></Label>
-                    <input
-                      type="file"
-                      accept=".dcm,.zip,.rar"
-                      className="hidden"
-                      ref={dicomInputRef}
-                      onChange={handleDicomFileChange}
-                    />
+                            {uploadState === 'warning' && (
+                              <div className="border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/20 rounded-lg p-4">
+                                <h4 className="text-sm font-semibold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
+                                  <Activity className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+                                  Pre-Flight Analysis Alerts
+                                </h4>
+                                <ul className="list-disc pl-5 mt-2 space-y-1">
+                                  {validationWarnings.map((warn, i) => (
+                                    <li key={i} className="text-xs text-amber-700 dark:text-amber-400">{warn}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
 
-                    {!selectedDicomFile ? (
-                      <div
-                        onClick={handleDicomUploadClick}
-                        className="border-2 border-dashed border-border rounded-lg p-8 flex flex-col items-center justify-center text-center bg-muted/20 hover:bg-muted/40 transition-colors cursor-pointer"
-                      >
-                        <UploadCloud className="h-8 w-8 text-muted-foreground mb-2" />
-                        <p className="text-sm font-medium text-foreground">Drag & Drop DICOM Files Here</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">or click to browse (.dcm, .zip)</p>
+                            {validationDimensions && (
+                              <div className="border border-border rounded-lg p-3 bg-muted/20 text-xs flex justify-around text-foreground">
+                                <div><span className="font-semibold">Width (X):</span> {validationDimensions.x.toFixed(1)} mm</div>
+                                <div><span className="font-semibold">Length (Y):</span> {validationDimensions.y.toFixed(1)} mm</div>
+                                <div><span className="font-semibold">Height (Z):</span> {validationDimensions.z.toFixed(1)} mm</div>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
-                    ) : (
-                      <div
-                        onClick={handleDicomUploadClick}
-                        className="border border-emerald-500/30 rounded-lg p-4 flex items-center gap-4 bg-emerald-500/5 cursor-pointer hover:bg-emerald-500/10 transition-colors"
-                      >
-                        <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
-                          <FileText className="h-4 w-4 text-emerald-500" />
+
+                      {treatmentType.includes('Surgical Guide') && (
+                        <div className="border-t border-border pt-4 mt-4">
+                          <Label className="text-foreground mb-2 block">Upload DICOM / CBCT Scan (DCM/ZIP) <span className="text-red-500">*</span></Label>
+                          <input
+                            type="file"
+                            accept=".dcm,.zip,.rar"
+                            className="hidden"
+                            ref={dicomInputRef}
+                            onChange={handleDicomFileChange}
+                          />
+
+                          {!selectedDicomFile ? (
+                            <div
+                              onClick={handleDicomUploadClick}
+                              className="border-2 border-dashed border-border rounded-lg p-8 flex flex-col items-center justify-center text-center bg-muted/20 hover:bg-muted/40 transition-colors cursor-pointer"
+                            >
+                              <UploadCloud className="h-8 w-8 text-muted-foreground mb-2" />
+                              <p className="text-sm font-medium text-foreground">Drag & Drop DICOM Files Here</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">or click to browse (.dcm, .zip)</p>
+                            </div>
+                          ) : (
+                            <div
+                              onClick={handleDicomUploadClick}
+                              className="border border-emerald-500/30 rounded-lg p-4 flex items-center gap-4 bg-emerald-500/5 cursor-pointer hover:bg-emerald-500/10 transition-colors"
+                            >
+                              <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
+                                <FileText className="h-4 w-4 text-emerald-500" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-foreground truncate">{selectedDicomFile.name}</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                  {(selectedDicomFile.size / (1024 * 1024)).toFixed(2)} MB • Click to replace
+                                </p>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">{selectedDicomFile.name}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {(selectedDicomFile.size / (1024 * 1024)).toFixed(2)} MB • Click to replace
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                    </div>
-                  )}
+                      )}
                     </div>
                   </div>
 
                   {/* Step 2: Model */}
                   <div className="w-full flex-shrink-0 px-1">
                     <div className="space-y-4 animate-in fade-in duration-300">
-                {false ? null : (
-                  <>
-                    <div className="flex justify-between items-center mb-1">
-                  <Label className="text-foreground font-semibold text-sm">Tooth Charting & Restoration Properties</Label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="teethNotSpecified"
-                      checked={isTeethNotSpecified}
-                      onChange={(e) => {
-                        setIsTeethNotSpecified(e.target.checked);
-                        if (e.target.checked) {
-                          setSelectedTeeth([]);
-                          setToothConfigs({});
-                          setConnections([]);
-                        }
-                      }}
-                      className="rounded border-border text-blue-600 focus:ring-blue-600 h-4 w-4 bg-background"
-                    />
-                    <Label htmlFor="teethNotSpecified" className="text-xs text-muted-foreground cursor-pointer">Not Specified</Label>
-                  </div>
-                </div>
+                      {false ? null : (
+                        <>
+                          <div className="flex justify-between items-center mb-1">
+                            <Label className="text-foreground font-semibold text-sm">Tooth Charting & Restoration Properties</Label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                id="teethNotSpecified"
+                                checked={isTeethNotSpecified}
+                                onChange={(e) => {
+                                  setIsTeethNotSpecified(e.target.checked);
+                                  if (e.target.checked) {
+                                    setSelectedTeeth([]);
+                                    setToothConfigs({});
+                                    setConnections([]);
+                                  }
+                                }}
+                                className="rounded border-border text-blue-600 focus:ring-blue-600 h-4 w-4 bg-background"
+                              />
+                              <Label htmlFor="teethNotSpecified" className="text-xs text-muted-foreground cursor-pointer">Not Specified</Label>
+                            </div>
+                          </div>
 
-                {!isTeethNotSpecified ? (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border border-border rounded-lg p-3 bg-muted/10">
-                    <div className="md:col-span-1 border-b md:border-b-0 md:border-r border-border pb-3 md:pb-0 md:pr-3">
-                      {renderToolsSidebar()}
-                    </div>
+                          {!isTeethNotSpecified ? (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border border-border rounded-lg p-3 bg-muted/10">
+                              <div className="md:col-span-1 border-b md:border-b-0 md:border-r border-border pb-3 md:pb-0 md:pr-3">
+                                {renderToolsSidebar()}
+                              </div>
 
-                    <div className="md:col-span-2">
-                      {renderChartingCanvas(false)}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="border border-dashed border-border rounded-lg p-8 text-center text-muted-foreground text-sm">
-                    No teeth configured (Case parameters general)
-                  </div>
-                )}
+                              <div className="md:col-span-2">
+                                {renderChartingCanvas(false)}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="border border-dashed border-border rounded-lg p-8 text-center text-muted-foreground text-sm">
+                              No teeth configured (Case parameters general)
+                            </div>
+                          )}
 
-                <div className="grid grid-cols-2 gap-3 mt-4 pt-3 border-t border-border">
-                  <div className="grid gap-1">
-                    <Label htmlFor="occlusalClearance" className="text-[11px] text-foreground">Occlusal Clearance</Label>
-                    <Select value={occlusalClearance} onValueChange={(val) => setOcclusalClearance(val || 'Medium')}>
-                      <SelectTrigger className="h-8 text-xs border-border text-foreground bg-background">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="High">High</SelectItem>
-                        <SelectItem value="Medium">Medium</SelectItem>
-                        <SelectItem value="Light">Light</SelectItem>
-                        <SelectItem value="Out of Occlusion">Out of Occlusion</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid gap-1">
-                    <Label htmlFor="contactDesign" className="text-[11px] text-foreground">Contact Design</Label>
-                    <Select value={contactDesign} onValueChange={(val) => setContactDesign(val || 'Normal')}>
-                      <SelectTrigger className="h-8 text-xs border-border text-foreground bg-background">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Tight">Tight</SelectItem>
-                        <SelectItem value="Normal">Normal</SelectItem>
-                        <SelectItem value="Light">Light</SelectItem>
-                        <SelectItem value="Open">Open</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid gap-1">
-                    <Label htmlFor="connectorDesign" className="text-[11px] text-foreground">Connector Design</Label>
-                    <Select value={connectorDesign} onValueChange={(val) => setConnectorDesign(val || 'Anatomical')}>
-                      <SelectTrigger className="h-8 text-xs border-border text-foreground bg-background">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Anatomical">Anatomical</SelectItem>
-                        <SelectItem value="Reduced">Reduced</SelectItem>
-                        <SelectItem value="Knife Edge">Knife Edge</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid gap-1">
-                    <Label htmlFor="ponticDesign" className="text-[11px] text-foreground">Pontic Design</Label>
-                    <Select value={ponticDesign} onValueChange={(val) => setPonticDesign(val || 'Ovate')}>
-                      <SelectTrigger className="h-8 text-xs border-border text-foreground bg-background">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Sanitary">Sanitary</SelectItem>
-                        <SelectItem value="Saddle">Saddle</SelectItem>
-                        <SelectItem value="Ovate">Ovate</SelectItem>
-                        <SelectItem value="Modified Ridge Lap">Modified Ridge Lap</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                    </>
-                  )}
+                          <div className="grid grid-cols-2 gap-3 mt-4 pt-3 border-t border-border">
+                            <div className="grid gap-1">
+                              <Label htmlFor="occlusalClearance" className="text-[11px] text-foreground">Occlusal Clearance</Label>
+                              <Select value={occlusalClearance} onValueChange={(val) => setOcclusalClearance(val || 'Medium')}>
+                                <SelectTrigger className="h-8 text-xs border-border text-foreground bg-background">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="High">High</SelectItem>
+                                  <SelectItem value="Medium">Medium</SelectItem>
+                                  <SelectItem value="Light">Light</SelectItem>
+                                  <SelectItem value="Out of Occlusion">Out of Occlusion</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="grid gap-1">
+                              <Label htmlFor="contactDesign" className="text-[11px] text-foreground">Contact Design</Label>
+                              <Select value={contactDesign} onValueChange={(val) => setContactDesign(val || 'Normal')}>
+                                <SelectTrigger className="h-8 text-xs border-border text-foreground bg-background">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Tight">Tight</SelectItem>
+                                  <SelectItem value="Normal">Normal</SelectItem>
+                                  <SelectItem value="Light">Light</SelectItem>
+                                  <SelectItem value="Open">Open</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="grid gap-1">
+                              <Label htmlFor="connectorDesign" className="text-[11px] text-foreground">Connector Design</Label>
+                              <Select value={connectorDesign} onValueChange={(val) => setConnectorDesign(val || 'Anatomical')}>
+                                <SelectTrigger className="h-8 text-xs border-border text-foreground bg-background">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Anatomical">Anatomical</SelectItem>
+                                  <SelectItem value="Reduced">Reduced</SelectItem>
+                                  <SelectItem value="Knife Edge">Knife Edge</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="grid gap-1">
+                              <Label htmlFor="ponticDesign" className="text-[11px] text-foreground">Pontic Design</Label>
+                              <Select value={ponticDesign} onValueChange={(val) => setPonticDesign(val || 'Ovate')}>
+                                <SelectTrigger className="h-8 text-xs border-border text-foreground bg-background">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Sanitary">Sanitary</SelectItem>
+                                  <SelectItem value="Saddle">Saddle</SelectItem>
+                                  <SelectItem value="Ovate">Ovate</SelectItem>
+                                  <SelectItem value="Modified Ridge Lap">Modified Ridge Lap</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
 
                   {/* Step 3: CAD */}
                   <div className="w-full flex-shrink-0 px-1">
                     <div className="space-y-4 animate-in fade-in duration-300">
-                <div className="flex justify-between items-center mb-2">
-                  <Label className="text-foreground">Restoration Materials & Shade</Label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="designNotSpecified"
-                      checked={isDesignNotSpecified}
-                      onChange={(e) => {
-                        setIsDesignNotSpecified(e.target.checked);
-                      }}
-                      className="rounded border-border text-blue-600 focus:ring-blue-600 h-4 w-4 bg-background"
-                    />
-                    <Label htmlFor="designNotSpecified" className="text-xs text-muted-foreground cursor-pointer">Not Specified</Label>
-                  </div>
-                </div>
-
-                {!isDesignNotSpecified ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-center gap-2 text-[10px] text-muted-foreground">
-                      <span className={carouselPanel === 'material' ? 'font-bold text-blue-600' : ''}>1. Material</span>
-                      <ChevronRight className="w-3 h-3" />
-                      <span className={carouselPanel === 'shade' ? 'font-bold text-blue-600' : ''}>2. Shade</span>
-                    </div>
-
-                    <div className="overflow-hidden">
-                      <div className="flex transition-transform duration-500 ease-out" style={{ transform: `translateX(-${carouselPanel === 'shade' ? 100 : 0}%)` }}>
-                        <div className="w-full shrink-0 pr-1">
-                          <div className="grid gap-2">
-                            {MATERIALS.map(mat => (
-                              <button
-                                key={mat.value}
-                                type="button"
-                                onClick={() => {
-                                  setMaterial(mat.value);
-                                  setCarouselPanel('shade');
-                                }}
-                                className={`flex items-center justify-between p-3 rounded-lg border transition-all text-left ${material === mat.value
-                                  ? 'border-blue-600 bg-blue-600/10 shadow-sm'
-                                  : 'border-border bg-background hover:bg-muted/50'
-                                  }`}
-                              >
-                                <span className="text-sm font-medium text-foreground">{mat.label}</span>
-                                {material === mat.value && (
-                                  <CheckCircle2 className="w-4 h-4 text-blue-600" />
-                                )}
-                              </button>
-                            ))}
-                          </div>
+                      <div className="flex justify-between items-center mb-2">
+                        <Label className="text-foreground">Restoration Materials & Shade</Label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            id="designNotSpecified"
+                            checked={isDesignNotSpecified}
+                            onChange={(e) => {
+                              setIsDesignNotSpecified(e.target.checked);
+                            }}
+                            className="rounded border-border text-blue-600 focus:ring-blue-600 h-4 w-4 bg-background"
+                          />
+                          <Label htmlFor="designNotSpecified" className="text-xs text-muted-foreground cursor-pointer">Not Specified</Label>
                         </div>
+                      </div>
 
-                        <div className="w-full shrink-0 pl-1 space-y-4">
-                          <button
-                            type="button"
-                            onClick={() => setCarouselPanel('material')}
-                            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                          >
-                            <ChevronLeft className="w-3 h-3" />
-                            Back to Material
-                          </button>
-
-                          <div className="text-xs text-muted-foreground">
-                            Material: <span className="font-semibold text-foreground">{MATERIALS.find(m => m.value === material)?.label}</span>
+                      {!isDesignNotSpecified ? (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-center gap-2 text-[10px] text-muted-foreground">
+                            <span className={carouselPanel === 'material' ? 'font-bold text-blue-600' : ''}>1. Material</span>
+                            <ChevronRight className="w-3 h-3" />
+                            <span className={carouselPanel === 'shade' ? 'font-bold text-blue-600' : ''}>2. Shade</span>
                           </div>
 
-                          <div>
-                            <Label className="text-foreground mb-2 block text-sm">Shade-Code <span className="text-red-500">*</span></Label>
-                            {renderShadeGrid((s) => setShade(s), shade)}
-                          </div>
+                          <div className="overflow-hidden">
+                            <div className="flex transition-transform duration-500 ease-out" style={{ transform: `translateX(-${carouselPanel === 'shade' ? 100 : 0}%)` }}>
+                              <div className="w-full shrink-0 pr-1">
+                                <div className="grid gap-2">
+                                  {MATERIALS.map(mat => (
+                                    <button
+                                      key={mat.value}
+                                      type="button"
+                                      onClick={() => {
+                                        setMaterial(mat.value);
+                                        setCarouselPanel('shade');
+                                      }}
+                                      className={`flex items-center justify-between p-3 rounded-lg border transition-all text-left ${material === mat.value
+                                        ? 'border-blue-600 bg-blue-600/10 shadow-sm'
+                                        : 'border-border bg-background hover:bg-muted/50'
+                                        }`}
+                                    >
+                                      <span className="text-sm font-medium text-foreground">{mat.label}</span>
+                                      {material === mat.value && (
+                                        <CheckCircle2 className="w-4 h-4 text-blue-600" />
+                                      )}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
 
-                          <div className="border-t border-border pt-3">
-                            <div className="flex items-center gap-2 mb-3">
-                              <input
-                                type="checkbox"
-                                id="customShadeEnabled"
-                                checked={customShadeEnabled}
-                                onChange={(e) => {
-                                  setCustomShadeEnabled(e.target.checked);
-                                  if (!e.target.checked) setActiveZone(null);
-                                }}
-                                className="rounded border-border text-blue-600 focus:ring-blue-600 h-4 w-4 bg-background"
-                              />
-                              <Label htmlFor="customShadeEnabled" className="text-sm text-foreground cursor-pointer">Enable Custom Shading (3-Zone)</Label>
-                            </div>
+                              <div className="w-full shrink-0 pl-1 space-y-4">
+                                <button
+                                  type="button"
+                                  onClick={() => setCarouselPanel('material')}
+                                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                  <ChevronLeft className="w-3 h-3" />
+                                  Back to Material
+                                </button>
 
-                            {customShadeEnabled && (
-                              <div className="space-y-3">
-                                <div className="flex gap-3 items-start">
-                                  <div className="flex flex-col justify-between text-[8px] text-muted-foreground py-1" style={{ height: '120px' }}>
-                                    <span>Cervical</span>
-                                    <span>Body</span>
-                                    <span>Incisal</span>
+                                <div className="text-xs text-muted-foreground">
+                                  Material: <span className="font-semibold text-foreground">{MATERIALS.find(m => m.value === material)?.label}</span>
+                                </div>
+
+                                <div>
+                                  <Label className="text-foreground mb-2 block text-sm">Shade-Code <span className="text-red-500">*</span></Label>
+                                  {renderShadeGrid((s) => setShade(s), shade)}
+                                </div>
+
+                                <div className="border-t border-border pt-3">
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <input
+                                      type="checkbox"
+                                      id="customShadeEnabled"
+                                      checked={customShadeEnabled}
+                                      onChange={(e) => {
+                                        setCustomShadeEnabled(e.target.checked);
+                                        if (!e.target.checked) setActiveZone(null);
+                                      }}
+                                      className="rounded border-border text-blue-600 focus:ring-blue-600 h-4 w-4 bg-background"
+                                    />
+                                    <Label htmlFor="customShadeEnabled" className="text-sm text-foreground cursor-pointer">Enable Custom Shading (3-Zone)</Label>
                                   </div>
-                                  <svg viewBox="0 0 80 120" className="w-20 shrink-0" style={{ height: '120px' }}>
-                                    <defs>
-                                      <clipPath id="toothClip">
-                                        <path d="M 15 8 Q 40 3 65 8 L 63 45 L 60 80 L 55 105 L 40 118 L 25 105 L 20 80 L 17 45 Z" />
-                                      </clipPath>
-                                    </defs>
-                                    <rect x="0" y="0" width="80" height="40"
-                                      fill={SHADE_HEX_MAP[cervicalShade] || '#ebdccb'}
-                                      clipPath="url(#toothClip)"
-                                      onClick={() => setActiveZone(activeZone === 'cervical' ? null : 'cervical')}
-                                      className="cursor-pointer transition-opacity hover:opacity-80" />
-                                    <rect x="0" y="40" width="80" height="40"
-                                      fill={SHADE_HEX_MAP[bodyShade] || '#ebdccb'}
-                                      clipPath="url(#toothClip)"
-                                      onClick={() => setActiveZone(activeZone === 'body' ? null : 'body')}
-                                      className="cursor-pointer transition-opacity hover:opacity-80" />
-                                    <rect x="0" y="80" width="80" height="40"
-                                      fill={SHADE_HEX_MAP[incisalShade] || '#ebdccb'}
-                                      clipPath="url(#toothClip)"
-                                      onClick={() => setActiveZone(activeZone === 'incisal' ? null : 'incisal')}
-                                      className="cursor-pointer transition-opacity hover:opacity-80" />
-                                    <path d="M 15 8 Q 40 3 65 8 L 63 45 L 60 80 L 55 105 L 40 118 L 25 105 L 20 80 L 17 45 Z"
-                                      fill="none" stroke="#999" strokeWidth="1.5" />
-                                    <line x1="15" y1="40" x2="65" y2="40" stroke="#aaa" strokeWidth="0.5" strokeDasharray="2,2" />
-                                    <line x1="18" y1="80" x2="62" y2="80" stroke="#aaa" strokeWidth="0.5" strokeDasharray="2,2" />
-                                    {activeZone === 'cervical' && <rect x="0" y="0" width="80" height="40" fill="none" stroke="#3b82f6" strokeWidth="2" clipPath="url(#toothClip)" />}
-                                    {activeZone === 'body' && <rect x="0" y="40" width="80" height="40" fill="none" stroke="#3b82f6" strokeWidth="2" clipPath="url(#toothClip)" />}
-                                    {activeZone === 'incisal' && <rect x="0" y="80" width="80" height="40" fill="none" stroke="#3b82f6" strokeWidth="2" clipPath="url(#toothClip)" />}
-                                  </svg>
 
-                                  {/* Floating shade picker for active zone */}
-                                  <div className="flex-1 min-w-0">
-                                    {activeZone ? (
-                                      <div className="border border-blue-600/30 rounded-lg p-3 bg-blue-600/5">
-                                        <p className="text-xs font-semibold text-foreground mb-2">
-                                          Select shade for {activeZone === 'cervical' ? 'Cervical' : activeZone === 'body' ? 'Body' : 'Incisal'} zone:
-                                        </p>
-                                        {renderShadeGrid(
-                                          (s) => {
-                                            if (activeZone === 'cervical') setCervicalShade(s);
-                                            else if (activeZone === 'body') setBodyShade(s);
-                                            else setIncisalShade(s);
-                                          },
-                                          activeZone === 'cervical' ? cervicalShade : activeZone === 'body' ? bodyShade : incisalShade
-                                        )}
-                                      </div>
-                                    ) : (
-                                      <div className="text-xs text-muted-foreground py-4 text-center border border-dashed border-border rounded-lg">
-                                        Click a zone on the tooth to select its shade.
-                                        <div className="mt-2 space-y-1 text-left inline-block">
-                                          <div>Cervical: <span className="font-semibold">{cervicalShade}</span></div>
-                                          <div>Body: <span className="font-semibold">{bodyShade}</span></div>
-                                          <div>Incisal: <span className="font-semibold">{incisalShade}</span></div>
+                                  {customShadeEnabled && (
+                                    <div className="space-y-3">
+                                      <div className="flex gap-3 items-start">
+                                        <div className="flex flex-col justify-between text-[8px] text-muted-foreground py-1" style={{ height: '120px' }}>
+                                          <span>Cervical</span>
+                                          <span>Body</span>
+                                          <span>Incisal</span>
+                                        </div>
+                                        <svg viewBox="0 0 80 120" className="w-20 shrink-0" style={{ height: '120px' }}>
+                                          <defs>
+                                            <clipPath id="toothClip">
+                                              <path d="M 15 8 Q 40 3 65 8 L 63 45 L 60 80 L 55 105 L 40 118 L 25 105 L 20 80 L 17 45 Z" />
+                                            </clipPath>
+                                          </defs>
+                                          <rect x="0" y="0" width="80" height="40"
+                                            fill={SHADE_HEX_MAP[cervicalShade] || '#ebdccb'}
+                                            clipPath="url(#toothClip)"
+                                            onClick={() => setActiveZone(activeZone === 'cervical' ? null : 'cervical')}
+                                            className="cursor-pointer transition-opacity hover:opacity-80" />
+                                          <rect x="0" y="40" width="80" height="40"
+                                            fill={SHADE_HEX_MAP[bodyShade] || '#ebdccb'}
+                                            clipPath="url(#toothClip)"
+                                            onClick={() => setActiveZone(activeZone === 'body' ? null : 'body')}
+                                            className="cursor-pointer transition-opacity hover:opacity-80" />
+                                          <rect x="0" y="80" width="80" height="40"
+                                            fill={SHADE_HEX_MAP[incisalShade] || '#ebdccb'}
+                                            clipPath="url(#toothClip)"
+                                            onClick={() => setActiveZone(activeZone === 'incisal' ? null : 'incisal')}
+                                            className="cursor-pointer transition-opacity hover:opacity-80" />
+                                          <path d="M 15 8 Q 40 3 65 8 L 63 45 L 60 80 L 55 105 L 40 118 L 25 105 L 20 80 L 17 45 Z"
+                                            fill="none" stroke="#999" strokeWidth="1.5" />
+                                          <line x1="15" y1="40" x2="65" y2="40" stroke="#aaa" strokeWidth="0.5" strokeDasharray="2,2" />
+                                          <line x1="18" y1="80" x2="62" y2="80" stroke="#aaa" strokeWidth="0.5" strokeDasharray="2,2" />
+                                          {activeZone === 'cervical' && <rect x="0" y="0" width="80" height="40" fill="none" stroke="#3b82f6" strokeWidth="2" clipPath="url(#toothClip)" />}
+                                          {activeZone === 'body' && <rect x="0" y="40" width="80" height="40" fill="none" stroke="#3b82f6" strokeWidth="2" clipPath="url(#toothClip)" />}
+                                          {activeZone === 'incisal' && <rect x="0" y="80" width="80" height="40" fill="none" stroke="#3b82f6" strokeWidth="2" clipPath="url(#toothClip)" />}
+                                        </svg>
+
+                                        {/* Floating shade picker for active zone */}
+                                        <div className="flex-1 min-w-0">
+                                          {activeZone ? (
+                                            <div className="border border-blue-600/30 rounded-lg p-3 bg-blue-600/5">
+                                              <p className="text-xs font-semibold text-foreground mb-2">
+                                                Select shade for {activeZone === 'cervical' ? 'Cervical' : activeZone === 'body' ? 'Body' : 'Incisal'} zone:
+                                              </p>
+                                              {renderShadeGrid(
+                                                (s) => {
+                                                  if (activeZone === 'cervical') setCervicalShade(s);
+                                                  else if (activeZone === 'body') setBodyShade(s);
+                                                  else setIncisalShade(s);
+                                                },
+                                                activeZone === 'cervical' ? cervicalShade : activeZone === 'body' ? bodyShade : incisalShade
+                                              )}
+                                            </div>
+                                          ) : (
+                                            <div className="text-xs text-muted-foreground py-4 text-center border border-dashed border-border rounded-lg">
+                                              Click a zone on the tooth to select its shade.
+                                              <div className="mt-2 space-y-1 text-left inline-block">
+                                                <div>Cervical: <span className="font-semibold">{cervicalShade}</span></div>
+                                                <div>Body: <span className="font-semibold">{bodyShade}</span></div>
+                                                <div>Incisal: <span className="font-semibold">{incisalShade}</span></div>
+                                              </div>
+                                            </div>
+                                          )}
                                         </div>
                                       </div>
-                                    )}
-                                  </div>
-                                </div>
 
-                                {/* Characterizations */}
-                                <div>
-                                  <Label className="text-foreground mb-2 block text-xs">Characterizations</Label>
-                                  <div className="flex flex-wrap gap-2">
-                                    {['White Spots', 'Crack Lines', 'Incisal Translucency', 'Hypoplasia Marks'].map(char => (
-                                      <label key={char} className="flex items-center gap-1.5 text-xs cursor-pointer">
-                                        <input
-                                          type="checkbox"
-                                          checked={characterizations.includes(char)}
-                                          onChange={(e) => {
-                                            if (e.target.checked) {
-                                              setCharacterizations(prev => [...prev, char]);
-                                            } else {
-                                              setCharacterizations(prev => prev.filter(c => c !== char));
-                                            }
-                                          }}
-                                          className="rounded border-border text-blue-600 focus:ring-blue-600 h-3.5 w-3.5 bg-background"
-                                        />
-                                        <span className="text-foreground">{char}</span>
-                                      </label>
-                                    ))}
-                                  </div>
-                                </div>
-
-                                {/* Shade Reference Photo Upload */}
-                                <div>
-                                  <Label className="text-foreground mb-2 block text-xs">Shade Reference Photograph</Label>
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    className="hidden"
-                                    ref={shadePhotoInputRef}
-                                    onChange={handleShadePhotoChange}
-                                  />
-                                  {!shadePhotoFile ? (
-                                    <div
-                                      onClick={handleShadePhotoClick}
-                                      className="border-2 border-dashed border-border rounded-lg p-4 flex flex-col items-center justify-center text-center bg-muted/20 hover:bg-muted/40 transition-colors cursor-pointer"
-                                    >
-                                      <Camera className="h-6 w-6 text-muted-foreground mb-1" />
-                                      <p className="text-xs text-muted-foreground">Upload shade reference photo</p>
-                                    </div>
-                                  ) : (
-                                    <div
-                                      onClick={handleShadePhotoClick}
-                                      className="border border-emerald-500/30 rounded-lg p-3 flex items-center gap-3 bg-emerald-500/5 cursor-pointer hover:bg-emerald-500/10 transition-colors"
-                                    >
-                                      <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
-                                        <Camera className="h-4 w-4 text-emerald-500" />
+                                      {/* Characterizations */}
+                                      <div>
+                                        <Label className="text-foreground mb-2 block text-xs">Characterizations</Label>
+                                        <div className="flex flex-wrap gap-2">
+                                          {['White Spots', 'Crack Lines', 'Incisal Translucency', 'Hypoplasia Marks'].map(char => (
+                                            <label key={char} className="flex items-center gap-1.5 text-xs cursor-pointer">
+                                              <input
+                                                type="checkbox"
+                                                checked={characterizations.includes(char)}
+                                                onChange={(e) => {
+                                                  if (e.target.checked) {
+                                                    setCharacterizations(prev => [...prev, char]);
+                                                  } else {
+                                                    setCharacterizations(prev => prev.filter(c => c !== char));
+                                                  }
+                                                }}
+                                                className="rounded border-border text-blue-600 focus:ring-blue-600 h-3.5 w-3.5 bg-background"
+                                              />
+                                              <span className="text-foreground">{char}</span>
+                                            </label>
+                                          ))}
+                                        </div>
                                       </div>
-                                      <div className="flex-1 min-w-0">
-                                        <p className="text-xs font-medium text-foreground truncate">{shadePhotoFile.name}</p>
-                                        <p className="text-[10px] text-muted-foreground">Click to replace</p>
+
+                                      {/* Shade Reference Photo Upload */}
+                                      <div>
+                                        <Label className="text-foreground mb-2 block text-xs">Shade Reference Photograph</Label>
+                                        <input
+                                          type="file"
+                                          accept="image/*"
+                                          className="hidden"
+                                          ref={shadePhotoInputRef}
+                                          onChange={handleShadePhotoChange}
+                                        />
+                                        {!shadePhotoFile ? (
+                                          <div
+                                            onClick={handleShadePhotoClick}
+                                            className="border-2 border-dashed border-border rounded-lg p-4 flex flex-col items-center justify-center text-center bg-muted/20 hover:bg-muted/40 transition-colors cursor-pointer"
+                                          >
+                                            <Camera className="h-6 w-6 text-muted-foreground mb-1" />
+                                            <p className="text-xs text-muted-foreground">Upload shade reference photo</p>
+                                          </div>
+                                        ) : (
+                                          <div
+                                            onClick={handleShadePhotoClick}
+                                            className="border border-emerald-500/30 rounded-lg p-3 flex items-center gap-3 bg-emerald-500/5 cursor-pointer hover:bg-emerald-500/10 transition-colors"
+                                          >
+                                            <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
+                                              <Camera className="h-4 w-4 text-emerald-500" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                              <p className="text-xs font-medium text-foreground truncate">{shadePhotoFile.name}</p>
+                                              <p className="text-[10px] text-muted-foreground">Click to replace</p>
+                                            </div>
+                                          </div>
+                                        )}
                                       </div>
                                     </div>
                                   )}
                                 </div>
                               </div>
-                            )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="border border-dashed border-border rounded-lg p-8 text-center text-muted-foreground text-sm">
-                    Material and Shade parameters left unspecified. The lab technician will select appropriate aesthetic choices.
-                  </div>
-                )}
+                      ) : (
+                        <div className="border border-dashed border-border rounded-lg p-8 text-center text-muted-foreground text-sm">
+                          Material and Shade parameters left unspecified. The lab technician will select appropriate aesthetic choices.
+                        </div>
+                      )}
                     </div>
                   </div>
 
                   {/* Step 4: CAM */}
                   <div className="w-full flex-shrink-0 px-1">
                     <div className="space-y-4 animate-in fade-in duration-300">
-                <div className="grid gap-2">
-                  <Label htmlFor="dueDate" className="text-foreground">Requested Due Date <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="dueDate"
-                    type="date"
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
-                    min={new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]} // Min 1 day ahead
-                    className="border-border text-foreground bg-background"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="instructions" className="text-foreground">Custom Lab Instructions</Label>
-                  <textarea
-                    id="instructions"
-                    placeholder="Provide specific notes regarding occlusal clearances, contacts, prep margins, or custom glazing instructions..."
-                    value={instructions}
-                    onChange={(e) => setInstructions(e.target.value)}
-                    className="w-full min-h-[100px] p-2 border border-border rounded bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-blue-600"
-                  />
+                      <div className="grid gap-2">
+                        <Label htmlFor="dueDate" className="text-foreground">Requested Due Date <span className="text-red-500">*</span></Label>
+                        <Input
+                          id="dueDate"
+                          type="date"
+                          value={dueDate}
+                          onChange={(e) => setDueDate(e.target.value)}
+                          min={new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]} // Min 1 day ahead
+                          className="border-border text-foreground bg-background"
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="instructions" className="text-foreground">Custom Lab Instructions</Label>
+                        <textarea
+                          id="instructions"
+                          placeholder="Provide specific notes regarding occlusal clearances, contacts, prep margins, or custom glazing instructions..."
+                          value={instructions}
+                          onChange={(e) => setInstructions(e.target.value)}
+                          className="w-full min-h-[100px] p-2 border border-border rounded bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-blue-600"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
           <DialogFooter className="flex justify-between items-center gap-2 sm:gap-0 p-6 border-t border-border bg-card shrink-0">
             <div>
