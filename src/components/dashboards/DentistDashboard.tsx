@@ -460,7 +460,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         return;
       }
       
-      if (treatmentType.some(t => ['CNB', 'FPD', 'Veneer', 'Implant'].includes(t))) {
+      if (treatmentType.some(t => ['CNB', 'Denture', 'Veneer', 'Implant'].includes(t))) {
         const simulated = { ...updated, [toothId]: activeIndication };
         const upperMax = getArchMaxGroupSize(UPPER_ARCH_ORDER, simulated);
         const lowerMax = getArchMaxGroupSize(LOWER_ARCH_ORDER, simulated);
@@ -961,7 +961,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         const hasSelection = Object.values(toothConfigs).some(v => v !== 'none') || isTeethNotSpecified;
         if (!hasSelection) return false;
         
-        if (treatmentType.some(t => ['CNB', 'FPD', 'Veneer', 'Implant'].includes(t))) {
+        if (treatmentType.some(t => ['CNB', 'Denture', 'Veneer', 'Implant'].includes(t))) {
           const upperMax = getArchMaxGroupSize(UPPER_ARCH_ORDER, toothConfigs);
           const lowerMax = getArchMaxGroupSize(LOWER_ARCH_ORDER, toothConfigs);
           if (upperMax > 6 || lowerMax > 6) {
@@ -1181,7 +1181,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
       return;
     }
 
-    if (treatmentType.some(t => ['CNB', 'FPD', 'Veneer', 'Implant'].includes(t))) {
+    if (treatmentType.some(t => ['CNB', 'Denture', 'Veneer', 'Implant'].includes(t))) {
       const upperMax = getArchMaxGroupSize(UPPER_ARCH_ORDER, toothConfigs);
       const lowerMax = getArchMaxGroupSize(LOWER_ARCH_ORDER, toothConfigs);
       if (upperMax > 6 || lowerMax > 6) {
@@ -1804,7 +1804,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                     <DropdownMenuContent className="w-[300px]">
                       {[
                         { id: 'CNB', label: 'CNB (Crown and Bridge)' },
-                        { id: 'FPD', label: 'FPD (Fixed Partial Denture)' },
+                        { id: 'Denture', label: 'Denture' },
                         { id: 'Veneer', label: 'Veneer' },
                         { id: 'Implant', label: 'Implant' },
                         { id: 'Surgical Guide', label: 'Surgical Guide' }
@@ -1827,7 +1827,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                               setAnalogLogistics('');
                             }
                             
-                            if (newTypes.some(t => ['CNB', 'FPD', 'Veneer', 'Implant'].includes(t))) {
+                            if (newTypes.some(t => ['CNB', 'Denture', 'Veneer', 'Implant'].includes(t))) {
                               const upperMax = getArchMaxGroupSize(UPPER_ARCH_ORDER, toothConfigs);
                               const lowerMax = getArchMaxGroupSize(LOWER_ARCH_ORDER, toothConfigs);
                               if (upperMax > 6 || lowerMax > 6) {
