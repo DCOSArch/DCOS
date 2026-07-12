@@ -28,7 +28,7 @@ export default function LabDashboard({ initialCases, initialInventory, available
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const [cases, setCases] = useState<Case[]>(initialCases);
-  
+
   // Sync initialCases with cases when router.refresh() happens
   useEffect(() => {
     setCases(initialCases);
@@ -52,17 +52,35 @@ export default function LabDashboard({ initialCases, initialInventory, available
       alert('Please fill out all required fields.');
       return;
     }
-    
+
     setUploadState('uploading');
     try {
       let scanUrl = null;
       if (selectedFile) {
-        const fileName = `${Date.now()}_${selectedFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-        const { data, error } = await supabase.storage.from('scans').upload(fileName, selectedFile);
-        if (error) throw error;
-        scanUrl = data.path;
+        // R2 presigned upload (direct-to-edge)
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: selectedFile.name, contentType: 'application/octet-stream' }),
+        });
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.error || `Presign failed (${res.status})`);
+        }
+        const { url: signedUrl, key } = await res.json();
+
+        await new Promise<void>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open('PUT', signedUrl, true);
+          xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+          xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`R2 PUT failed: ${xhr.status}`)));
+          xhr.onerror = () => reject(new Error('Network error during upload'));
+          xhr.send(selectedFile);
+        });
+
+        scanUrl = key;
       }
-      
+
       const dbCase = {
         patient_name: patientName,
         dentist_id: selectedDentistId,
@@ -76,7 +94,7 @@ export default function LabDashboard({ initialCases, initialInventory, available
 
       const { error } = await supabase.from('cases').insert([dbCase]);
       if (error) throw error;
-      
+
       setIsCreateModalOpen(false);
       setPatientName('');
       setTreatmentType('');
@@ -109,7 +127,7 @@ export default function LabDashboard({ initialCases, initialInventory, available
       .on('postgres_changes', { event: '*', schema: 'public', table: 'cases' }, payload => {
         const eventType = payload.eventType;
         const newCase = payload.new as any;
-        
+
         if (eventType === 'INSERT') {
           const dentist = availableDentists.find(u => u.id === newCase.dentist_id);
           const dentistName = dentist ? dentist.name : 'A dentist';
@@ -142,7 +160,7 @@ export default function LabDashboard({ initialCases, initialInventory, available
             deliveryTrackingId: newCase.delivery_tracking_id
           } : c));
         }
-        
+
         router.refresh();
       })
       .subscribe();
@@ -166,21 +184,21 @@ export default function LabDashboard({ initialCases, initialInventory, available
     e.preventDefault();
     if (draggedCaseId) {
       const caseItem = cases.find(c => c.id === draggedCaseId);
-      
+
       // Material Sync Logic
       if (caseItem && caseItem.status === 'PENDING' && statusId === 'IN_PROGRESS' && caseItem.material) {
         const matchedItem = inventory.find(inv => inv.name === caseItem.material && inv.quantity > 0);
         if (matchedItem) {
           setSyncNotification(`Deducted 1 ${matchedItem.unit} of ${matchedItem.name}`);
           setTimeout(() => setSyncNotification(null), 3000);
-          setInventory(prev => prev.map(inv => 
+          setInventory(prev => prev.map(inv =>
             inv.id === matchedItem.id ? { ...inv, quantity: inv.quantity - 1 } : inv
           ));
         }
       }
 
       setCases(prev => prev.map(c => c.id === draggedCaseId ? { ...c, status: statusId } : c));
-      
+
       // Update in Supabase
       supabase.from('cases').update({ status: statusId }).eq('id', draggedCaseId).then(({ error }) => {
         if (error) {
@@ -285,8 +303,8 @@ export default function LabDashboard({ initialCases, initialInventory, available
           {KANBAN_COLUMNS.map(column => {
             const columnCases = filteredCases.filter(c => c.status === column.id);
             return (
-              <div 
-                key={column.id} 
+              <div
+                key={column.id}
                 className="flex flex-col pt-2"
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, column.id)}
@@ -299,7 +317,7 @@ export default function LabDashboard({ initialCases, initialInventory, available
                     </span>
                   </h3>
                 </div>
-                
+
                 <div className={`flex-1 space-y-3 rounded-xl p-3 min-h-[500px] transition-colors ${draggedCaseId ? 'bg-muted/50 border-2 border-dashed border-primary/20' : 'bg-muted/30 border-2 border-transparent'}`}>
                   {columnCases.length === 0 ? (
                     <div className="h-24 border-2 border-dashed border-border rounded-lg flex items-center justify-center text-sm text-muted-foreground pointer-events-none">
@@ -309,8 +327,8 @@ export default function LabDashboard({ initialCases, initialInventory, available
                     columnCases.map(caseItem => {
                       const dentist = availableDentists.find(u => u.id === caseItem.dentistId);
                       return (
-                        <Card 
-                          key={caseItem.id} 
+                        <Card
+                          key={caseItem.id}
                           draggable
                           onDragStart={(e) => handleDragStart(e, caseItem.id)}
                           onClick={() => router.push(`/cases/${caseItem.id}`)}
@@ -334,10 +352,10 @@ export default function LabDashboard({ initialCases, initialInventory, available
                                 <Badge className="bg-muted text-muted-foreground border-border hover:bg-muted text-[8px] px-1 py-0 h-3.5 shrink-0 scale-90 origin-right">F</Badge>
                               )}
                             </div>
-                             <div className="mt-1.5 bg-primary-soft/50 border border-primary/20 rounded px-1.5 py-1">
+                            <div className="mt-1.5 bg-primary-soft/50 border border-primary/20 rounded px-1.5 py-1">
                               <p className="text-[10px] font-medium text-primary leading-none truncate">{caseItem.requestedTreatment}</p>
                             </div>
-                            
+
                             <div className="mt-2 pt-1.5 border-t border-border/50 flex items-center justify-between text-[10px] text-muted-foreground">
                               <span className="font-medium text-foreground truncate max-w-[100px]">
                                 {dentist?.name || 'Unknown Dr.'}
@@ -360,10 +378,10 @@ export default function LabDashboard({ initialCases, initialInventory, available
       </div>
 
       <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-        <DialogTrigger 
+        <DialogTrigger
           render={<Button className="fixed bottom-6 right-6 md:bottom-10 md:right-10 h-14 w-14 rounded-full shadow-xl bg-primary hover:bg-primary-hover p-0 z-50" />}
         >
-            <Plus className="h-6 w-6 text-primary-foreground" />
+          <Plus className="h-6 w-6 text-primary-foreground" />
         </DialogTrigger>
         <DialogContent className="sm:max-w-[550px]">
           <DialogHeader>
@@ -373,66 +391,66 @@ export default function LabDashboard({ initialCases, initialInventory, available
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-             <div className="grid gap-2">
-                <Label htmlFor="patientName">Patient Name</Label>
-                <Input id="patientName" placeholder="e.g. John Doe" value={patientName} onChange={e => setPatientName(e.target.value)} />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="dentist">Prescribing Dentist</Label>
-                  <Select value={selectedDentistId} onValueChange={(val) => setSelectedDentistId(val || '')}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select dentist" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableDentists.map(d => (
-                        <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="treatment">Treatment Type</Label>
-                  <Select value={treatmentType} onValueChange={(val) => setTreatmentType(val || '')}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Zirconia Crown">Zirconia Crown</SelectItem>
-                      <SelectItem value="Fixed Bridge">Fixed Bridge</SelectItem>
-                      <SelectItem value="Nightguard">Nightguard</SelectItem>
-                      <SelectItem value="Implant Abutment">Implant Abutment</SelectItem>
-                      <SelectItem value="Porcelain Veneer">Porcelain Veneer</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+            <div className="grid gap-2">
+              <Label htmlFor="patientName">Patient Name</Label>
+              <Input id="patientName" placeholder="e.g. John Doe" value={patientName} onChange={e => setPatientName(e.target.value)} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="urgency">Urgency</Label>
-                <Select value={urgency} onValueChange={(val) => setUrgency((val as Urgency) || 'NORMAL')}>
+                <Label htmlFor="dentist">Prescribing Dentist</Label>
+                <Select value={selectedDentistId} onValueChange={(val) => setSelectedDentistId(val || '')}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select urgency" />
+                    <SelectValue placeholder="Select dentist" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="LOW">Low</SelectItem>
-                    <SelectItem value="NORMAL">Normal</SelectItem>
-                    <SelectItem value="HIGH">High</SelectItem>
-                    <SelectItem value="URGENT">Urgent</SelectItem>
+                    {availableDentists.map(d => (
+                      <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
-              <div className="mt-4">
-                <Label className="mb-2 block">Upload Scans (STL/PLY)</Label>
-                <label className="border-2 border-dashed border-border rounded-lg p-8 flex flex-col items-center justify-center text-center bg-muted/50 hover:bg-muted transition-colors cursor-pointer block w-full">
-                  <UploadCloud className="h-10 w-10 text-muted-foreground mb-3" />
-                  <p className="text-sm font-medium text-foreground">{selectedFile ? selectedFile.name : "Click to select STL Files"}</p>
-                  <input type="file" accept=".stl,.ply" className="hidden" onChange={e => setSelectedFile(e.target.files?.[0] || null)} />
-                </label>
+              <div className="grid gap-2">
+                <Label htmlFor="treatment">Treatment Type</Label>
+                <Select value={treatmentType} onValueChange={(val) => setTreatmentType(val || '')}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Zirconia Crown">Zirconia Crown</SelectItem>
+                    <SelectItem value="Fixed Bridge">Fixed Bridge</SelectItem>
+                    <SelectItem value="Nightguard">Nightguard</SelectItem>
+                    <SelectItem value="Implant Abutment">Implant Abutment</SelectItem>
+                    <SelectItem value="Porcelain Veneer">Porcelain Veneer</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="urgency">Urgency</Label>
+              <Select value={urgency} onValueChange={(val) => setUrgency((val as Urgency) || 'NORMAL')}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select urgency" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="LOW">Low</SelectItem>
+                  <SelectItem value="NORMAL">Normal</SelectItem>
+                  <SelectItem value="HIGH">High</SelectItem>
+                  <SelectItem value="URGENT">Urgent</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="mt-4">
+              <Label className="mb-2 block">Upload Scans (STL/PLY)</Label>
+              <label className="border-2 border-dashed border-border rounded-lg p-8 flex flex-col items-center justify-center text-center bg-muted/50 hover:bg-muted transition-colors cursor-pointer block w-full">
+                <UploadCloud className="h-10 w-10 text-muted-foreground mb-3" />
+                <p className="text-sm font-medium text-foreground">{selectedFile ? selectedFile.name : "Click to select STL Files"}</p>
+                <input type="file" accept=".stl,.ply" className="hidden" onChange={e => setSelectedFile(e.target.files?.[0] || null)} />
+              </label>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>Cancel</Button>
-             <Button className="bg-primary hover:bg-primary-hover text-primary-foreground font-medium" onClick={handleSubmitCase} disabled={uploadState === 'uploading'}>
+            <Button className="bg-primary hover:bg-primary-hover text-primary-foreground font-medium" onClick={handleSubmitCase} disabled={uploadState === 'uploading'}>
               {uploadState === 'uploading' ? 'Saving...' : 'Submit Case'}
             </Button>
           </DialogFooter>

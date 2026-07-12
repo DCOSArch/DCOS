@@ -40,13 +40,6 @@ export default async function CaseDetailsPage(props: { params: Promise<{ id: str
     return <div className="p-8 text-center">Case not found or you don't have access.</div>
   }
 
-  let signedScanUrl = caseData.scan_url;
-
-  // Construct Supabase public URL for the scan file
-  if (caseData.scan_url && !caseData.scan_url.startsWith('http')) {
-    signedScanUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/scans/${caseData.scan_url}`;
-  }
-
   const mappedCase = {
     id: caseData.id,
     dentistId: caseData.dentist_id,
@@ -57,7 +50,7 @@ export default async function CaseDetailsPage(props: { params: Promise<{ id: str
     urgency: caseData.urgency,
     dueDate: caseData.due_date,
     material: caseData.material,
-    scanUrl: signedScanUrl,
+    scanUrl: caseData.scan_url,
     createdAt: caseData.created_at,
     shade: caseData.shade,
     selectedTeeth: caseData.selected_teeth,
@@ -85,9 +78,9 @@ export default async function CaseDetailsPage(props: { params: Promise<{ id: str
   })) || [];
 
   return (
-    <CaseDetailsClient 
-      initialCase={mappedCase} 
-      currentUser={currentUser} 
+    <CaseDetailsClient
+      initialCase={mappedCase}
+      currentUser={currentUser}
       initialDentistName={dentistName}
       initialLabName={labName}
       initialTimeline={timelineData || []}

@@ -14,6 +14,7 @@ import { ArrowLeft, Calendar, FileText, User as UserIcon, Building2, Download, B
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { getR2PublicUrl } from '@/lib/r2';
 
 // ThreeDViewer uses WebGL/canvas APIs — must be loaded client-side only
 const ThreeDViewer = dynamic(() => import('@/components/ThreeDViewer'), {
@@ -46,8 +47,8 @@ const PIPELINE_STEPS = [
 ];
 const statusOrder = ['PENDING', 'IN_PROGRESS', 'QUALITY_CHECK', 'DISPATCHED', 'DELIVERED', 'COMPLETED'];
 
-export default function CaseDetailsClient({ 
-  initialCase, 
+export default function CaseDetailsClient({
+  initialCase,
   currentUser,
   initialDentistName = '',
   initialLabName = '',
@@ -57,7 +58,7 @@ export default function CaseDetailsClient({
 }: CaseDetailsProps) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
-  
+
   // Real-time synchronization
   const [caseItem, setCaseItem] = useState<Case>(initialCase);
 
@@ -85,7 +86,7 @@ export default function CaseDetailsClient({
     const marker = '[Design Parameters]:';
     const index = caseItem.instructions.indexOf(marker);
     if (index === -1) return null;
-    
+
     try {
       const jsonStr = caseItem.instructions.substring(index + marker.length).trim();
       return JSON.parse(jsonStr);
@@ -116,7 +117,7 @@ export default function CaseDetailsClient({
   const [dentistName, setDentistName] = useState<string>(initialDentistName);
   const [labName, setLabName] = useState<string>(initialLabName);
   const [tempProposalDate, setTempProposalDate] = useState('');
-  
+
   const isChatUnlocked = caseItem?.status !== 'DRAFT' && caseItem?.status !== 'PENDING' && (caseItem?.status as string) !== 'REJECTED';
 
   const currentIdx = useMemo(() => statusOrder.indexOf(caseItem.status), [caseItem.status]);
@@ -124,11 +125,8 @@ export default function CaseDetailsClient({
   const [isUploadingDesign, setIsUploadingDesign] = useState(false);
 
   const designFileUrl = useMemo(() => {
-    if (!caseItem.designUrl) return undefined;
-    if (caseItem.designUrl.startsWith('http')) return caseItem.designUrl;
-    const { data } = supabase.storage.from('designs').getPublicUrl(caseItem.designUrl);
-    return data.publicUrl;
-  }, [caseItem.designUrl, supabase]);
+    return getR2PublicUrl(caseItem.designUrl);
+  }, [caseItem.designUrl]);
 
   const handleDesignUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -136,19 +134,35 @@ export default function CaseDetailsClient({
 
     setIsUploadingDesign(true);
     try {
-      const fileName = `${caseItem.id}_design_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-      
-      const { data, error } = await supabase.storage.from('designs').upload(fileName, file);
-      if (error) throw error;
+      // R2 presigned upload (direct-to-edge)
+      const presignRes = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: file.name, contentType: file.type || 'application/octet-stream' }),
+      });
+      if (!presignRes.ok) {
+        const errBody = await presignRes.json().catch(() => ({}));
+        throw new Error(errBody.error || `Presign failed (${presignRes.status})`);
+      }
+      const { url: signedUrl, key } = await presignRes.json();
+
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('PUT', signedUrl, true);
+        xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+        xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`R2 PUT failed: ${xhr.status}`)));
+        xhr.onerror = () => reject(new Error('Network error during upload'));
+        xhr.send(file);
+      });
 
       const { error: updateError } = await supabase
         .from('cases')
-        .update({ design_url: data.path })
+        .update({ design_url: key })
         .eq('id', caseItem.id);
 
       if (updateError) throw updateError;
 
-      setCaseItem(prev => ({ ...prev, designUrl: data.path }));
+      setCaseItem(prev => ({ ...prev, designUrl: key }));
       toast.success("CAD/CAM design soft-copy successfully archived!");
     } catch (err: any) {
       console.error("Design upload error:", err);
@@ -161,7 +175,7 @@ export default function CaseDetailsClient({
   const handlePublishDraft = async () => {
     // 1. Update cases state to PENDING
     setCaseItem(prev => ({ ...prev, status: 'PENDING' }));
-    
+
     // 2. Update Supabase cases table
     const { error: updateError } = await supabase.from('cases').update({ status: 'PENDING' }).eq('id', caseItem.id);
     if (updateError) {
@@ -219,7 +233,7 @@ export default function CaseDetailsClient({
           .select('id')
           .eq('case_id', caseItem.id)
           .single();
-          
+
         if (!chatData) {
           // Auto-initialize chat room if it doesn't exist
           const { data: newChat } = await supabase
@@ -227,7 +241,7 @@ export default function CaseDetailsClient({
             .insert({ case_id: caseItem.id })
             .select('id')
             .single();
-            
+
           chatData = newChat;
         }
 
@@ -244,7 +258,7 @@ export default function CaseDetailsClient({
           .select('*')
           .eq('chat_id', activeChatId)
           .order('created_at', { ascending: true });
-        
+
         if (messageData) {
           setMessages(messageData.map((m: any) => ({
             id: m.id,
@@ -294,14 +308,14 @@ export default function CaseDetailsClient({
           .select('*')
           .eq('case_id', caseItem.id)
           .order('timestamp', { ascending: false });
-        
+
         if (data) {
           setDbTimeline(data);
         }
       };
       fetchTimeline();
     }
-    
+
     // Subscribe to new timeline events
     const timelineSub = supabase.channel(`timeline_${caseItem.id}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'timeline_events', filter: `case_id=eq.${caseItem.id}` }, payload => {
@@ -329,7 +343,7 @@ export default function CaseDetailsClient({
         }));
       })
       .subscribe();
-      
+
     return () => {
       supabase.removeChannel(timelineSub);
       supabase.removeChannel(caseSub);
@@ -349,14 +363,14 @@ export default function CaseDetailsClient({
       sender_id: currentUser.id,
       content: content
     });
-    
+
     setIsSending(false);
   };
-  
+
   const handleStatusUpdate = async (newStatus: string) => {
     // 1. Update cases state
     setCaseItem(prev => ({ ...prev, status: newStatus as any }));
-    
+
     // 2. Update Supabase cases table
     const { error: updateError } = await supabase.from('cases').update({ status: newStatus }).eq('id', caseItem.id);
     if (updateError) {
@@ -383,16 +397,16 @@ export default function CaseDetailsClient({
           due_date_proposals_count: (caseItem.dueDateProposalsCount || 0) + 1
         })
         .eq('id', caseItem.id);
-      
+
       if (error) throw error;
-      
+
       await supabase.from('timeline_events').insert({
         case_id: caseItem.id,
         status_update: 'Timeline proposed update',
         notes: `Lab proposed new delivery due date: ${new Date(tempProposalDate).toLocaleDateString()} (proposal #${(caseItem.dueDateProposalsCount || 0) + 1})`,
         visibility: 'BOTH'
       });
-      
+
       setCaseItem(prev => ({
         ...prev,
         proposedDueDate: tempProposalDate,
@@ -416,14 +430,14 @@ export default function CaseDetailsClient({
           })
           .eq('id', caseItem.id);
         if (error) throw error;
-        
+
         await supabase.from('timeline_events').insert({
           case_id: caseItem.id,
           status_update: 'Due date updated',
           notes: `Dentist approved due date adjustment to ${new Date(caseItem.proposedDueDate!).toLocaleDateString()}`,
           visibility: 'BOTH'
         });
-        
+
         setCaseItem(prev => ({
           ...prev,
           dueDate: new Date(prev.proposedDueDate!).toISOString(),
@@ -438,14 +452,14 @@ export default function CaseDetailsClient({
           })
           .eq('id', caseItem.id);
         if (error) throw error;
-        
+
         await supabase.from('timeline_events').insert({
           case_id: caseItem.id,
           status_update: 'Timeline proposal rejected',
           notes: `Dentist rejected due date adjustment to ${new Date(caseItem.proposedDueDate!).toLocaleDateString()}`,
           visibility: 'BOTH'
         });
-        
+
         setCaseItem(prev => ({
           ...prev,
           proposedDueDate: undefined
@@ -460,13 +474,13 @@ export default function CaseDetailsClient({
 
   const handleConfirmFinalStatus = async (targetStatus: CaseStatus) => {
     try {
-      const notes = 
-        targetStatus === 'COMPLETED' 
+      const notes =
+        targetStatus === 'COMPLETED'
           ? 'Dentist confirmed clinical fit on patient. Case completed.'
           : targetStatus === 'IN_PROGRESS'
             ? 'Dentist flagged restoration fit failure. Remake order queued.'
             : 'Dentist rejected case due to quality/aesthetic mismatch.';
-            
+
       const { error } = await supabase
         .from('cases')
         .update({
@@ -474,19 +488,19 @@ export default function CaseDetailsClient({
         })
         .eq('id', caseItem.id);
       if (error) throw error;
-      
+
       await supabase.from('timeline_events').insert({
         case_id: caseItem.id,
         status_update: targetStatus === 'COMPLETED' ? 'Case Completed' : targetStatus === 'IN_PROGRESS' ? 'Remake Initiated' : 'Case Rejected',
         notes: notes,
         visibility: 'BOTH'
       });
-      
+
       setCaseItem(prev => ({
         ...prev,
         status: targetStatus
       }));
-      
+
       if (targetStatus === 'COMPLETED') {
         toast.success("Case successfully completed and closed!");
       } else if (targetStatus === 'IN_PROGRESS') {
@@ -508,13 +522,13 @@ export default function CaseDetailsClient({
         notes: `${currentUser.role === 'DENTIST' ? 'Dentist' : 'Lab'} requested an additional clinical trial stage.`,
         visibility: 'BOTH'
       });
-      
+
       const { error } = await supabase
         .from('cases')
         .update({ status: 'IN_PROGRESS' })
         .eq('id', caseItem.id);
       if (error) throw error;
-      
+
       setCaseItem(prev => ({ ...prev, status: 'IN_PROGRESS' }));
       toast.info("Clinical trial stage appended to active pipeline.");
     } catch (err: any) {
@@ -550,9 +564,7 @@ export default function CaseDetailsClient({
 
   const scanFileUrl = useMemo(() => {
     if (!caseItem.scanUrl) return undefined;
-    if (caseItem.scanUrl.startsWith('http')) return caseItem.scanUrl;
-    const { data } = supabase.storage.from('scans').getPublicUrl(caseItem.scanUrl);
-    return data.publicUrl;
+    return getR2PublicUrl(caseItem.scanUrl);
   }, [caseItem.scanUrl, supabase]);
 
   const handleCopyLink = () => {
@@ -636,7 +648,7 @@ export default function CaseDetailsClient({
             <span>Created {new Date(caseItem.createdAt).toLocaleDateString()}</span>
           </p>
         </div>
-        
+
         <div className="flex gap-2 items-center flex-wrap">
           {currentUser.role === 'DENTIST' && (
             <Button variant="outline" size="sm" onClick={() => setShowPatientLinkModal(true)} className="gap-2">
@@ -678,16 +690,16 @@ export default function CaseDetailsClient({
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 md:gap-4 relative">
               {/* Progress Line */}
               <div className="absolute left-[19px] top-[19px] bottom-[19px] w-0.5 bg-border md:left-0 md:right-0 md:top-[19px] md:h-0.5 md:w-full -z-10" />
-              
+
               {PIPELINE_STEPS.map((step, idx) => {
                 const isCompleted = idx < currentIdx;
                 const isActive = idx === currentIdx;
-                
+
                 // Icon rendering
                 let IconComponent = Clock;
                 let animationClass = "";
                 let colorClass = "text-muted-foreground bg-muted border-muted-foreground/20";
-                
+
                 if (step.status === 'PENDING') {
                   IconComponent = Clock;
                   if (isActive) {
@@ -730,7 +742,7 @@ export default function CaseDetailsClient({
                     colorClass = "text-emerald-600 bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-900";
                   }
                 }
-                
+
                 return (
                   <div key={step.status} className="flex md:flex-col items-center gap-4 md:gap-2 flex-1 md:text-center z-10 w-full bg-background md:bg-transparent pr-4 md:pr-0">
                     <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${colorClass} ${isActive ? 'ring-4 ring-primary/10 scale-110 shadow-sm' : ''}`}>
@@ -775,7 +787,7 @@ export default function CaseDetailsClient({
                     {currentUser.role === 'LAB_ADMIN' && (
                       <Dialog>
                         <DialogTrigger render={<Button variant="link" size="sm" className="h-5 p-0 text-primary justify-start text-[10px]">Propose new date</Button>}>
-                            Propose new date
+                          Propose new date
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-[400px] bg-background border-border">
                           <DialogHeader>
@@ -785,7 +797,7 @@ export default function CaseDetailsClient({
                             </DialogDescription>
                           </DialogHeader>
                           <div className="py-4">
-                            <Input 
+                            <Input
                               type="date"
                               id="proposalDate"
                               min={new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
@@ -928,7 +940,7 @@ export default function CaseDetailsClient({
                             <span>Body: <strong>{parsedDesignParams.customShade.body}</strong></span>
                             <span>Incisal: <strong>{parsedDesignParams.customShade.incisal}</strong></span>
                           </div>
-                          
+
                           <svg viewBox="0 0 80 120" className="w-16 shrink-0" style={{ height: '110px' }}>
                             <defs>
                               <clipPath id="detailsToothClip">
@@ -992,13 +1004,12 @@ export default function CaseDetailsClient({
                       </div>
                       <div className="space-y-0.5">
                         <p className="text-xs font-medium text-foreground">Shade matching reference photo attached</p>
-                        <Button 
-                          variant="link" 
-                          size="sm" 
+                        <Button
+                          variant="link"
+                          size="sm"
                           className="h-5 p-0 text-primary font-semibold"
                           onClick={() => {
-                            const { data } = supabase.storage.from('scans').getPublicUrl(parsedDesignParams.shadePhotoUrl);
-                            window.open(data.publicUrl, '_blank');
+                            window.open(getR2PublicUrl(parsedDesignParams.shadePhotoUrl), '_blank');
                           }}
                         >
                           View Full Photograph
@@ -1014,12 +1025,12 @@ export default function CaseDetailsClient({
           {/* 3D Viewer */}
           <Card className="overflow-hidden border-border shadow-sm">
             <CardHeader className="bg-muted/30 border-b border-border flex flex-row items-center justify-between py-4">
-              <CardTitle className="text-lg flex items-center gap-2"><Box className="w-5 h-5 text-primary"/> 3D Design Viewer</CardTitle>
+              <CardTitle className="text-lg flex items-center gap-2"><Box className="w-5 h-5 text-primary" /> 3D Design Viewer</CardTitle>
               <div className="flex gap-2">
                 {caseItem.scanUrl && (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     className="h-9 shadow-sm hidden sm:flex"
                     onClick={() => window.open(scanFileUrl, '_blank')}
                   >
@@ -1031,7 +1042,7 @@ export default function CaseDetailsClient({
             <div className="h-[400px] w-full bg-[#111827] relative flex items-center justify-center group overflow-hidden">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
               <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent to-[#111827]/80 pointer-events-none"></div>
-              
+
               <div className="absolute inset-0 w-full h-full">
                 <ThreeDViewer stlUrl={scanFileUrl} />
               </div>
@@ -1077,9 +1088,9 @@ export default function CaseDetailsClient({
                     </div>
                   </div>
                   <div className="flex gap-2 shrink-0">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => window.open(designFileUrl, '_blank')}
                       className="gap-1.5 h-9"
                     >
@@ -1098,8 +1109,8 @@ export default function CaseDetailsClient({
                   <UploadCloud className="h-8 w-8 text-muted-foreground/60 mb-2 animate-bounce" />
                   <p className="text-sm font-semibold text-foreground">No Design Archived Yet</p>
                   <p className="text-xs text-muted-foreground mt-0.5 max-w-xs">
-                    {currentUser.role === 'LAB_ADMIN' 
-                      ? 'Upload the final milling-ready CAD soft-copy for permanent warranty archiving.' 
+                    {currentUser.role === 'LAB_ADMIN'
+                      ? 'Upload the final milling-ready CAD soft-copy for permanent warranty archiving.'
                       : 'Laboratory has not uploaded the final CAD soft-copy yet.'}
                   </p>
                   {currentUser.role === 'LAB_ADMIN' && (
@@ -1137,12 +1148,11 @@ export default function CaseDetailsClient({
                     </div>
                   </div>
                   <div className="flex gap-2 shrink-0">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={async () => {
-                        const { data } = supabase.storage.from('scans').getPublicUrl(caseItem.dicomUrl!);
-                        window.open(data.publicUrl, '_blank');
+                        window.open(getR2PublicUrl(caseItem.dicomUrl!), '_blank');
                       }}
                       className="gap-1.5 h-9"
                     >
@@ -1203,8 +1213,8 @@ export default function CaseDetailsClient({
             {isChatUnlocked && (
               <CardFooter className="border-t border-border p-3 bg-muted/30">
                 <form className="flex w-full items-center gap-2" onSubmit={handleSendMessage}>
-                  <Input 
-                    placeholder="Type your message..." 
+                  <Input
+                    placeholder="Type your message..."
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     className="flex-1 bg-background"
