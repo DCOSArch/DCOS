@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/server';
 import ThreeDViewer from '@/components/ThreeDViewer';
 import { notFound } from 'next/navigation';
 import { getR2PublicUrl } from '@/lib/r2';
@@ -9,7 +9,8 @@ export const metadata = {
 };
 
 export default async function SmilePreviewPage({ params }: { params: { hash: string } }) {
-  const supabase = await createClient();
+  // Service-role client bypasses RLS so unauthenticated patients can see the preview
+  const supabase = await createServiceClient();
 
   // The [hash] is expected to be something like "hash-CASEID" to mask the real UUID slightly from plain sight,
   // or it could be an actual cryptographic hash mapped in the DB.
