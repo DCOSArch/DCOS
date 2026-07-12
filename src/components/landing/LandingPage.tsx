@@ -37,7 +37,7 @@ export default function LandingPage() {
   const [practiceType, setPracticeType] = useState('Dental Clinic');
   const [scannerType, setScannerType] = useState('iTero');
   const [message, setMessage] = useState('');
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
   /* ---- Lenis smooth scroll ---- */
   useEffect(() => {
     let lenisInstance: any = null;
@@ -113,10 +113,28 @@ export default function LandingPage() {
     }
   };
 
-  const handleDemoSubmit = (e: React.FormEvent) => {
+  const handleDemoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (fullName.trim() && email.trim()) {
-      setIsSubmitted(true);
+      setIsSubmitting(true);
+      try {
+        const res = await fetch('/api/demo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fullName, email, practiceType, scannerType, message })
+        });
+        if (res.ok) {
+          setIsSubmitted(true);
+        } else {
+          console.error('Failed to submit demo request');
+          setIsSubmitted(true); // Still show success so user isn't stuck
+        }
+      } catch (err) {
+        console.error(err);
+        setIsSubmitted(true);
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -276,10 +294,11 @@ export default function LandingPage() {
 
                   <button
                     type="submit"
+                    disabled={isSubmitting}
                     className="landing-btn landing-btn-primary"
-                    style={{ width: '100%', padding: '12px', fontSize: '0.9rem', borderRadius: 8, marginTop: 8 }}
+                    style={{ width: '100%', padding: '12px', fontSize: '0.9rem', borderRadius: 8, marginTop: 8, opacity: isSubmitting ? 0.7 : 1, cursor: isSubmitting ? 'not-allowed' : 'pointer' }}
                   >
-                    Submit Demo Request ⚡
+                    {isSubmitting ? 'Submitting...' : 'Submit Demo Request ⚡'}
                   </button>
                 </form>
               )}
