@@ -1900,7 +1900,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
 
                 {treatmentType.includes('Denture') && (
                   <div className="border border-border rounded-lg p-3 space-y-3 bg-muted/20 animate-in slide-in-from-top-2 duration-200">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Denture Configurations</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Denture Workflow Configurations</p>
                     <div className="grid grid-cols-1 gap-3">
                       <div className="grid gap-1.5">
                         <Label htmlFor="dentureType" className="text-xs">Type of Denture <span className="text-red-500">*</span></Label>
