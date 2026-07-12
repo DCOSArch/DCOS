@@ -1205,20 +1205,12 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
       if (selectedDicomFile) filesToUpload.push({ file: selectedDicomFile, contentType: 'application/dicom', label: 'dicom' });
       if (shadePhotoFile) filesToUpload.push({ file: shadePhotoFile, contentType: shadePhotoFile.type || 'image/jpeg', label: 'shade' });
 
-      // Upload all files with combined progress
-      const totalSize = filesToUpload.reduce((sum, f) => sum + f.file.size, 0);
-      let uploadedBytes = 0;
+      // Upload all files in PARALLEL (not serial) for maximum speed
       const uploadResults: Record<string, string | null> = {};
 
-      for (const { file, contentType, label } of filesToUpload) {
-        const fileStartBytes = uploadedBytes;
-        const fileProgress = (pct: number) => {
-          const fileBytesUploaded = (pct / 100) * file.size;
-          const overallPct = Math.round(((fileStartBytes + fileBytesUploaded) / totalSize) * 100);
-          setUploadProgress(overallPct);
-        };
-
+      const uploadTasks = filesToUpload.map(async ({ file, contentType, label }) => {
         try {
+          // Phase 1: Get presigned URL
           const res = await fetch('/api/upload', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1230,13 +1222,16 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
           }
           const { url: signedUrl, key } = await res.json();
 
+          // Phase 2: Upload to R2
           await new Promise<void>((resolve, reject) => {
             const xhr = new XMLHttpRequest();
             xhr.open('PUT', signedUrl, true);
             xhr.setRequestHeader('Content-Type', contentType);
             xhr.upload.onprogress = (e) => {
               if (e.lengthComputable) {
-                fileProgress(Math.round((e.loaded / e.total) * 100));
+                // Rough combined progress — best effort with parallel uploads
+                const pct = Math.round((e.loaded / e.total) * 100);
+                setUploadProgress((prev) => Math.max(prev, pct));
               }
             };
             xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`R2 PUT failed: ${xhr.status}`)));
@@ -1249,8 +1244,9 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
           console.error(`${label} upload error:`, err);
           uploadResults[label] = null;
         }
-        uploadedBytes += file.size;
-      }
+      });
+
+      await Promise.all(uploadTasks);
 
       const scanUrl = uploadResults['scan'] ?? null;
       const dicomUrl = uploadResults['dicom'] ?? null;
