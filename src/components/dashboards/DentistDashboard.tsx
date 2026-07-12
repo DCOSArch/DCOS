@@ -244,6 +244,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
   const [implantBrand, setImplantBrand] = useState('');
   const [scanBodyModel, setScanBodyModel] = useState('');
   const [analogLogistics, setAnalogLogistics] = useState('');
+  const [dentureType, setDentureType] = useState('');
 
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedTeeth, setSelectedTeeth] = useState<number[]>([]);
@@ -949,7 +950,10 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
           patientGender !== '';
 
         if (treatmentType.includes('Implant')) {
-          return isBasicComplete && implantBrand !== '' && scanBodyModel !== '' && analogLogistics !== '';
+          if (implantBrand === '' || scanBodyModel === '' || analogLogistics === '') return false;
+        }
+        if (treatmentType.includes('Denture')) {
+          if (dentureType === '') return false;
         }
         return isBasicComplete;
       case 1:
@@ -1276,7 +1280,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         lab_id: selectedLabId,
         status: isDraft ? 'DRAFT' : 'PENDING',
         urgency,
-        requested_treatment: treatmentType.join(', ') || 'Not Specified',
+        requested_treatment: treatmentType.map(t => t === 'Denture' && dentureType ? `Denture (${dentureType})` : t).join(', ') || 'Not Specified',
         material: isDesignNotSpecified ? 'Not Specified' : material,
         scan_url: scanUrl,
         dicom_url: dicomUrl,
@@ -1356,6 +1360,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
 
       setPatientName('');
       setTreatmentType([]);
+      setDentureType('');
       setUrgency('NORMAL');
       setDueDate('');
       setSelectedFile(null);
@@ -1644,6 +1649,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
             setSelectedFile(null);
             setPatientName('');
             setTreatmentType([]);
+            setDentureType('');
             setUrgency('NORMAL');
             setDueDate('');
             setValidationWarnings([]);
@@ -1826,6 +1832,9 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                               setScanBodyModel('');
                               setAnalogLogistics('');
                             }
+                            if (!newTypes.includes('Denture')) {
+                              setDentureType('');
+                            }
                             
                             if (newTypes.some(t => ['CNB', 'Denture', 'Veneer', 'Implant'].includes(t))) {
                               const upperMax = getArchMaxGroupSize(UPPER_ARCH_ORDER, toothConfigs);
@@ -1885,6 +1894,28 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                           <SelectItem value="Lab Provided">Lab Provided (Lab supplies component)</SelectItem>
                         </SelectContent>
                       </Select>
+                    </div>
+                  </div>
+                )}
+
+                {treatmentType.includes('Denture') && (
+                  <div className="border border-border rounded-lg p-3 space-y-3 bg-muted/20 animate-in slide-in-from-top-2 duration-200">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Denture Configurations</p>
+                    <div className="grid grid-cols-1 gap-3">
+                      <div className="grid gap-1.5">
+                        <Label htmlFor="dentureType" className="text-xs">Type of Denture <span className="text-red-500">*</span></Label>
+                        <Select value={dentureType} onValueChange={(val) => setDentureType(val || '')}>
+                          <SelectTrigger className="border-border text-foreground h-8 text-xs bg-background">
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Fixed Partial Denture">Fixed Partial Denture</SelectItem>
+                            <SelectItem value="Removable Partial Denture">Removable Partial Denture</SelectItem>
+                            <SelectItem value="Complete Denture">Complete Denture</SelectItem>
+                            <SelectItem value="Full Mouth Denture">Full Mouth Denture</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   </div>
                 )}
