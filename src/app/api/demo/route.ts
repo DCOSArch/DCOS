@@ -16,9 +16,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // Send the email using Resend
+    // Send the email using Resend with the verified custom domain
     const data = await resend.emails.send({
-      from: 'onboarding@resend.dev',
+      from: 'DCOS <onboarding@dcos.in>',
       to: 'appointmentselite@gmail.com',
       subject: `New Demo Request: ${fullName}`,
       html: `
