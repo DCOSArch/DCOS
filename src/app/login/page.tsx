@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Stethoscope, ArrowRight, Loader2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import { animate, stagger } from 'animejs';
+
+// Custom UI Components
+import { AuroraBackground } from '@/components/ui/aceternity/aurora-background';
+import { PaperShaderBackground } from '@/components/ui/shaders/PaperShader';
+import { ShinyText } from '@/components/ui/reactbits/shiny-text';
+import { ShimmerButton } from '@/components/ui/magic/shimmer-button';
 
 type Role = 'DENTIST' | 'LAB_ADMIN';
 
@@ -26,6 +33,7 @@ export default function Login() {
   
   const router = useRouter();
   const supabase = createClient();
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Read URL parameters on mount to check if this is a password reset redirection
   useEffect(() => {
@@ -39,6 +47,26 @@ export default function Login() {
       }
     }
   }, []);
+
+  // Anime.js animation trigger
+  useEffect(() => {
+    if (containerRef.current) {
+      // Reset opacity first
+      const items = containerRef.current.querySelectorAll('.anime-item');
+      items.forEach((item: any) => {
+        item.style.opacity = '0';
+        item.style.transform = 'translateY(20px)';
+      });
+
+      animate('.anime-item', {
+        opacity: [0, 1],
+        translateY: [20, 0],
+        delay: stagger(100, { start: 300 }),
+        ease: 'outQuad',
+        duration: 800
+      });
+    }
+  }, [authMode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,179 +127,218 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
-      <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-8 duration-700 ease-out">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-full mb-4">
-            <Stethoscope className="w-8 h-8 text-primary" />
+    <div ref={containerRef} className="min-h-screen w-full bg-[#272822] flex flex-col lg:flex-row overflow-hidden">
+      {/* Left Column: Form */}
+      <div className="w-full lg:w-[45%] flex flex-col items-center justify-center p-8 lg:p-12 relative z-10">
+        <div className="w-full max-w-md">
+          
+          <div className="text-center mb-8 anime-item">
+            <div className="inline-flex items-center justify-center p-4 bg-[#1E1F1C]/60 border border-[#3E3D32] shadow-xl rounded-2xl mb-6 backdrop-blur-md">
+              <Stethoscope className="w-10 h-10 text-[#66D9EF]" />
+            </div>
+            <h1 className="text-4xl font-extrabold tracking-tight mb-2">
+              <ShinyText text="DentalConnect OS" speed={3} className="text-[#F3F1E7]" />
+            </h1>
+            <p className="text-lg text-[#C2BEAD] font-medium">Log in to your dashboard.</p>
           </div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-foreground mb-2">DentalConnect OS</h1>
-          <p className="text-lg text-muted-foreground">The premier operating system for modern dentistry.</p>
-        </div>
 
-        <Card className="border-2 shadow-xl bg-background/60 backdrop-blur-sm">
-          <CardHeader className="text-center pb-6">
-            <CardTitle className="text-2xl">
-              {authMode === 'signup' && 'Create an Account'}
-              {authMode === 'signin' && 'Welcome Back'}
-              {authMode === 'forgot' && 'Reset Password'}
-              {authMode === 'reset' && 'Set New Password'}
-            </CardTitle>
-            <CardDescription>
-              {authMode === 'signup' && 'Enter your details below to create your account'}
-              {authMode === 'signin' && 'Enter your credentials to access your portal'}
-              {authMode === 'forgot' && 'Enter your email to receive a password reset link'}
-              {authMode === 'reset' && 'Enter your new secure password'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {errorMsg && (
-                <div className="bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 p-3 rounded-md text-sm text-center font-medium">
-                  {errorMsg}
-                </div>
-              )}
-              
-              {authMode === 'signup' && (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="fullName">Full Name</Label>
-                    <Input 
-                      id="fullName" 
-                      placeholder="e.g. Dr. Jane Smith" 
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      required 
-                    />
+          <Card className="anime-item border border-[#3E3D32] bg-[#1E1F1C]/80 backdrop-blur-2xl shadow-2xl text-[#F3F1E7] rounded-2xl overflow-hidden transition-all">
+            <CardHeader className="text-center pb-6 border-b border-[#3E3D32]/80 anime-item">
+              <CardTitle className="text-2xl font-bold tracking-tight text-[#F3F1E7]">
+                {authMode === 'signup' && 'Create an Account'}
+                {authMode === 'signin' && 'Welcome Back'}
+                {authMode === 'forgot' && 'Reset Password'}
+                {authMode === 'reset' && 'Set New Password'}
+              </CardTitle>
+              <CardDescription className="text-[#C2BEAD] font-medium">
+                {authMode === 'signup' && 'Enter your details below to create your account'}
+                {authMode === 'signin' && 'Enter your credentials to access your portal'}
+                {authMode === 'forgot' && 'Enter your email to receive a password reset link'}
+                {authMode === 'reset' && 'Enter your new secure password'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {errorMsg && (
+                  <div className="anime-item bg-red-950/50 border-2 border-red-500 text-red-400 p-3 shadow-[4px_4px_0px_0px_rgba(239,68,68,1)] text-sm text-center font-bold">
+                    {errorMsg}
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="role">Role</Label>
-                    <Select value={role} onValueChange={(val) => { if (val) setRole(val as Role) }}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select your role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="DENTIST">Dentist / Clinic</SelectItem>
-                        <SelectItem value="LAB_ADMIN">Laboratory Admin</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {role === 'LAB_ADMIN' && (
-                    <div className="space-y-2">
-                      <Label htmlFor="labName">Laboratory Name</Label>
+                )}
+                
+                {authMode === 'signup' && (
+                  <>
+                    <div className="space-y-2 anime-item">
+                      <Label htmlFor="fullName" className="font-semibold text-[#D6D2C4]">Full Name</Label>
                       <Input 
-                        id="labName" 
-                        placeholder="e.g. Apex Dental Labs" 
-                        value={labName}
-                        onChange={(e) => setLabName(e.target.value)}
+                        id="fullName" 
+                        placeholder="e.g. Dr. Jane Smith" 
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
                         required 
+                        className="border border-[#3E3D32] bg-[#272822]/50 text-[#F3F1E7] placeholder:text-[#8E8B7F] focus-visible:ring-1 focus-visible:ring-[#A6E22E] focus-visible:border-[#A6E22E] rounded-lg transition-all shadow-sm"
                       />
                     </div>
-                  )}
-                </>
-              )}
-
-              {(authMode === 'signin' || authMode === 'signup' || authMode === 'forgot') && (
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input 
-                    id="email" 
-                    type="email" 
-                    placeholder="name@example.com" 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required 
-                  />
-                </div>
-              )}
-
-              {(authMode === 'signin' || authMode === 'signup') && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="password">Password</Label>
-                    {authMode === 'signin' && (
-                      <button 
-                        type="button" 
-                        onClick={() => setAuthMode('forgot')} 
-                        className="text-xs text-primary hover:underline focus:outline-none"
-                      >
-                        Forgot password?
-                      </button>
+                    <div className="space-y-2 anime-item">
+                      <Label htmlFor="role" className="font-semibold text-[#D6D2C4]">Role</Label>
+                      <Select value={role} onValueChange={(val) => { if (val) setRole(val as Role) }}>
+                        <SelectTrigger className="border border-[#3E3D32] bg-[#272822]/50 text-[#F3F1E7] rounded-lg focus:ring-1 focus:ring-[#A6E22E] focus:border-[#A6E22E] transition-all shadow-sm">
+                          <SelectValue placeholder="Select your role" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#1E1F1C] border border-[#3E3D32] text-[#F3F1E7] rounded-lg shadow-xl">
+                          <SelectItem value="DENTIST" className="focus:bg-[#3E3D32]">Dentist / Clinic</SelectItem>
+                          <SelectItem value="LAB_ADMIN" className="focus:bg-[#3E3D32]">Laboratory Admin</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {role === 'LAB_ADMIN' && (
+                      <div className="space-y-2 anime-item">
+                        <Label htmlFor="labName" className="font-semibold text-[#D6D2C4]">Laboratory Name</Label>
+                        <Input 
+                          id="labName" 
+                          placeholder="e.g. Apex Dental Labs" 
+                          value={labName}
+                          onChange={(e) => setLabName(e.target.value)}
+                          required 
+                          className="border border-[#3E3D32] bg-[#272822]/50 text-[#F3F1E7] placeholder:text-[#8E8B7F] focus-visible:ring-1 focus-visible:ring-[#A6E22E] focus-visible:border-[#A6E22E] rounded-lg transition-all shadow-sm"
+                        />
+                      </div>
                     )}
+                  </>
+                )}
+
+                {(authMode === 'signin' || authMode === 'signup' || authMode === 'forgot') && (
+                  <div className="space-y-2 anime-item">
+                    <Label htmlFor="email" className="font-semibold text-[#D6D2C4]">Email</Label>
+                    <Input 
+                      id="email" 
+                      type="email" 
+                      placeholder="name@example.com" 
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required 
+                      className="border border-[#3E3D32] bg-[#272822]/50 text-[#F3F1E7] placeholder:text-[#8E8B7F] focus-visible:ring-1 focus-visible:ring-[#A6E22E] focus-visible:border-[#A6E22E] rounded-lg transition-all shadow-sm"
+                    />
                   </div>
-                  <Input 
-                    id="password" 
-                    type="password" 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required 
-                    minLength={6}
-                  />
+                )}
+
+                {(authMode === 'signin' || authMode === 'signup') && (
+                  <div className="space-y-2 anime-item">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="password" className="font-semibold text-[#D6D2C4]">Password</Label>
+                      {authMode === 'signin' && (
+                        <button 
+                          type="button" 
+                          onClick={() => setAuthMode('forgot')} 
+                          className="text-xs text-[#66D9EF] font-semibold hover:text-[#F3F1E7] hover:underline focus:outline-none transition-colors"
+                        >
+                          Forgot password?
+                        </button>
+                      )}
+                    </div>
+                    <Input 
+                      id="password" 
+                      type="password" 
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required 
+                      minLength={6}
+                      className="border border-[#3E3D32] bg-[#272822]/50 text-[#F3F1E7] placeholder:text-[#8E8B7F] focus-visible:ring-1 focus-visible:ring-[#A6E22E] focus-visible:border-[#A6E22E] rounded-lg transition-all shadow-sm"
+                    />
+                  </div>
+                )}
+
+                {authMode === 'reset' && (
+                  <>
+                    <div className="space-y-2 anime-item">
+                      <Label htmlFor="newPassword" className="font-semibold text-[#D6D2C4]">New Password</Label>
+                      <Input 
+                        id="newPassword" 
+                        type="password" 
+                        placeholder="Minimum 6 characters"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        required 
+                        minLength={6}
+                        className="border border-[#3E3D32] bg-[#272822]/50 text-[#F3F1E7] placeholder:text-[#8E8B7F] focus-visible:ring-1 focus-visible:ring-[#A6E22E] focus-visible:border-[#A6E22E] rounded-lg transition-all shadow-sm"
+                      />
+                    </div>
+                    <div className="space-y-2 anime-item">
+                      <Label htmlFor="confirmPassword" className="font-semibold text-[#D6D2C4]">Confirm New Password</Label>
+                      <Input 
+                        id="confirmPassword" 
+                        type="password" 
+                        placeholder="Repeat new password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required 
+                        minLength={6}
+                        className="border border-[#3E3D32] bg-[#272822]/50 text-[#F3F1E7] placeholder:text-[#8E8B7F] focus-visible:ring-1 focus-visible:ring-[#A6E22E] focus-visible:border-[#A6E22E] rounded-lg transition-all shadow-sm"
+                      />
+                    </div>
+                  </>
+                )}
+
+                <div className="anime-item pt-4">
+                  <ShimmerButton 
+                    type="submit" 
+                    disabled={loading}
+                    className="w-full h-11 text-[#272822] font-extrabold tracking-wide shadow-lg rounded-lg"
+                    shimmerColor="rgba(0,0,0,0.2)"
+                    background="#F3F1E7"
+                  >
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}
+                    {authMode === 'signup' && 'Sign Up'}
+                    {authMode === 'signin' && 'Sign In'}
+                    {authMode === 'forgot' && 'Send Reset Link'}
+                    {authMode === 'reset' && 'Update Password'}
+                    {!loading && <ArrowRight className="w-4 h-4 ml-2" />}
+                  </ShimmerButton>
                 </div>
-              )}
-
-              {authMode === 'reset' && (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="newPassword">New Password</Label>
-                    <Input 
-                      id="newPassword" 
-                      type="password" 
-                      placeholder="Minimum 6 characters"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      required 
-                      minLength={6}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                    <Input 
-                      id="confirmPassword" 
-                      type="password" 
-                      placeholder="Repeat new password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      required 
-                      minLength={6}
-                    />
-                  </div>
-                </>
-              )}
-
-              <Button type="submit" className="w-full mt-6 h-11" disabled={loading}>
-                {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}
-                {authMode === 'signup' && 'Sign Up'}
-                {authMode === 'signin' && 'Sign In'}
-                {authMode === 'forgot' && 'Send Reset Link'}
-                {authMode === 'reset' && 'Update Password'}
-                {!loading && <ArrowRight className="w-4 h-4 ml-2" />}
-              </Button>
-            </form>
-          </CardContent>
-          <CardFooter className="flex flex-col gap-2 border-t border-border pt-6">
-            {authMode === 'forgot' || authMode === 'reset' ? (
-              <button 
-                type="button" 
-                onClick={() => setAuthMode('signin')} 
-                className="text-sm text-primary font-medium hover:underline focus:outline-none"
-              >
-                Back to Sign In
-              </button>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                {authMode === 'signup' ? 'Already have an account?' : "Don't have an account?"}{' '}
+              </form>
+            </CardContent>
+            <CardFooter className="flex flex-col gap-2 border-t border-[#3E3D32]/80 bg-[#1E1F1C]/90 pt-6 anime-item">
+              {authMode === 'forgot' || authMode === 'reset' ? (
                 <button 
                   type="button" 
-                  onClick={() => setAuthMode(authMode === 'signup' ? 'signin' : 'signup')} 
-                  className="text-primary font-medium hover:underline focus:outline-none"
+                  onClick={() => setAuthMode('signin')} 
+                  className="text-sm text-[#66D9EF] font-semibold hover:text-[#F3F1E7] transition-colors focus:outline-none"
                 >
-                  {authMode === 'signup' ? 'Sign In' : 'Sign Up'}
+                  Back to Sign In
                 </button>
+              ) : (
+                <p className="text-sm text-[#C2BEAD] font-medium">
+                  {authMode === 'signup' ? 'Already have an account?' : "Don't have an account?"}{' '}
+                  <button 
+                    type="button" 
+                    onClick={() => setAuthMode(authMode === 'signup' ? 'signin' : 'signup')} 
+                    className="text-[#A6E22E] font-semibold hover:text-[#F3F1E7] transition-colors focus:outline-none"
+                  >
+                    {authMode === 'signup' ? 'Sign In' : 'Sign Up'}
+                  </button>
+                </p>
+              )}
+            </CardFooter>
+          </Card>
+        </div>
+      </div>
+
+      {/* Right Column: Visual Showcase */}
+      <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden bg-[#272822]">
+        <AuroraBackground className="absolute inset-0 w-full h-full items-center justify-center p-16">
+           <PaperShaderBackground />
+           <div className="relative z-20 w-full max-w-lg flex flex-col space-y-6 text-left">
+              {/* Minimal Accent Line */}
+              <div className="h-[2px] w-16 bg-[#A6E22E] rounded anime-item" />
+              
+              <h2 className="text-4xl lg:text-5xl font-light text-[#F3F1E7] leading-tight tracking-tight anime-item">
+                Uniting clinics and laboratories in <span className="font-semibold text-[#66D9EF]">one unified workspace</span>.
+              </h2>
+              
+              <p className="text-base text-[#C2BEAD] leading-relaxed font-medium max-w-md anime-item">
+                Experience seamless 3D case routing, instant messaging, and automated turnaround tracking built for the future of dentistry.
               </p>
-            )}
-          </CardFooter>
-        </Card>
+           </div>
+        </AuroraBackground>
       </div>
     </div>
   );
