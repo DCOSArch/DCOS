@@ -248,6 +248,9 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
   const [implantBarNeeded, setImplantBarNeeded] = useState('');
   const [dentureType, setDentureType] = useState('');
 
+  const [patientId, setPatientId] = useState<string | null>(null);
+  const [patientsList, setPatientsList] = useState<any[]>([]);
+
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedTeeth, setSelectedTeeth] = useState<number[]>([]);
   const [isTeethNotSpecified, setIsTeethNotSpecified] = useState(false);
@@ -1040,6 +1043,16 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
           lockedPrice: item.locked_price
         })));
       }
+
+      const { data: pts, error: ptsError } = await supabase
+        .from('patients')
+        .select('*')
+        .eq('dentist_id', currentUser.id)
+        .order('name');
+      
+      if (pts && !ptsError) {
+        setPatientsList(pts);
+      }
     };
 
     const fetchNotifications = async () => {
@@ -1120,7 +1133,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
 
       if (nameGuess) {
         nameGuess = nameGuess.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
-        if (!patientName) {
+        if (!patientName && !patientId) {
           setPatientName(nameGuess);
           toast.success(`Auto-filled Patient Name: "${nameGuess}"`);
         }
@@ -1293,7 +1306,29 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         ? `${instructions}\n\n[Design Parameters]: ${designParamsJson}`
         : `[Design Parameters]: ${designParamsJson}`;
 
+      let finalPatientId = patientId;
+
+      if (!finalPatientId) {
+        // Try to create the patient
+        const { data: newPatient, error: newPatientError } = await supabase
+          .from('patients')
+          .insert([{
+            dentist_id: currentUser.id,
+            name: patientName,
+            age: patientAge ? parseInt(patientAge, 10) : null,
+            gender: patientGender || null
+          }])
+          .select()
+          .single();
+        
+        if (newPatient && !newPatientError) {
+          finalPatientId = newPatient.id;
+          setPatientsList(prev => [...prev, newPatient]);
+        }
+      }
+
       const dbCase = {
+        patient_id: finalPatientId,
         patient_name: patientName,
         dentist_id: currentUser.id,
         lab_id: selectedLabId,
@@ -1389,6 +1424,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
       setValidationDimensions(null);
       setSelectedTeeth([]);
       setIsTeethNotSpecified(false);
+      setPatientId(null);
       setMaterial('Zirconia HT');
       setShade('A2');
       setIsDesignNotSpecified(false);
@@ -1779,42 +1815,79 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                   <div className="w-full flex-shrink-0 px-1">
                     <div className="space-y-4 animate-in fade-in duration-300">
                       <div className="grid gap-2">
-                        <Label htmlFor="patientName" className="text-foreground">Patient Name <span className="text-red-500">*</span></Label>
-                        <Input
-                          id="patientName"
-                          placeholder="e.g. John Doe"
-                          value={patientName}
-                          onChange={(e) => setPatientName(e.target.value)}
-                          className="border-border text-foreground bg-background"
-                        />
-                        <p className="text-xs text-muted-foreground">Or upload a scan file in the next step to auto-extract the name.</p>
+                        <Label className="text-foreground">Patient <span className="text-red-500">*</span></Label>
+                        <Select 
+                          value={patientId || 'new'} 
+                          onValueChange={(val) => {
+                            if (val === 'new') {
+                              setPatientId(null);
+                              setPatientName('');
+                              setPatientAge('');
+                              setPatientGender('');
+                            } else {
+                              const pt = patientsList.find(p => p.id === val);
+                              if (pt) {
+                                setPatientId(pt.id);
+                                setPatientName(pt.name);
+                                setPatientAge(pt.age ? pt.age.toString() : '');
+                                setPatientGender(pt.gender || '');
+                              }
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="border-border text-foreground bg-background">
+                            <SelectValue placeholder="Select or Create New Patient" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="new" className="font-semibold text-primary">+ Create New Patient</SelectItem>
+                            {patientsList.map(pt => (
+                              <SelectItem key={pt.id} value={pt.id}>{pt.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                          <Label htmlFor="patientAge" className="text-foreground">Patient Age <span className="text-red-500">*</span></Label>
-                          <Input
-                            id="patientAge"
-                            type="number"
-                            placeholder="Age"
-                            value={patientAge}
-                            onChange={(e) => setPatientAge(e.target.value)}
-                            className="border-border text-foreground bg-background"
-                          />
-                        </div>
-                        <div className="grid gap-2">
-                          <Label htmlFor="patientGender" className="text-foreground">Patient Gender <span className="text-red-500">*</span></Label>
-                          <Select value={patientGender} onValueChange={(val) => setPatientGender((val as any) || '')}>
-                            <SelectTrigger className="border-border text-foreground bg-background">
-                              <SelectValue placeholder="Gender" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="MALE">Male</SelectItem>
-                              <SelectItem value="FEMALE">Female</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
+                      {!patientId && (
+                        <>
+                          <div className="grid gap-2">
+                            <Label htmlFor="patientName" className="text-foreground">Patient Name <span className="text-red-500">*</span></Label>
+                            <Input
+                              id="patientName"
+                              placeholder="e.g. John Doe"
+                              value={patientName}
+                              onChange={(e) => setPatientName(e.target.value)}
+                              className="border-border text-foreground bg-background"
+                            />
+                            <p className="text-xs text-muted-foreground">Or upload a scan file in the next step to auto-extract the name.</p>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="grid gap-2">
+                              <Label htmlFor="patientAge" className="text-foreground">Patient Age <span className="text-red-500">*</span></Label>
+                              <Input
+                                id="patientAge"
+                                type="number"
+                                placeholder="Age"
+                                value={patientAge}
+                                onChange={(e) => setPatientAge(e.target.value)}
+                                className="border-border text-foreground bg-background"
+                              />
+                            </div>
+                            <div className="grid gap-2">
+                              <Label htmlFor="patientGender" className="text-foreground">Patient Gender <span className="text-red-500">*</span></Label>
+                              <Select value={patientGender} onValueChange={(val) => setPatientGender((val as any) || '')}>
+                                <SelectTrigger className="border-border text-foreground bg-background">
+                                  <SelectValue placeholder="Gender" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="MALE">Male</SelectItem>
+                                  <SelectItem value="FEMALE">Female</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </>
+                      )}
 
                       <div className="grid gap-2">
                         <Label htmlFor="treatmentType" className="text-foreground">Treatment Type <span className="text-red-500">*</span></Label>

@@ -10,9 +10,21 @@ export interface User {
   avatarUrl?: string;
 }
 
+export interface Patient {
+  id: string;
+  dentistId: string;
+  name: string;
+  age?: number;
+  gender?: 'MALE' | 'FEMALE';
+  medicalHistory?: string;
+  contactInfo?: string;
+  createdAt: string;
+}
+
 export interface Case {
   id: string;
-  patientName: string;
+  patientId?: string; // Link to the new Patient entity
+  patientName: string; // Kept for backwards compatibility
   dentistId: string;
   labId: string;
   status: CaseStatus;

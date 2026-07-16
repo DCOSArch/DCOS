@@ -1,12 +1,56 @@
-import { User, Case, TimelineEvent, LabProfile, InventoryItem, DoctorInventoryItem, OrderChat } from '@/types';
+import { User, Case, Patient, TimelineEvent, LabProfile, InventoryItem, DoctorInventoryItem, OrderChat } from '@/types';
 export const mockUsers: User[] = [
   { id: 'u1', name: 'Dr. Maneesh Vishnoi', role: 'DENTIST', avatarUrl: 'https://i.pravatar.cc/150?u=u1' },
   { id: 'u2', name: 'Advance Dental Export', role: 'LAB_ADMIN', labId: 'lab1', avatarUrl: 'https://i.pravatar.cc/150?u=u2' },
 ];
 
+export const mockPatients: Patient[] = [
+  {
+    id: 'p1',
+    dentistId: 'u1',
+    name: 'Rahul Sharma',
+    age: 35,
+    gender: 'MALE',
+    medicalHistory: 'None',
+    contactInfo: 'rahul.s@example.com',
+    createdAt: '2026-06-01T10:00:00Z',
+  },
+  {
+    id: 'p2',
+    dentistId: 'u1',
+    name: 'Priya Singh',
+    age: 28,
+    gender: 'FEMALE',
+    medicalHistory: 'Allergic to Penicillin',
+    contactInfo: 'priya.singh@example.com',
+    createdAt: '2026-06-05T09:30:00Z',
+  },
+  {
+    id: 'p3',
+    dentistId: 'u1',
+    name: 'Amit Patel',
+    age: 42,
+    gender: 'MALE',
+    medicalHistory: 'Diabetes Type 2',
+    contactInfo: 'amit.patel@example.com',
+    createdAt: '2026-06-10T08:00:00Z',
+  },
+  {
+    id: 'p4',
+    dentistId: 'u1',
+    name: 'Neha Gupta',
+    age: 31,
+    gender: 'FEMALE',
+    medicalHistory: 'None',
+    contactInfo: 'neha.g@example.com',
+    createdAt: '2026-05-20T14:20:00Z',
+  }
+];
+
 export const mockCases: Case[] = [
   {
     id: 'c1',
+    patientId: 'p1',
     patientName: 'Rahul Sharma',
     dentistId: 'u1',
     labId: 'lab1',
@@ -19,6 +63,7 @@ export const mockCases: Case[] = [
   },
   {
     id: 'c2',
+    patientId: 'p2',
     patientName: 'Priya Singh',
     dentistId: 'u1',
     labId: 'lab1',
@@ -31,6 +76,7 @@ export const mockCases: Case[] = [
   },
   {
     id: 'c3',
+    patientId: 'p3',
     patientName: 'Amit Patel',
     dentistId: 'u1',
     labId: 'lab1',
@@ -43,6 +89,7 @@ export const mockCases: Case[] = [
   },
   {
     id: 'c4',
+    patientId: 'p4',
     patientName: 'Neha Gupta',
     dentistId: 'u1',
     labId: 'lab1',

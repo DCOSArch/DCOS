@@ -15,6 +15,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { getR2PublicUrl } from '@/lib/r2';
+import Link from 'next/link';
 
 // ThreeDViewer uses WebGL/canvas APIs — must be loaded client-side only
 const ThreeDViewer = dynamic(() => import('@/components/ThreeDViewer'), {
@@ -1147,10 +1148,15 @@ export default function CaseDetailsClient({
                       </p>
                     </div>
                   </div>
-                  <div className="flex gap-2 shrink-0">
-                    <Button
-                      variant="outline"
-                      size="sm"
+                  <div className="flex gap-2 shrink-0 flex-wrap justify-end">
+                    <Link href={`/viewer/${caseItem.id}`}>
+                      <Button className="gap-1.5 h-9 bg-indigo-600 hover:bg-indigo-700 text-white">
+                        <Box className="w-4 h-4" /> View CBCT
+                      </Button>
+                    </Link>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
                       onClick={async () => {
                         window.open(getR2PublicUrl(caseItem.dicomUrl!), '_blank');
                       }}
