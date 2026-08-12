@@ -23,12 +23,12 @@ export const metadata: Metadata = {
     template: "%s | DentalConnect OS",
   },
   description:
-    "DentalConnect OS (DCOS) is the operating system for modern dentistry. Connect clinics and dental laboratories on one real-time platform — 3D case routing, digital prescriptions, instant messaging, inventory tracking, and automated turnaround. Trusted by dentists and labs across India.",
+    "DentalConnect OS (DCOS) is the operating system for modern dentistry. Connect dental clinics and laboratories on one real-time cloud platform — 3D case routing, digital prescriptions, instant messaging, inventory tracking, and automated turnaround. Built for clinics and labs worldwide.",
   applicationName: "DentalConnect OS",
   keywords: [
     "dental lab management software",
     "dental case management software",
-    "dental lab software India",
+    "dental laboratory software",
     "dentist lab collaboration platform",
     "3D dental case routing",
     "digital dental prescription software",
@@ -36,6 +36,9 @@ export const metadata: Metadata = {
     "dental turnaround tracking",
     "dental inventory management software",
     "dental clinic lab communication app",
+    "cloud dental lab software",
+    "dental CAD/CAM workflow software",
+    "DSO dental lab platform",
     "DentalConnect OS",
     "DCOS",
   ],
@@ -45,6 +48,10 @@ export const metadata: Metadata = {
   category: "Dental Software",
   alternates: {
     canonical: "/",
+    languages: {
+      en: "/",
+      "x-default": "/",
+    },
   },
   openGraph: {
     type: "website",
@@ -53,7 +60,7 @@ export const metadata: Metadata = {
     description:
       "Connect dental clinics and labs on one real-time platform. 3D case routing, digital prescriptions, and automated turnaround tracking.",
     url: SITE_URL,
-    locale: "en_IN",
+    locale: "en_US",
     images: [
       {
         url: "/opengraph-image",

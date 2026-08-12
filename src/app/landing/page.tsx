@@ -7,8 +7,14 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.dcos.in';
 export const metadata: Metadata = {
   title: 'Dental Lab Management & Clinic Collaboration Software',
   description:
-    'DentalConnect OS (DCOS) connects dental clinics and laboratories on one real-time platform — 3D case routing, digital prescriptions, instant messaging, inventory tracking, and automated turnaround. The operating system for modern dentistry.',
-  alternates: { canonical: '/landing' },
+    'DentalConnect OS (DCOS) connects dental clinics and laboratories on one real-time cloud platform — 3D case routing, digital prescriptions, instant messaging, inventory tracking, and automated turnaround. The operating system for modern dentistry, built for clinics and labs worldwide.',
+  alternates: {
+    canonical: '/landing',
+    languages: {
+      en: '/landing',
+      'x-default': '/landing',
+    },
+  },
   openGraph: {
     title: 'DentalConnect OS — Dental Lab Management & Clinic Collaboration Software',
     description:
@@ -59,12 +65,12 @@ const faqs = [
     a: 'DCOS supports every major intraoral scanner ecosystem including iTero, 3Shape TRIOS, Medit, Carestream, and Planmeca. Digital scans (STL, PLY, OBJ, DCM) are routed automatically from your local scanner folder to the destination lab via our secure folder-watcher.',
   },
   {
-    q: 'Is DCOS available in India?',
-    a: 'Yes. DCOS is built and operated in India, GPDP-compliant, and priced in INR. Clinics and labs across metros and tier-2 cities are already collaborating on the platform.',
+    q: 'Is DCOS available worldwide?',
+    a: 'Yes. DCOS is a cloud-native SaaS platform available to dental clinics and laboratories worldwide. Pricing is offered in USD, EUR, GBP, INR, and AED, with billing handled in your local currency where supported. Onboarding is handled remotely — a working setup takes a single 30-minute call.',
   },
   {
     q: 'How does DCOS keep patient data safe?',
-    a: 'DCOS is Digital Personal Data Protection Act (DPDP) compliant and acts as a Data Processor for clinics and labs. Patient PHI is isolated behind row-level security, share links are masked and expire in 72 hours, and scan files are stored on private buckets accessed via signed URLs.',
+    a: 'DCOS treats patient PHI as strictly Processor-held data. Records are isolated behind row-level security, share links are masked and expire in 72 hours, and scan files are stored on private buckets accessed via signed URLs. The platform aligns with HIPAA (US), GDPR (EU/UK), and India\'s DPDP requirements out of the box.',
   },
   {
     q: 'What does DCOS replace?',
@@ -84,7 +90,10 @@ const jsonLd = {
       logo: `${SITE_URL}/favicon.ico`,
       description:
         'B2B collaboration platform connecting dental clinics and fabrication laboratories on a single real-time channel.',
-      areaServed: 'IN',
+      areaServed: {
+        '@type': 'Place',
+        name: 'Worldwide',
+      },
     },
     {
       '@type': 'SoftwareApplication',
@@ -99,7 +108,7 @@ const jsonLd = {
       offers: {
         '@type': 'Offer',
         price: '0',
-        priceCurrency: 'INR',
+        priceCurrency: 'USD',
         availability: 'https://schema.org/InStock',
       },
       featureList: features.map((f) => f.title).join(', '),
@@ -114,7 +123,7 @@ const jsonLd = {
       url: SITE_URL,
       name: 'DentalConnect OS',
       publisher: { '@id': `${SITE_URL}/#organization` },
-      inLanguage: 'en-IN',
+      inLanguage: 'en',
     },
     {
       '@type': 'FAQPage',
@@ -162,9 +171,10 @@ export default function LandingRoute() {
           <h1>DentalConnect OS — Dental Lab Management &amp; Clinic Collaboration Software</h1>
           <p>
             DentalConnect OS (DCOS) is the operating system for modern dentistry. Connect
-            dental clinics and fabrication laboratories on one real-time platform. Route 3D
-            cases, send digital prescriptions, message labs instantly, track inventory, and
-            measure turnaround — from any intraoral scanner to any lab, in India and beyond.
+            dental clinics and fabrication laboratories on one real-time cloud platform.
+            Route 3D cases, send digital prescriptions, message labs instantly, track
+            inventory, and measure turnaround — from any intraoral scanner to any lab,
+            anywhere in the world.
           </p>
           <p>
             <Link href="/login">Get started with DCOS</Link> ·{' '}
@@ -204,8 +214,13 @@ export default function LandingRoute() {
               Carestream, Planmeca — and any intraoral scanner that exports STL/PLY/OBJ.
             </li>
             <li>
-              <strong>Built for India, ready for the world.</strong> GPDP-compliant, INR
-              pricing, and clinic-to-lab workflows tuned for the Indian dental ecosystem.
+              <strong>Compliance-ready worldwide.</strong> Aligned with HIPAA (US), GDPR
+              (EU/UK), and DPDP (India) requirements out of the box, so you can ship cases
+              anywhere your clinic operates.
+            </li>
+            <li>
+              <strong>Multi-currency billing.</strong> Priced in USD, EUR, GBP, INR, and
+              AED — pay in your local currency where supported.
             </li>
           </ul>
         </section>
@@ -234,7 +249,7 @@ export default function LandingRoute() {
         <footer>
           <p>
             DentalConnect OS · Dental lab management software · Clinic-to-lab collaboration
-            platform · Digital dentistry workflow · Made in India.
+            platform · Digital dentistry workflow · Available worldwide.
           </p>
         </footer>
       </article>
