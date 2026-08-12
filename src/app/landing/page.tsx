@@ -1,11 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import dynamic from 'next/dynamic';
-
-const InteractiveLanding = dynamic(
-  () => import('@/components/landing/LandingPage'),
-  { ssr: false }
-);
+import InteractiveLanding from '@/components/landing/InteractiveLandingWrapper';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.dcos.in';
 
