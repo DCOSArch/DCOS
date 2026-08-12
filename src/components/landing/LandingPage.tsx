@@ -156,6 +156,8 @@ export default function LandingPage() {
           <button className="landing-nav-link" onClick={() => scrollToSection('dashboards')}>Dashboards</button>
           <button className="landing-nav-link" onClick={() => scrollToSection('viewer')}>3D Viewer</button>
           <button className="landing-nav-link" onClick={() => scrollToSection('security')}>Security</button>
+          <Link href="/labs" className="landing-nav-link">Labs</Link>
+          <Link href="/blog" className="landing-nav-link">Blog</Link>
         </div>
 
         <Link href="/login" className="landing-nav-cta">

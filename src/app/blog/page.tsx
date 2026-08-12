@@ -15,6 +15,14 @@ export const metadata: Metadata = {
       'Guides and comparisons on dental lab management software and clinic-to-lab collaboration.',
     url: `${SITE_URL}/blog`,
     type: 'website',
+    images: [
+      {
+        url: '/opengraph-image',
+        width: 1200,
+        height: 630,
+        alt: 'DentalConnect OS Blog',
+      },
+    ],
   },
 };
 

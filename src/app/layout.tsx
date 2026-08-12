@@ -46,8 +46,11 @@ export const metadata: Metadata = {
   creator: "DentalConnect OS",
   publisher: "DentalConnect OS",
   category: "Dental Software",
+  // NOTE: deliberately no `alternates.canonical` here. A root-level canonical is
+  // inherited by every page that doesn't override it, which would make each of those
+  // pages declare itself a duplicate of the homepage. Every indexable route sets its
+  // own self-referencing canonical instead.
   alternates: {
-    canonical: "/",
     languages: {
       en: "/",
       "x-default": "/",

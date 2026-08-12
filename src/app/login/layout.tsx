@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Sign In | DentalConnect OS',
+  // `absolute` prevents the root layout's "%s | DentalConnect OS" template from
+  // appending the brand a second time.
+  title: { absolute: 'Sign In | DentalConnect OS' },
   description: 'Sign in to your DentalConnect OS dashboard.',
   robots: {
     index: false,

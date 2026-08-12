@@ -1,10 +1,32 @@
+import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { Star, Clock, ShieldCheck, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
-export const metadata = {
-  title: 'Laboratory Discovery | Dental ConnectOS',
-  description: 'Find and partner with top-rated dental laboratories.',
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.dcos.in';
+
+export const metadata: Metadata = {
+  // `absolute` stops the root layout's "%s | DentalConnect OS" template from
+  // appending the brand a second time.
+  title: { absolute: 'Find a Dental Laboratory | DentalConnect OS' },
+  description:
+    'Browse verified dental laboratories by service, price, and turnaround time. Compare crown, bridge, implant, and aligner pricing, then route your digital cases instantly.',
+  alternates: { canonical: '/labs' },
+  openGraph: {
+    title: 'Find a Dental Laboratory — DentalConnect OS',
+    description:
+      'Browse verified dental laboratories by service, price, and turnaround time. Route your digital cases instantly.',
+    url: `${SITE_URL}/labs`,
+    type: 'website',
+    images: [
+      {
+        url: '/opengraph-image',
+        width: 1200,
+        height: 630,
+        alt: 'Find a Dental Laboratory on DentalConnect OS',
+      },
+    ],
+  },
 };
 
 export default async function LabsMarketplacePage() {
@@ -34,10 +56,12 @@ export default async function LabsMarketplacePage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-5xl">
-            Partner with Elite Laboratories
+            Find a Dental Laboratory
           </h1>
           <p className="mt-4 text-xl text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">
-            Discover verified dental labs, compare transparent pricing, and route your digital cases instantly.
+            Discover verified dental labs, compare transparent pricing and turnaround
+            times, and route your digital cases instantly — crowns, bridges, implants,
+            aligners, and full-arch restorations.
           </p>
         </div>
 
@@ -92,6 +116,74 @@ export default async function LabsMarketplacePage() {
             );
           })}
         </div>
+
+        {(!labs || labs.length === 0) && (
+          <div className="max-w-2xl mx-auto text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-10">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+              Laboratory directory opening soon
+            </h2>
+            <p className="mt-3 text-slate-500 dark:text-slate-400">
+              We&apos;re onboarding verified dental laboratories now. Labs listed here
+              publish their service catalog, pricing, and turnaround times so clinics can
+              compare and route cases in a single click.
+            </p>
+            <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+              <Link
+                href="/login"
+                className="inline-flex justify-center items-center gap-2 py-2.5 px-5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors"
+              >
+                List your laboratory <ArrowRight className="w-4 h-4" />
+              </Link>
+              <Link
+                href="/login"
+                className="inline-flex justify-center items-center py-2.5 px-5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+              >
+                I&apos;m a clinic looking for a lab
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Contextual copy + internal links. Keeps this route from being a crawl
+            dead-end and gives it indexable content even before labs are listed. */}
+        <section className="max-w-3xl mx-auto mt-20 text-slate-600 dark:text-slate-400">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
+            How lab discovery works on DentalConnect OS
+          </h2>
+          <p className="mb-4">
+            Every laboratory on DentalConnect OS publishes a service catalog with
+            transparent pricing and quoted turnaround times. Clinics compare labs on the
+            work they actually need — zirconia crowns, PFM bridges, implant abutments,
+            clear aligners, dentures, or full-arch restorations — then route a case
+            directly from their intraoral scanner without leaving the platform.
+          </p>
+          <p className="mb-4">
+            Once a case is routed, the clinic and lab share a single real-time workspace:
+            structured digital prescriptions, spatial pin comments on the 3D model,
+            case-scoped messaging, and automated turnaround tracking from received through
+            shipped.
+          </p>
+          <ul className="space-y-2">
+            <li>
+              <Link href="/landing" className="text-blue-600 dark:text-blue-400 hover:underline">
+                See how DentalConnect OS connects clinics and labs
+              </Link>
+            </li>
+            <li>
+              <Link href="/blog" className="text-blue-600 dark:text-blue-400 hover:underline">
+                Read our guides on dental lab software and digital workflows
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/blog/how-to-choose-dental-lab-management-software"
+                className="text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                How to choose dental lab management software: 7 criteria that matter
+              </Link>
+            </li>
+          </ul>
+        </section>
       </div>
     </div>
   );

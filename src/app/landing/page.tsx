@@ -21,6 +21,16 @@ export const metadata: Metadata = {
       'Connect dental clinics and labs on one real-time platform. 3D case routing, digital prescriptions, and automated turnaround tracking.',
     url: `${SITE_URL}/landing`,
     type: 'website',
+    // A page-level openGraph block replaces the parent's entirely, so `images`
+    // must be restated here or social shares render with no preview image.
+    images: [
+      {
+        url: '/opengraph-image',
+        width: 1200,
+        height: 630,
+        alt: 'DentalConnect OS — The Operating System for Modern Dentistry',
+      },
+    ],
   },
 };
 
@@ -178,7 +188,8 @@ export default function LandingRoute() {
           </p>
           <p>
             <Link href="/login">Get started with DCOS</Link> ·{' '}
-            <Link href="/labs">Browse verified dental laboratories</Link>
+            <Link href="/labs">Browse verified dental laboratories</Link> ·{' '}
+            <Link href="/blog">Dental lab software guides and comparisons</Link>
           </p>
         </header>
 
@@ -234,6 +245,30 @@ export default function LandingRoute() {
             e.max, aligners, and full-arch restorations. Prosthodontists and implant
             specialists who need precise 3D communication with lab technicians.
           </p>
+        </section>
+
+        <section aria-labelledby="resources-heading">
+          <h2 id="resources-heading">Guides for choosing dental lab software</h2>
+          <ul>
+            <li>
+              <Link href="/blog/best-dental-lab-software-india-2026">
+                Best dental lab software in India (2026 buyer’s guide)
+              </Link>
+            </li>
+            <li>
+              <Link href="/blog/dcos-vs-labyx">
+                DCOS vs Labyx: which dental lab software is right for you?
+              </Link>
+            </li>
+            <li>
+              <Link href="/blog/how-to-choose-dental-lab-management-software">
+                How to choose dental lab management software: 7 criteria that matter
+              </Link>
+            </li>
+            <li>
+              <Link href="/blog">All DentalConnect OS guides and comparisons</Link>
+            </li>
+          </ul>
         </section>
 
         <section aria-labelledby="faq-heading" id="faq">
