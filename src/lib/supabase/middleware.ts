@@ -31,19 +31,33 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/auth') &&
-    !request.nextUrl.pathname.startsWith('/preview') &&
-    !request.nextUrl.pathname.startsWith('/landing')
-  ) {
+  const { pathname } = request.nextUrl
+
+  // Explicitly protected dashboard prefixes — only redirect to /login for these.
+  // Everything else (marketing pages, robots.txt, sitemap.xml, unmatched routes)
+  // is allowed to reach Next.js so it can render the correct page or a real 404.
+  const protectedPrefixes = [
+    '/cases',
+    '/inventory',
+    '/patients',
+    '/viewer',
+    '/lab-directory',
+  ]
+
+  const isProtected = protectedPrefixes.some(
+    (p) => pathname === p || pathname.startsWith(p + '/')
+  )
+
+  if (!user && isProtected) {
     const url = request.nextUrl.clone()
-    if (request.nextUrl.pathname === '/') {
-      url.pathname = '/landing'
-    } else {
-      url.pathname = '/login'
-    }
+    url.pathname = '/login'
+    return NextResponse.redirect(url)
+  }
+
+  // Root always sends to /landing so crawlers land on real content.
+  if (pathname === '/' && !user) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/landing'
     return NextResponse.redirect(url)
   }
 

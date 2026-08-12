@@ -1,26 +1,28 @@
 import { MetadataRoute } from 'next';
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.dcos.in';
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://dcos.in'; // Replace with production URL
+  const lastModified = new Date();
 
   return [
     {
-      url: `${baseUrl}/`,
-      lastModified: new Date(),
+      url: `${SITE_URL}/`,
+      lastModified,
       changeFrequency: 'daily',
       priority: 1.0,
     },
     {
-      url: `${baseUrl}/landing`,
-      lastModified: new Date(),
+      url: `${SITE_URL}/landing`,
+      lastModified,
       changeFrequency: 'weekly',
-      priority: 0.8,
+      priority: 0.9,
     },
     {
-      url: `${baseUrl}/login`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.5,
+      url: `${SITE_URL}/labs`,
+      lastModified,
+      changeFrequency: 'daily',
+      priority: 0.8,
     },
   ];
 }

@@ -14,12 +14,79 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.dcos.in";
+
 export const metadata: Metadata = {
-  title: "DCOS — The Operating System for Modern Dentistry",
-  description: "B2B collaboration platform connecting dental clinics and fabrication laboratories on a single real-time channel. Streamline prescriptions, 3D annotations, and inventory tracking.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "DentalConnect OS — Dental Lab Management & Clinic Collaboration Software",
+    template: "%s | DentalConnect OS",
+  },
+  description:
+    "DentalConnect OS (DCOS) is the operating system for modern dentistry. Connect clinics and dental laboratories on one real-time platform — 3D case routing, digital prescriptions, instant messaging, inventory tracking, and automated turnaround. Trusted by dentists and labs across India.",
+  applicationName: "DentalConnect OS",
+  keywords: [
+    "dental lab management software",
+    "dental case management software",
+    "dental lab software India",
+    "dentist lab collaboration platform",
+    "3D dental case routing",
+    "digital dental prescription software",
+    "dental lab client portal",
+    "dental turnaround tracking",
+    "dental inventory management software",
+    "dental clinic lab communication app",
+    "DentalConnect OS",
+    "DCOS",
+  ],
+  authors: [{ name: "DentalConnect OS" }],
+  creator: "DentalConnect OS",
+  publisher: "DentalConnect OS",
+  category: "Dental Software",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    siteName: "DentalConnect OS",
+    title: "DentalConnect OS — Dental Lab Management & Clinic Collaboration Software",
+    description:
+      "Connect dental clinics and labs on one real-time platform. 3D case routing, digital prescriptions, and automated turnaround tracking.",
+    url: SITE_URL,
+    locale: "en_IN",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "DentalConnect OS — The Operating System for Modern Dentistry",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "DentalConnect OS — Dental Lab Management & Clinic Collaboration Software",
+    description:
+      "Connect dental clinics and labs on one real-time platform. 3D case routing, digital prescriptions, and automated turnaround tracking.",
+    images: ["/opengraph-image"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  icons: {
+    icon: [{ url: "/favicon.ico", sizes: "any" }],
+  },
   other: {
     "google-site-verification": process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || "",
-  }
+  },
 };
 
 export default function RootLayout({
