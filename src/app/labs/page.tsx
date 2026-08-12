@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   // appending the brand a second time.
   title: { absolute: 'Find a Dental Laboratory | DentalConnect OS' },
   description:
-    'Browse verified dental laboratories by service, price, and turnaround time. Compare crown, bridge, implant, and aligner pricing, then route your digital cases instantly.',
+    'Browse verified dental laboratories by service, price, and turnaround time. Compare crown, bridge, and aligner pricing, then route cases instantly.',
   alternates: { canonical: '/labs' },
   openGraph: {
     title: 'Find a Dental Laboratory — DentalConnect OS',
