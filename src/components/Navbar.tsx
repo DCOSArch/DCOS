@@ -220,14 +220,29 @@ export default function Navbar({ currentUser, cases }: NavbarProps) {
           <div className="flex items-center gap-1 sm:gap-2 mr-2">
             {currentUser.role === 'DENTIST' && (
               <>
+                <Link href="/flow">
+                  <Button variant="ghost" size="sm" className="hidden md:flex text-muted-foreground hover:text-foreground">
+                    Flow
+                  </Button>
+                </Link>
                 <Link href="/patients">
                   <Button variant="ghost" size="sm" className="hidden sm:flex text-muted-foreground hover:text-foreground">
                     Patients
                   </Button>
                 </Link>
+                <Link href="/inventory">
+                  <Button variant="ghost" size="sm" className="hidden md:flex text-muted-foreground hover:text-foreground">
+                    Inventory
+                  </Button>
+                </Link>
+                <Link href="/billing">
+                  <Button variant="ghost" size="sm" className="hidden md:flex text-muted-foreground hover:text-foreground">
+                    Billing
+                  </Button>
+                </Link>
                 <Link href="/lab-directory">
-                  <Button variant="ghost" size="sm" className="hidden sm:flex text-muted-foreground hover:text-foreground">
-                    Lab Directory
+                  <Button variant="ghost" size="sm" className="hidden lg:flex text-muted-foreground hover:text-foreground">
+                    Labs
                   </Button>
                 </Link>
               </>

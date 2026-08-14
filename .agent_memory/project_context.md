@@ -31,4 +31,14 @@ A storage bucket `designs` holds the final milling-ready CAD output uploaded by 
 A column `cases.dicom_url` stores references to 3D DICOM / CBCT scan files uploaded by clinics for surgical guide cases. This is stored under the `dicom/` prefix in the `scans` bucket.
 
 ## Realtime RLS Optimizations
-To support Supabase Realtime WebSocket notifications on tables containing RLS, we configured `REPLICA IDENTITY FULL` on `cases` and `timeline_events`. We also denormalized `dentist_id` and `lab_id` onto `timeline_events` via a `BEFORE INSERT` trigger function `populate_timeline_event_participants()`, ensuring that RLS rules (`dentist_id = auth.uid()`) can be evaluated directly on the row by the Supabase Realtime filter without subqueries.
+To support Supabase Realtime WebSocket notifications on tables containing RLS, we configured `REPLICA IDENTITY FULL` on `cases` and `timeline_events`. We also denormalized `dentist_id` and `lab_id` onto `timeline_events` via a `BEFORE INSERT` trigger function `populate_timeline_event_participants()`, ensuring that RLS rules (`dentist_id = auth.uid()`) can be evaluated directly on the row by the Supabase Realtime filter without subqueries.
+
+## VishnoiOS V1 Database Hierarchy (Phase 1)
+To support the guiding principle of "One Patient, One Record, One Timeline" and eliminate the flat case structure, the plan proposes to introduce the following schemas (to be implemented by Cline in Phase 1):
+- **`public.patients`**: Stores patient records with a unique `patient_id` (e.g. PT-100234), age, gender, and prescribing dentist.
+- **`public.appointments`**: Logs scheduled visits per operatory, linked to patients.
+- **`public.visits`**: Maps a clinical encounter to a patient and appointment, housing the core `clinical_notes`.
+- **`public.treatments`**: Captures dentist prescriptions and treatment plans.
+- **`public.devices`**: Registry for multi-camera architecture hardware tags (e.g., `IOC-01`, `CAMP-01`).
+- **`public.clinical_media`**: A unified, HIPAA-compliant catalog of all uploaded scans, images, and videos (Cloudflare R2 keys) mapped directly to patient, visit, case, and capturing device.
+- **Cases Association**: The `cases` table is altered to reference `patient_id` and `visit_id`, with case-specific design parameters serialized under `design_parameters` (JSONB).

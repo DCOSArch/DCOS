@@ -15,10 +15,17 @@ export interface Patient {
   dentistId: string;
   name: string;
   age?: number;
-  gender?: 'MALE' | 'FEMALE';
+  gender?: 'MALE' | 'FEMALE' | 'OTHER';
   medicalHistory?: string;
   contactInfo?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  allergies?: string[];
+  medicalAlerts?: string[];
   createdAt: string;
+  outstandingBalance?: number;
+  lastVisitDate?: string;
 }
 
 export interface Case {
@@ -40,7 +47,7 @@ export interface Case {
   designUrl?: string;
   dicomUrl?: string;
   patientAge?: number;
-  patientGender?: 'MALE' | 'FEMALE';
+  patientGender?: 'MALE' | 'FEMALE' | 'OTHER';
   implantBrand?: string;
   scanBodyModel?: string;
   analogLogistics?: string;
@@ -69,6 +76,128 @@ export interface LabProfile {
   contactPhone: string;
 }
 
+// ----------------- TOOTH CHARTING (ODONTOGRAM) -----------------
+export type ToothSurface = 'B' | 'M' | 'O' | 'D' | 'L' | 'I'; // Buccal/Facial, Mesial, Occlusal, Distal, Lingual, Incisal
+
+export type ToothCondition =
+  | 'healthy'
+  | 'cavity'
+  | 'filling'
+  | 'rct'
+  | 'crown'
+  | 'missing'
+  | 'implant'
+  | 'bridge'
+  | 'fracture'
+  | 'sealant'
+  | 'watch'
+  | 'unerupted';
+
+export interface ToothData {
+  condition: ToothCondition;
+  surfaces: {
+    B?: ToothCondition;
+    M?: ToothCondition;
+    O?: ToothCondition;
+    D?: ToothCondition;
+    L?: ToothCondition;
+    I?: ToothCondition;
+  };
+  note?: string;
+}
+
+export type ToothChartData = Record<number, ToothData>;
+
+export interface ToothChartRecord {
+  id: string;
+  patientId: string;
+  visitId?: string;
+  teeth: ToothChartData;
+  lastUpdated: string;
+  updatedBy?: string;
+}
+
+// ----------------- CLINICAL VISITS & SOAP NOTES -----------------
+export interface PrescriptionItem {
+  id: string;
+  drugName: string;
+  dosage: string;
+  frequency: string; // e.g. "1-0-1 (Twice daily after food)"
+  duration: string;  // e.g. "5 days"
+  instructions: string; // e.g. "Take with warm water"
+}
+
+export interface ClinicalVisit {
+  id: string;
+  patientId: string;
+  dentistId: string;
+  appointmentId?: string;
+  visitDate: string;
+  chiefComplaint: string;
+  diagnosis: string;
+  clinicalFindings: string;
+  treatmentRendered: string;
+  procedures: string[];
+  vitals?: {
+    bp?: string;
+    pulse?: string;
+    temperature?: string;
+    spO2?: string;
+    bloodSugar?: string;
+  };
+  prescriptions: PrescriptionItem[];
+  voiceTranscript?: string;
+  toothChartSnapshot?: ToothChartData;
+  linkedCaseId?: string;
+  status: 'DRAFT' | 'IN_PROGRESS' | 'COMPLETED';
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ----------------- OPERATORY FLOW & CHAIR QUEUE -----------------
+export type ChairStatus = 'AVAILABLE' | 'OCCUPIED' | 'CLEANING' | 'MAINTENANCE';
+
+export interface OperatoryChair {
+  id: string;
+  name: string;
+  roomNumber: string;
+  status: ChairStatus;
+  currentPatientId?: string;
+  currentPatientName?: string;
+  currentProcedure?: string;
+  occupiedSince?: string;
+  doctorName?: string;
+}
+
+export type QueueStage =
+  | 'SCHEDULED'
+  | 'CHECKED_IN'
+  | 'WAITING'
+  | 'IN_CHAIR'
+  | 'IN_TREATMENT'
+  | 'BILLING'
+  | 'COMPLETED'
+  | 'NO_SHOW'
+  | 'CANCELLED';
+
+export interface QueueEntry {
+  id: string;
+  patientId: string;
+  patientName: string;
+  patientPhone?: string;
+  dentistId: string;
+  doctorName: string;
+  scheduledTime: string;
+  checkInTime?: string;
+  waitingMinutes: number;
+  stage: QueueStage;
+  chairId?: string;
+  chairName?: string;
+  treatmentType: string;
+  notes?: string;
+}
+
+// ----------------- CLINICAL INVENTORY & CONSUMABLES -----------------
 export interface InventoryItem {
   id: string;
   labId: string;
@@ -89,6 +218,81 @@ export interface DoctorInventoryItem {
   lockedPrice: string;
 }
 
+export type ConsumableCategory =
+  | 'RESTORATIVE'
+  | 'ENDODONTICS'
+  | 'PROSTHODONTICS'
+  | 'SURGICAL'
+  | 'PERIODONTICS'
+  | 'PREVENTIVE'
+  | 'PPE_DISPOSABLES';
+
+export interface ConsumableItem {
+  id: string;
+  dentistId: string;
+  name: string;
+  category: ConsumableCategory;
+  brand?: string;
+  sku: string;
+  currentStock: number;
+  minThreshold: number;
+  unit: string; // e.g., "Syringe", "Pack", "Cartridge", "Box", "Piece"
+  costPerUnit: number;
+  expiryDate?: string;
+  supplierName?: string;
+  location?: string; // e.g., "Cabinet A", "Operatory 1"
+  lastRestocked?: string;
+}
+
+export interface InventoryMovement {
+  id: string;
+  itemId: string;
+  itemName: string;
+  movementType: 'STOCK_IN' | 'STOCK_OUT' | 'ADJUSTMENT' | 'PROCEDURE_USE';
+  quantity: number;
+  previousStock: number;
+  newStock: number;
+  patientId?: string;
+  visitId?: string;
+  reason?: string;
+  timestamp: string;
+  performedBy: string;
+}
+
+// ----------------- BILLING & INVOICING -----------------
+export interface InvoiceLineItem {
+  id: string;
+  description: string;
+  toothNumber?: number;
+  unitPrice: number;
+  quantity: number;
+  discount: number;
+  total: number;
+}
+
+export interface ClinicalInvoice {
+  id: string;
+  invoiceNumber: string;
+  patientId: string;
+  patientName: string;
+  dentistId: string;
+  visitId?: string;
+  items: InvoiceLineItem[];
+  subtotal: number;
+  discountTotal: number;
+  taxTotal: number;
+  grandTotal: number;
+  paidAmount: number;
+  balanceAmount: number;
+  paymentStatus: 'UNPAID' | 'PARTIAL' | 'PAID' | 'REFUNDED';
+  paymentMethod?: 'CASH' | 'UPI' | 'CARD' | 'NETBANKING' | 'INSURANCE';
+  dueDate: string;
+  createdAt: string;
+  paidAt?: string;
+  notes?: string;
+}
+
+// ----------------- CHAT & COMMUNICATION -----------------
 export interface ChatMessage {
   id: string;
   chatId: string;

@@ -13,3 +13,20 @@ coverage/
 
 # AutoClaw KDream data
 .autoclaw/
+
+# Obsidian settings
+.obsidian/
+
+# Plan files and documents (Excel, PDF, lock files)
+*plan*
+*.xlsx
+*.pdf
+.~lock.*
+
+
+
+
+
+
+# Ignore Smart Environment folder
+.smart-env
