@@ -32,6 +32,10 @@ export default async function CaseDetailsPage(props: { params: Promise<{ id: str
       .maybeSingle()
   ])
 
+  if (!currentUser) {
+    redirect('/login')
+  }
+
   const { data: caseData, error } = caseResult
   const { data: timelineData } = timelineResult
   const { data: chatData } = chatResult

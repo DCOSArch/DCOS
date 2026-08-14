@@ -46,7 +46,7 @@ export default async function DashboardRoot() {
       supabase
         .from('inventory_items')
         .select('*')
-        .eq('lab_id', userProfile.lab_id || userProfile.id),
+        .eq('lab_id', userProfile.labId || userProfile.id),
       supabase
         .from('users')
         .select('*')

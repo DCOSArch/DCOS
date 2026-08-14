@@ -34,14 +34,15 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Explicitly protected dashboard prefixes — only redirect to /login for these.
-  // Everything else (marketing pages, robots.txt, sitemap.xml, unmatched routes)
-  // is allowed to reach Next.js so it can render the correct page or a real 404.
   const protectedPrefixes = [
     '/cases',
     '/inventory',
     '/patients',
     '/viewer',
     '/lab-directory',
+    '/flow',
+    '/billing',
+    '/visits',
   ]
 
   const isProtected = protectedPrefixes.some(
@@ -54,7 +55,14 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Root always sends to /landing so crawlers land on real content.
+  // If user is already authenticated and visits /login, redirect to / (dashboard)
+  if (user && pathname === '/login') {
+    const url = request.nextUrl.clone()
+    url.pathname = '/'
+    return NextResponse.redirect(url)
+  }
+
+  // Root always sends unauthenticated users to /landing
   if (pathname === '/' && !user) {
     const url = request.nextUrl.clone()
     url.pathname = '/landing'

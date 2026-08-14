@@ -59,7 +59,7 @@ export default async function InventoryDashboard() {
     )
   }
 
-  const labId = currentUser.lab_id || currentUser.id
+  const labId = currentUser.labId || currentUser.id
 
   // Fetch inventory items and allocations in parallel
   const [inventoryResult, allocationsResult] = await Promise.all([

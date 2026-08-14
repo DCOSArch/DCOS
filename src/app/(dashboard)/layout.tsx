@@ -18,6 +18,10 @@ export default async function DashboardLayout({
     getCachedCases()
   ])
 
+  if (!userProfile) {
+    redirect('/login')
+  }
+
   // Map case objects to camelCase
   const mappedCases = cases?.map(c => ({
     id: c.id,
