@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { Check, Sparkles, Zap, Shield, Building2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { AntigravityCard } from '@/components/ui/AntigravityCard';
 
 interface PricingSectionProps {
   onRequestDemo: () => void;
@@ -164,11 +163,9 @@ export default function PricingSection({ onRequestDemo }: PricingSectionProps) {
         {/* Pricing Cards Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch">
           {tiers.map((tier, idx) => (
-            <AntigravityCard
+            <div
               key={idx}
-              maxTilt={tier.highlight ? 10 : 6}
-              glareOpacity={tier.highlight ? 0.25 : 0.12}
-              className={`pricing-card relative rounded-3xl p-8 flex flex-col justify-between ${
+              className={`pricing-card relative rounded-3xl p-8 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 ${
                 tier.highlight
                   ? 'bg-gradient-to-b from-neutral-900/95 to-neutral-950/95 border-2 border-cyan-500/50 shadow-[0_0_50px_rgba(6,182,212,0.2)] ring-1 ring-cyan-500/30'
                   : 'bg-neutral-900/50 border border-neutral-800/80 hover:border-neutral-700/90 backdrop-blur-xl shadow-lg'
@@ -250,7 +247,7 @@ export default function PricingSection({ onRequestDemo }: PricingSectionProps) {
                   </Link>
                 )}
               </div>
-            </AntigravityCard>
+            </div>
           ))}
         </div>
 

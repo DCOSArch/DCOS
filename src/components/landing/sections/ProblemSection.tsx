@@ -13,7 +13,6 @@ import {
   Layers,
   ArrowRight,
 } from 'lucide-react';
-import { AntigravityCard } from '@/components/ui/AntigravityCard';
 
 const frictionPoints = [
   {
@@ -150,11 +149,7 @@ export default function ProblemSection() {
 
         {/* Interactive Comparison Console */}
         <div className="max-w-5xl mx-auto">
-          <AntigravityCard
-            maxTilt={4}
-            glareOpacity={0.12}
-            className="rounded-3xl bg-neutral-950/80 border border-neutral-800/80 backdrop-blur-2xl p-8 lg:p-10 shadow-2xl"
-          >
+          <div className="rounded-3xl bg-neutral-950/90 border border-neutral-800/80 backdrop-blur-2xl p-8 lg:p-10 shadow-2xl">
             {/* Console Header */}
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 border-b border-neutral-800/80">
               <div className="flex items-center gap-3">
@@ -273,7 +268,7 @@ export default function ProblemSection() {
                 DCOS 2.0 Bi-Temporal Verification
               </div>
             </div>
-          </AntigravityCard>
+          </div>
         </div>
       </div>
     </section>

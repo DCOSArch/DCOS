@@ -12,7 +12,6 @@ import {
   ArrowRight,
   ShieldCheck,
 } from 'lucide-react';
-import { AntigravityCard } from '@/components/ui/AntigravityCard';
 
 export default function SolutionReveal() {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -76,17 +75,15 @@ export default function SolutionReveal() {
           </p>
         </div>
 
-        {/* 3-Step Antigravity Cards Grid */}
+        {/* 3-Step Clean Solid Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto mb-16 items-stretch">
           {steps.map((step, idx) => {
             const isSelected = activeStep === idx;
             return (
-              <AntigravityCard
+              <div
                 key={idx}
-                maxTilt={6}
-                glareOpacity={isSelected ? 0.2 : 0.1}
                 onClick={() => setActiveStep(idx)}
-                className={`p-8 rounded-3xl cursor-pointer transition-all duration-300 border flex flex-col justify-between ${
+                className={`p-8 rounded-3xl cursor-pointer transition-all duration-300 border flex flex-col justify-between hover:-translate-y-1.5 ${
                   isSelected
                     ? 'bg-neutral-900/90 border-teal-500/50 shadow-[0_0_40px_rgba(20,184,166,0.15)] ring-1 ring-teal-500/30'
                     : 'bg-neutral-900/40 border-neutral-800/80 hover:border-neutral-700/90 backdrop-blur-xl'
@@ -120,7 +117,7 @@ export default function SolutionReveal() {
                     <ArrowRight className="w-3 h-3" />
                   </div>
                 </div>
-              </AntigravityCard>
+              </div>
             );
           })}
         </div>

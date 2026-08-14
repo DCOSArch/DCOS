@@ -12,7 +12,6 @@ import {
   Sparkles,
   Zap,
 } from 'lucide-react';
-import { AntigravityCard } from '@/components/ui/AntigravityCard';
 
 const features = [
   {
@@ -165,15 +164,13 @@ export default function FeatureOrbit() {
           {features.map((feat, idx) => {
             const isActive = activeIdx === idx;
             return (
-              <AntigravityCard
+              <div
                 key={idx}
-                maxTilt={7}
-                glareOpacity={0.18}
                 onClick={() => setActiveIdx(idx)}
                 className={`orbit-bento-card relative rounded-2xl p-6 transition-all duration-300 cursor-pointer border ${
                   isActive
-                    ? 'bg-neutral-900/90 border-cyan-500/50 shadow-[0_0_30px_rgba(6,182,212,0.18)]'
-                    : 'bg-neutral-900/40 border-neutral-800/80 hover:border-neutral-700 hover:bg-neutral-900/60'
+                    ? 'bg-neutral-900/90 border-cyan-500/50 shadow-[0_0_30px_rgba(6,182,212,0.18)] -translate-y-1'
+                    : 'bg-neutral-900/40 border-neutral-800/80 hover:border-neutral-700 hover:bg-neutral-900/60 hover:-translate-y-0.5'
                 } backdrop-blur-xl flex flex-col justify-between`}
               >
                 <div>
@@ -214,7 +211,7 @@ export default function FeatureOrbit() {
                     <Zap className="w-3 h-3" /> Live Engine
                   </div>
                 </div>
-              </AntigravityCard>
+              </div>
             );
           })}
         </div>
