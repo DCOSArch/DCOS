@@ -13,11 +13,12 @@ const DualDashboard = dynamic(() => import('./sections/DualDashboard'), { ssr: f
 const ThreeDShowcase = dynamic(() => import('./sections/ThreeDShowcase'), { ssr: false });
 const RealtimeDemo = dynamic(() => import('./sections/RealtimeDemo'), { ssr: false });
 const SecurityVault = dynamic(() => import('./sections/SecurityVault'), { ssr: false });
+const PricingSection = dynamic(() => import('./sections/PricingSection'), { ssr: false });
 const CTASection = dynamic(() => import('./sections/CTASection'), { ssr: false });
 
 /* ---- Section IDs for progress nav ---- */
-const sectionIds = ['hero', 'problem', 'solution', 'features', 'dashboards', 'viewer', 'realtime', 'security', 'cta'];
-const sectionLabels = ['Home', 'Problem', 'Solution', 'Features', 'Dashboards', '3D Viewer', 'Real-time', 'Security', 'Get Started'];
+const sectionIds = ['hero', 'problem', 'solution', 'features', 'dashboards', 'viewer', 'realtime', 'security', 'pricing', 'cta'];
+const sectionLabels = ['Home', 'Problem', 'Solution', 'Features', 'Dashboards', '3D Viewer', 'Real-time', 'Security', 'Pricing', 'Get Started'];
 
 export default function LandingPage() {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -156,6 +157,7 @@ export default function LandingPage() {
           <button className="landing-nav-link" onClick={() => scrollToSection('dashboards')}>Dashboards</button>
           <button className="landing-nav-link" onClick={() => scrollToSection('viewer')}>3D Viewer</button>
           <button className="landing-nav-link" onClick={() => scrollToSection('security')}>Security</button>
+          <button className="landing-nav-link" onClick={() => scrollToSection('pricing')}>Pricing</button>
           <Link href="/labs" className="landing-nav-link">Labs</Link>
           <Link href="/blog" className="landing-nav-link">Blog</Link>
         </div>
@@ -186,6 +188,7 @@ export default function LandingPage() {
       <ThreeDShowcase />
       <RealtimeDemo />
       <SecurityVault />
+      <PricingSection onRequestDemo={() => { setIsSubmitted(false); setIsDemoOpen(true); }} />
       <CTASection
         onRequestDemo={() => { setIsSubmitted(false); setIsDemoOpen(true); }}
         onOpenPrivacy={() => setIsPrivacyOpen(true)}
