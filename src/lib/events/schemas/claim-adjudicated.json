@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ClaimAdjudicated",
+  "type": "object",
+  "required": [
+    "event_id",
+    "aggregate_id",
+    "aggregate_type",
+    "aggregate_version",
+    "event_type",
+    "system_at",
+    "observed_at",
+    "actor_id",
+    "prev_event_hash",
+    "event_hash",
+    "payload"
+  ],
+  "properties": {
+    "event_id": { "type": "string" },
+    "aggregate_id": { "type": "string" },
+    "aggregate_type": { "type": "string", "const": "BillingAggregate" },
+    "aggregate_version": { "type": "integer", "minimum": 1 },
+    "event_type": { "type": "string", "const": "ClaimAdjudicated" },
+    "system_at": { "type": "string", "format": "date-time" },
+    "observed_at": { "type": "string", "format": "date-time" },
+    "actor_id": { "type": "string" },
+    "prev_event_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "event_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "payload": {
+      "type": "object",
+      "required": ["claim_id", "patient_id", "payer_id", "status", "total_submitted", "total_benefit", "patient_responsibility", "adjudication_items"],
+      "properties": {
+        "claim_id": { "type": "string" },
+        "patient_id": { "type": "string" },
+        "payer_id": { "type": "string" },
+        "status": { "type": "string", "enum": ["approved", "partial", "denied"] },
+        "total_submitted": { "type": "number" },
+        "total_benefit": { "type": "number" },
+        "patient_responsibility": { "type": "number" },
+        "adjudication_items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["line_number", "cdt_code", "charge_amount", "allowed_amount", "paid_amount"],
+            "properties": {
+              "line_number": { "type": "integer" },
+              "cdt_code": { "type": "string" },
+              "charge_amount": { "type": "number" },
+              "allowed_amount": { "type": "number" },
+              "paid_amount": { "type": "number" },
+              "reason_code": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

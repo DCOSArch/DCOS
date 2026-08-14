@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ChargeCaptured",
+  "type": "object",
+  "required": [
+    "event_id",
+    "aggregate_id",
+    "aggregate_type",
+    "aggregate_version",
+    "event_type",
+    "system_at",
+    "observed_at",
+    "actor_id",
+    "prev_event_hash",
+    "event_hash",
+    "payload"
+  ],
+  "properties": {
+    "event_id": { "type": "string" },
+    "aggregate_id": { "type": "string" },
+    "aggregate_type": { "type": "string", "const": "BillingAggregate" },
+    "aggregate_version": { "type": "integer", "minimum": 1 },
+    "event_type": { "type": "string", "const": "ChargeCaptured" },
+    "system_at": { "type": "string", "format": "date-time" },
+    "observed_at": { "type": "string", "format": "date-time" },
+    "actor_id": { "type": "string" },
+    "prev_event_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "event_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "payload": {
+      "type": "object",
+      "required": ["encounter_id", "patient_id", "charge_id", "cdt_code", "description", "fee_amount", "patient_copay", "insurance_share", "status"],
+      "properties": {
+        "encounter_id": { "type": "string" },
+        "patient_id": { "type": "string" },
+        "charge_id": { "type": "string" },
+        "cdt_code": { "type": "string" },
+        "description": { "type": "string" },
+        "tooth_number": { "type": "integer" },
+        "surfaces": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["M", "O", "D", "B", "L", "I", "F"] }
+        },
+        "fee_amount": { "type": "number" },
+        "patient_copay": { "type": "number" },
+        "insurance_share": { "type": "number" },
+        "status": { "type": "string", "enum": ["PENDING", "BILLED", "SETTLED", "VOIDED"] }
+      }
+    }
+  }
+}

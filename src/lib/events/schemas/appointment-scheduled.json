@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AppointmentScheduled",
+  "type": "object",
+  "required": [
+    "event_id",
+    "aggregate_id",
+    "aggregate_type",
+    "aggregate_version",
+    "event_type",
+    "system_at",
+    "observed_at",
+    "actor_id",
+    "prev_event_hash",
+    "event_hash",
+    "payload"
+  ],
+  "properties": {
+    "event_id": { "type": "string" },
+    "aggregate_id": { "type": "string" },
+    "aggregate_type": { "type": "string", "const": "ScheduleAggregate" },
+    "aggregate_version": { "type": "integer", "minimum": 1 },
+    "event_type": { "type": "string", "const": "AppointmentScheduled" },
+    "system_at": { "type": "string", "format": "date-time" },
+    "observed_at": { "type": "string", "format": "date-time" },
+    "actor_id": { "type": "string" },
+    "prev_event_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "event_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "payload": {
+      "type": "object",
+      "required": ["patient_id", "provider_id", "operatory_id", "scheduled_start", "estimated_duration_minutes", "cpt_codes", "priority"],
+      "properties": {
+        "patient_id": { "type": "string" },
+        "provider_id": { "type": "string" },
+        "operatory_id": { "type": "string" },
+        "scheduled_start": { "type": "string", "format": "date-time" },
+        "estimated_duration_minutes": { "type": "integer", "minimum": 1 },
+        "cpt_codes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "priority": { "type": "string", "enum": ["routine", "urgent", "emergency"] }
+      }
+    }
+  }
+}

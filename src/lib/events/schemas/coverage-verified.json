@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CoverageVerified",
+  "type": "object",
+  "required": [
+    "event_id",
+    "aggregate_id",
+    "aggregate_type",
+    "aggregate_version",
+    "event_type",
+    "system_at",
+    "observed_at",
+    "actor_id",
+    "prev_event_hash",
+    "event_hash",
+    "payload"
+  ],
+  "properties": {
+    "event_id": { "type": "string" },
+    "aggregate_id": { "type": "string" },
+    "aggregate_type": { "type": "string", "const": "BillingAggregate" },
+    "aggregate_version": { "type": "integer", "minimum": 1 },
+    "event_type": { "type": "string", "const": "CoverageVerified" },
+    "system_at": { "type": "string", "format": "date-time" },
+    "observed_at": { "type": "string", "format": "date-time" },
+    "actor_id": { "type": "string" },
+    "prev_event_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "event_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "payload": {
+      "type": "object",
+      "required": ["coverage_id", "patient_id", "payer_id", "payer_name", "subscriber_id", "relationship", "status", "copay_amount", "period"],
+      "properties": {
+        "coverage_id": { "type": "string" },
+        "patient_id": { "type": "string" },
+        "payer_id": { "type": "string" },
+        "payer_name": { "type": "string" },
+        "subscriber_id": { "type": "string" },
+        "relationship": { "type": "string", "enum": ["self", "spouse", "child", "other"] },
+        "status": { "type": "string", "enum": ["active", "cancelled", "draft"] },
+        "copay_amount": { "type": "number" },
+        "deductible_remaining": { "type": "number" },
+        "annual_maximum_remaining": { "type": "number" },
+        "period": {
+          "type": "object",
+          "required": ["start", "end"],
+          "properties": {
+            "start": { "type": "string", "format": "date" },
+            "end": { "type": "string", "format": "date" }
+          }
+        }
+      }
+    }
+  }
+}
