@@ -43,7 +43,7 @@ async function runPhase2Verification() {
   const patientPayload: PatientRegisteredPayload = {
     mrn: 'MRN-2026-8891',
     national_health_id: '91-1234-5678-9012',
-    abha_address: 'maneesh.vishnoi@abdm',
+    abha_address: 'rahul.sharma@abdm',
     name: { family: 'Sharma', given: ['Rahul'] },
     gender: 'male',
     birth_date: '1988-05-14',

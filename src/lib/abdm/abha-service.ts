@@ -24,7 +24,7 @@ export class ABHAService {
   }
 
   /**
-   * Validates ABHA Address formatting (e.g. maneesh.vishnoi@abdm).
+   * Validates ABHA Address formatting (e.g. user@abdm).
    */
   public static isValidABHAAddress(address: string): boolean {
     return /^[a-zA-Z0-9._]+@(abdm|sbx)$/.test(address);

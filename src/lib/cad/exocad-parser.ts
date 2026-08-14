@@ -77,7 +77,7 @@ export class ExocadProjectParser {
 
     return {
       projectId: projectIdMatch?.[1] || `EXO-${Date.now()}`,
-      dentistName: dentistMatch?.[1] || 'Dr. Maneesh Vishnoi',
+      dentistName: dentistMatch?.[1] || 'Primary Dentist',
       patientName: patientMatch?.[1] || 'Clinical Patient',
       technicianName: technicianMatch?.[1] || 'Advance Dental CAD Lab',
       createdAt: dateMatch?.[1] || new Date().toISOString(),

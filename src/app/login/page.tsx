@@ -252,7 +252,7 @@ export default function Login() {
                       <Label htmlFor="fullName" className="text-xs font-semibold text-[#D6D2C4]">Full Name</Label>
                       <Input
                         id="fullName"
-                        placeholder="e.g. Dr. Maneesh Vishnoi"
+                        placeholder="e.g. Dr. Jane Doe"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
                         required

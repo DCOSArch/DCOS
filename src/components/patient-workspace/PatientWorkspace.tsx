@@ -75,9 +75,10 @@ export function PatientWorkspace({ patient, cases }: PatientWorkspaceProps) {
 
   const generateWhatsAppLink = (messageType: 'reminder' | 'balance' | 'followup') => {
     const cleanPhone = (patient.phone || patient.contactInfo || '').replace(/[^0-9]/g, '');
+    if (!cleanPhone) return '#';
     let text = '';
     if (messageType === 'reminder') {
-      text = `Dear ${patient.name}, this is a reminder from Dr. Maneesh Vishnoi's clinic regarding your upcoming appointment. Please reply to confirm.`;
+      text = `Dear ${patient.name}, this is an appointment reminder regarding your upcoming dental visit. Please reply to confirm your scheduled time.`;
     } else if (messageType === 'balance') {
       text = `Dear ${patient.name}, your current treatment balance is ₹${totalOutstanding.toLocaleString('en-IN')}. You can clear it via UPI/Card at your next visit.`;
     } else {
