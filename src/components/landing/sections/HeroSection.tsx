@@ -258,9 +258,10 @@ export default function HeroSection({ onRequestDemo }: HeroSectionProps) {
         <div className="hero-grid-container">
           {/* Left Text Column */}
           <div className="hero-text-side">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-semibold uppercase tracking-wider mb-4">
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-              THE DIGITAL HANDOFF, MADE CLINICAL
+            {/* Refined Minimalist Clinical Eyebrow */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] backdrop-blur-xl text-neutral-300 text-xs font-medium tracking-wide mb-6">
+              <span className="w-1.5 h-1.5 rounded-full bg-teal-400" />
+              The Digital Handoff, Made Clinical
             </div>
 
             <h1 ref={headlineRef} className="landing-display">
@@ -290,22 +291,20 @@ export default function HeroSection({ onRequestDemo }: HeroSectionProps) {
               </button>
             </div>
 
-            {/* Trust Line */}
-            <div className="flex items-center gap-4 text-xs text-neutral-400 font-medium pt-2">
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                Structured prescriptions
-              </span>
-              <span>•</span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                Controlled file access
-              </span>
-              <span>•</span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                Live case updates
-              </span>
+            {/* Clean, Understated Verified Capabilities Strip */}
+            <div className="flex items-center gap-6 text-xs text-neutral-400 pt-3 border-t border-neutral-800/50">
+              <div className="flex items-center gap-2">
+                <svg className="w-3.5 h-3.5 text-teal-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+                <span>Structured Prescriptions</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <svg className="w-3.5 h-3.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+                <span>Verified Scan Ingestion</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <svg className="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+                <span>Live Production Telemetry</span>
+              </div>
             </div>
           </div>
 
