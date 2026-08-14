@@ -146,7 +146,7 @@ export default function Login() {
           password: demoPassword,
           options: {
             data: {
-              full_name: demoRole === 'DENTIST' ? 'Dr. Maneesh Vishnoi' : 'Advance Dental Export',
+              full_name: demoRole === 'DENTIST' ? 'Dr. Aryan Sharma' : 'Advance Dental Export',
               role: demoRole,
               lab_name: demoRole === 'LAB_ADMIN' ? 'Advance Dental Export' : undefined,
             },
@@ -203,7 +203,7 @@ export default function Login() {
               </div>
               <div>
                 <span className="text-[11px] font-bold text-[#F3F1E7] block">Demo Dentist</span>
-                <span className="text-[10px] text-[#C2BEAD]">Dr. Maneesh</span>
+                <span className="text-[10px] text-[#C2BEAD]">Dr. Aryan</span>
               </div>
             </button>
 

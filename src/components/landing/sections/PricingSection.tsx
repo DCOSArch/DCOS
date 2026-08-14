@@ -52,7 +52,7 @@ export default function PricingSection({ onRequestDemo }: PricingSectionProps) {
     {
       name: 'Free Starter',
       badge: 'For Dentists & Clinics',
-      description: 'Zero-friction onboarding for dental clinics to route scans and track lab cases with zero subscription fees.',
+      description: 'For dentists who want scans, prescriptions, and lab status in one place — with nothing to pay, ever.',
       price: '$0',
       period: 'forever free',
       highlight: false,
@@ -73,7 +73,7 @@ export default function PricingSection({ onRequestDemo }: PricingSectionProps) {
     {
       name: 'Pro Lab Center',
       badge: 'Most Popular for Labs',
-      description: 'Comprehensive digital operating system built for dental laboratories and milling centers scaling daily throughput.',
+      description: 'For labs and milling centers routing dozens of cases a day — with CAD bridges, kanban production, and automated clinic alerts.',
       price: billingCycle === 'annual' ? '$149' : '$199',
       period: 'per month, billed ' + (billingCycle === 'annual' ? 'annually' : 'monthly'),
       savings: billingCycle === 'annual' ? 'Save 25% with annual billing' : undefined,
@@ -97,7 +97,7 @@ export default function PricingSection({ onRequestDemo }: PricingSectionProps) {
     {
       name: 'Enterprise Pipeline',
       badge: 'For DSOs & Hospital Networks',
-      description: 'Custom-tailored deployment for large multi-location clinic chains, university hospitals, and enterprise lab groups.',
+      description: 'For DSOs, hospital networks, and enterprise lab groups — dedicated infra, SSO, EMR connectors, and a solutions architect on call.',
       price: 'Custom',
       period: 'tailored annual retainer',
       highlight: false,
@@ -131,7 +131,7 @@ export default function PricingSection({ onRequestDemo }: PricingSectionProps) {
           </h2>
 
           <p className="landing-subheading mx-auto mb-8 text-neutral-300">
-            Free onboarding for dental clinics to eliminate friction. Scalable, high-ROI SaaS tiers for laboratories and enterprise networks.
+            Free forever for clinics. Paid tiers where labs and networks scale.
           </p>
 
           {/* Billing Cycle Toggle */}

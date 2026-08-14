@@ -647,6 +647,18 @@ export default function CaseDetailsClient({
             <span className="font-mono">#{caseItem.id.slice(-8).toUpperCase()}</span>
             <span>•</span>
             <span>Created {new Date(caseItem.createdAt).toLocaleDateString()}</span>
+            {caseItem.patientId && (
+              <>
+                <span>•</span>
+                <Link
+                  href={`/patients/${caseItem.patientId}`}
+                  className="text-primary hover:underline font-medium inline-flex items-center gap-1"
+                  title="Open the patient's full clinical workspace"
+                >
+                  View patient chart →
+                </Link>
+              </>
+            )}
           </p>
         </div>
 

@@ -40,7 +40,6 @@ export async function updateSession(request: NextRequest) {
     '/patients',
     '/viewer',
     '/lab-directory',
-    '/flow',
     '/billing',
     '/visits',
   ]

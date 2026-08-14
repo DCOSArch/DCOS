@@ -261,7 +261,7 @@ export default function HeroSection({ onRequestDemo }: HeroSectionProps) {
             {/* Refined Minimalist Clinical Eyebrow */}
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] backdrop-blur-xl text-neutral-300 text-xs font-medium tracking-wide mb-6">
               <span className="w-1.5 h-1.5 rounded-full bg-teal-400" />
-              The Digital Handoff, Made Clinical
+              Built for dentists and labs who ship digital
             </div>
 
             <h1 ref={headlineRef} className="landing-display">
@@ -277,17 +277,17 @@ export default function HeroSection({ onRequestDemo }: HeroSectionProps) {
             </h1>
 
             <p ref={subtitleRef} className="landing-subheading text-neutral-300" style={{ opacity: 0, margin: 0, lineHeight: 1.6 }}>
-              DentalConnect brings scans, prescriptions, shade details, lab communication, and live production updates into one calm clinical workspace.
+              Scans, prescriptions, shade details, chat, and live production updates — every case, one workspace. Stop chasing your lab on WhatsApp.
             </p>
 
             <div ref={ctaRef} className="hero-ctas" style={{ opacity: 0 }}>
               <Link href="/login" className="landing-btn landing-btn-primary shadow-lg shadow-cyan-500/20">
-                Start your dentist workspace
+                Start free — up to 20 cases/month
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </Link>
               <button onClick={onRequestDemo} className="landing-btn landing-btn-outline">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                See a case journey
+                Watch a 60-second demo
               </button>
             </div>
 
@@ -295,15 +295,15 @@ export default function HeroSection({ onRequestDemo }: HeroSectionProps) {
             <div className="flex items-center gap-6 text-xs text-neutral-400 pt-3 border-t border-neutral-800/50">
               <div className="flex items-center gap-2">
                 <svg className="w-3.5 h-3.5 text-teal-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
-                <span>Structured Prescriptions</span>
+                <span>Structured Rx</span>
               </div>
               <div className="flex items-center gap-2">
                 <svg className="w-3.5 h-3.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
-                <span>Verified Scan Ingestion</span>
+                <span>Any scanner, verified</span>
               </div>
               <div className="flex items-center gap-2">
                 <svg className="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
-                <span>Live Production Telemetry</span>
+                <span>Live status, no chasing</span>
               </div>
             </div>
           </div>

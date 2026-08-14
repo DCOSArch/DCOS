@@ -230,20 +230,29 @@ export default function LabDashboard({ initialCases, initialInventory, available
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Laboratory Dashboard</h1>
           <p className="text-muted-foreground mt-1">Active production pipeline.</p>
         </div>
-        <div className="flex gap-2 items-center bg-background rounded-lg border border-border p-1 shadow-sm">
-          <Filter className="w-4 h-4 ml-2 text-muted-foreground" />
-          <Select value={filterUrgency} onValueChange={(val) => setFilterUrgency(val || 'ALL')}>
-            <SelectTrigger className="w-[130px] border-none shadow-none focus:ring-0 h-8">
-              <SelectValue placeholder="Urgency" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">All Urgencies</SelectItem>
-              <SelectItem value="LOW">Low</SelectItem>
-              <SelectItem value="NORMAL">Normal</SelectItem>
-              <SelectItem value="HIGH">High</SelectItem>
-              <SelectItem value="URGENT">Urgent</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="h-8 px-3 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-all hover:scale-[1.02] active:scale-98"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Manual Case Entry</span>
+          </Button>
+          <div className="flex gap-2 items-center bg-background rounded-lg border border-border p-1 shadow-sm">
+            <Filter className="w-4 h-4 ml-2 text-muted-foreground" />
+            <Select value={filterUrgency} onValueChange={(val) => setFilterUrgency(val || 'ALL')}>
+              <SelectTrigger className="w-[130px] border-none shadow-none focus:ring-0 h-8">
+                <SelectValue placeholder="Urgency" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Urgencies</SelectItem>
+                <SelectItem value="LOW">Low</SelectItem>
+                <SelectItem value="NORMAL">Normal</SelectItem>
+                <SelectItem value="HIGH">High</SelectItem>
+                <SelectItem value="URGENT">Urgent</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
@@ -378,11 +387,6 @@ export default function LabDashboard({ initialCases, initialInventory, available
       </div>
 
       <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-        <DialogTrigger
-          render={<Button className="fixed bottom-6 right-6 md:bottom-10 md:right-10 h-14 w-14 rounded-full shadow-xl bg-primary hover:bg-primary-hover p-0 z-50" />}
-        >
-          <Plus className="h-6 w-6 text-primary-foreground" />
-        </DialogTrigger>
         <DialogContent className="sm:max-w-[550px]">
           <DialogHeader>
             <DialogTitle>Manual Case Entry</DialogTitle>

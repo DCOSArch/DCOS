@@ -101,7 +101,7 @@ async function runPhase4Verification() {
   const mockExocadXml = `
     <Project>
       <ProjectID>EXO-2026-KANPUR-01</ProjectID>
-      <Dentist>Dr. Maneesh Vishnoi</Dentist>
+      <Dentist>Dr. Aryan Sharma</Dentist>
       <Patient>Rahul Sharma</Patient>
       <Technician>Advance Dental CAD Lab</Technician>
       <Date>2026-08-14T12:00:00Z</Date>

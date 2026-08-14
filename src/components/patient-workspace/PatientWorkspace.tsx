@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ToothChart } from '@/components/dentos/ToothChart';
+import { ArchToothChart as ToothChart } from '@/components/dental/ArchToothChart';
 import { StatusBadge } from '@/components/StatusBadge';
 import {
   Patient,

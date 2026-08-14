@@ -17,7 +17,7 @@ import {
 } from '@/types';
 
 export const mockUsers: User[] = [
-  { id: 'u1', name: 'Dr. Maneesh Vishnoi', role: 'DENTIST', avatarUrl: 'https://i.pravatar.cc/150?u=u1' },
+  { id: 'u1', name: 'Dr. Aryan Sharma', role: 'DENTIST', avatarUrl: 'https://i.pravatar.cc/150?u=u1' },
   { id: 'u2', name: 'Advance Dental Export', role: 'LAB_ADMIN', labId: 'lab1', avatarUrl: 'https://i.pravatar.cc/150?u=u2' },
 ];
 
@@ -244,14 +244,14 @@ export const mockChairs: OperatoryChair[] = [
     currentPatientName: 'Rahul Sharma',
     currentProcedure: 'Root Canal Obturation #36',
     occupiedSince: '10:15 AM',
-    doctorName: 'Dr. Maneesh Vishnoi',
+    doctorName: 'Dr. Aryan Sharma',
   },
   {
     id: 'chair2',
     name: 'Operatory 2 (Surgical & Implant Suite)',
     roomNumber: 'OP-02',
     status: 'AVAILABLE',
-    doctorName: 'Dr. Maneesh Vishnoi',
+    doctorName: 'Dr. Aryan Sharma',
   },
   {
     id: 'chair3',
@@ -272,7 +272,7 @@ export const mockQueue: QueueEntry[] = [
     patientName: 'Rahul Sharma',
     patientPhone: '+91 98765 43210',
     dentistId: 'u1',
-    doctorName: 'Dr. Maneesh Vishnoi',
+    doctorName: 'Dr. Aryan Sharma',
     scheduledTime: '10:00 AM',
     checkInTime: '09:50 AM',
     waitingMinutes: 25,
@@ -288,7 +288,7 @@ export const mockQueue: QueueEntry[] = [
     patientName: 'Amit Patel',
     patientPhone: '+91 98111 22334',
     dentistId: 'u1',
-    doctorName: 'Dr. Maneesh Vishnoi',
+    doctorName: 'Dr. Aryan Sharma',
     scheduledTime: '10:30 AM',
     checkInTime: '10:20 AM',
     waitingMinutes: 15,
@@ -302,7 +302,7 @@ export const mockQueue: QueueEntry[] = [
     patientName: 'Priya Singh',
     patientPhone: '+91 91234 56789',
     dentistId: 'u1',
-    doctorName: 'Dr. Maneesh Vishnoi',
+    doctorName: 'Dr. Aryan Sharma',
     scheduledTime: '11:15 AM',
     waitingMinutes: 0,
     stage: 'SCHEDULED',
@@ -314,7 +314,7 @@ export const mockQueue: QueueEntry[] = [
     patientName: 'Neha Gupta',
     patientPhone: '+91 99887 66554',
     dentistId: 'u1',
-    doctorName: 'Dr. Maneesh Vishnoi',
+    doctorName: 'Dr. Aryan Sharma',
     scheduledTime: '12:00 PM',
     waitingMinutes: 0,
     stage: 'SCHEDULED',
@@ -436,7 +436,7 @@ export const mockInventoryMovements: InventoryMovement[] = [
     visitId: 'v3',
     reason: 'Direct Composite Aesthetic Bonding #11',
     timestamp: '2026-08-12T15:30:00Z',
-    performedBy: 'Dr. Maneesh Vishnoi',
+    performedBy: 'Dr. Aryan Sharma',
   },
   {
     id: 'mov2',
@@ -450,7 +450,7 @@ export const mockInventoryMovements: InventoryMovement[] = [
     visitId: 'v1',
     reason: 'Inferior Alveolar Nerve Block #36',
     timestamp: '2026-08-10T10:15:00Z',
-    performedBy: 'Dr. Maneesh Vishnoi',
+    performedBy: 'Dr. Aryan Sharma',
   },
   {
     id: 'mov3',
@@ -614,7 +614,7 @@ export const mockTimelineEvents: TimelineEvent[] = [
     id: 't2',
     caseId: 'c1',
     statusUpdate: 'PENDING',
-    notes: 'Case uploaded by Dr. Maneesh Vishnoi with IOS scan files.',
+    notes: 'Case uploaded by Dr. Aryan Sharma with IOS scan files.',
     timestamp: '2026-08-01T10:00:00Z',
     visibility: 'BOTH',
   },
@@ -700,7 +700,7 @@ export const mockOrderChats: OrderChat[] = [
         id: 'm2',
         chatId: 'chat1',
         senderId: 'u2',
-        content: 'Confirmed Dr. Vishnoi. 3D scan quality is excellent. 5-axis milling is scheduled for this afternoon.',
+        content: 'Confirmed Dr. Sharma. 3D scan quality is excellent. 5-axis milling is scheduled for this afternoon.',
         timestamp: '2026-08-01T11:20:00Z',
       },
     ],

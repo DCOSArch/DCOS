@@ -1,6 +1,6 @@
 import { User, Case, TimelineEvent, LabProfile, InventoryItem, DoctorInventoryItem, OrderChat } from '@/src/types';
 export const mockUsers: User[] = [
-  { id: 'u1', name: 'Dr. Maneesh Vishnoi', role: 'DENTIST', avatarUrl: 'https://i.pravatar.cc/150?u=u1' },
+  { id: 'u1', name: 'Dr. Aryan Sharma', role: 'DENTIST', avatarUrl: 'https://i.pravatar.cc/150?u=u1' },
   { id: 'u2', name: 'Advance Dental Export', role: 'LAB_ADMIN', labId: 'lab1', avatarUrl: 'https://i.pravatar.cc/150?u=u2' },
 ];
 

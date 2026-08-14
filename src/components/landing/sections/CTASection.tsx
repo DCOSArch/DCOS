@@ -108,17 +108,17 @@ export default function CTASection({
           </h2>
 
           <p className="landing-subheading mx-auto" style={{ marginBottom: 40 }}>
-            DentalConnect brings scans, prescriptions, shade details, lab communication, and live production updates into one calm clinical workspace.
+            Set up your workspace in under three minutes. Up to 20 cases a month, free forever — no credit card required.
           </p>
 
           <div className="cta-buttons" style={{ display: 'flex', gap: 16, justifySelf: 'center', justifyContent: 'center', flexWrap: 'wrap', opacity: 0 }}>
             <Link href="/login" className="landing-btn landing-btn-primary" style={{ fontSize: '1.05rem', padding: '16px 36px' }}>
-              Create your dentist workspace
+              Start free — no card required
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </Link>
             <button onClick={onRequestDemo} className="landing-btn landing-btn-outline" style={{ fontSize: '1.05rem', padding: '16px 36px' }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              Request Demo
+              Book a walkthrough
             </button>
           </div>
         </div>

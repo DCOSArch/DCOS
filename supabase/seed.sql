@@ -10,7 +10,7 @@ INSERT INTO public.lab_profiles (id, name, rating, reviews_count, services, pric
 
 -- Users
 INSERT INTO public.users (id, name, role, lab_id, avatar_url) VALUES
-('11111111-1111-1111-1111-111111111111', 'Dr. Maneesh Vishnoi', 'DENTIST', NULL, 'https://i.pravatar.cc/150?u=u1'),
+('11111111-1111-1111-1111-111111111111', 'Dr. Aryan Sharma', 'DENTIST', NULL, 'https://i.pravatar.cc/150?u=u1'),
 ('22222222-2222-2222-2222-222222222222', 'Advance Dental Export', 'LAB_ADMIN', '33333333-3333-3333-3333-333333333333', 'https://i.pravatar.cc/150?u=u2');
 
 -- Cases

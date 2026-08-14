@@ -96,7 +96,7 @@ export function ConsumableInventoryHub() {
       newStock,
       reason: stockReason || (stockAction === 'STOCK_IN' ? 'Manual Restock' : 'Clinical Procedure Usage'),
       timestamp: new Date().toISOString(),
-      performedBy: 'Dr. Maneesh Vishnoi',
+      performedBy: 'Dr. Aryan Sharma',
     };
 
     logInventoryMovement(newMovement);

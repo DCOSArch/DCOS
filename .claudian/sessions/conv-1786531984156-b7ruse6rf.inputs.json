@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "conversationId": "conv-1786531984156-b7ruse6rf",
+  "records": [
+    {
+      "schemaVersion": 1,
+      "id": "msg-1786531984479-zikh1ag",
+      "userTurnOrdinal": 1,
+      "state": "accepted",
+      "localMessageId": "msg-1786531984142-wykkmc8",
+      "timestamp": 1786531984142,
+      "rawDisplayText": "How do i make sure my claude code can benefit off of this indexing?",
+      "canonicalText": "How do i make sure my claude code can benefit off of this indexing?",
+      "images": [],
+      "contentDigest": "7362c95cae98170398d4b4a0c679122ffbcfd6cc87e857f5bdfe33e0b8b41424",
+      "providerUserMessageId": "96e16efc-9d15-492a-ad39-c40f34a1d071",
+      "providerAssistantMessageId": "ca9ee0c8-3b30-4ede-953f-bd1dc2144c23"
+    },
+    {
+      "schemaVersion": 1,
+      "id": "msg-1786532152790-8ntxfgb",
+      "userTurnOrdinal": 2,
+      "state": "accepted",
+      "localMessageId": "msg-1786532152785-h9hkgft",
+      "timestamp": 1786532152785,
+      "rawDisplayText": "Do dat shi",
+      "canonicalText": "Do dat shi",
+      "images": [],
+      "contentDigest": "ab192cffedb56f1324fb9fce60f3db58eb6846307f21bbb62fe430788a29ec10",
+      "providerUserMessageId": "8d05b571-0332-468c-b137-ba0bde83317d",
+      "providerAssistantMessageId": "c73a5468-9e68-407e-ba07-3b4eb85c285f"
+    },
+    {
+      "schemaVersion": 1,
+      "id": "msg-1786532315175-8i15w7l",
+      "userTurnOrdinal": 3,
+      "state": "accepted",
+      "localMessageId": "msg-1786532315166-685l89t",
+      "timestamp": 1786532315166,
+      "rawDisplayText": "If you want me to actually use semantic similarity, that needs an MCP bridge to Smart Connections (none is connected). Say the word and I'll look into whether one exists — otherwise full-text Grep covers most of it.\n\nExplain more about this",
+      "canonicalText": "If you want me to actually use semantic similarity, that needs an MCP bridge to Smart Connections (none is connected). Say the word and I'll look into whether one exists — otherwise full-text Grep covers most of it.\n\nExplain more about this",
+      "images": [],
+      "contentDigest": "bdbafa4b6df4c1c8b5394978b1e27a5234877475036b50a2667f388cc6dd87c9",
+      "providerUserMessageId": "2cc1fe8c-ee3e-4f74-bc8a-74de7f7900dd",
+      "providerAssistantMessageId": "7a511fd3-8c39-494f-9d8c-9912f091a4f4"
+    },
+    {
+      "schemaVersion": 1,
+      "id": "msg-1786532445874-opua6wx",
+      "userTurnOrdinal": 4,
+      "state": "accepted",
+      "localMessageId": "msg-1786532445866-t8wfqek",
+      "timestamp": 1786532445866,
+      "rawDisplayText": "sured",
+      "canonicalText": "sured",
+      "images": [],
+      "contentDigest": "4920f00aa9f909c9ff4c917bde4f5fa805600c5f89367ab4decf905ba39bf607",
+      "providerUserMessageId": "03b2c5d1-f41f-4684-8c7d-4cd87512df43",
+      "providerAssistantMessageId": "3f2bd994-9646-4894-a5c7-2d74f2ade284"
+    },
+    {
+      "schemaVersion": 1,
+      "id": "msg-1786532484992-7rrfcu1",
+      "userTurnOrdinal": 5,
+      "state": "accepted",
+      "localMessageId": "msg-1786532484983-6o2tjk2",
+      "timestamp": 1786532484983,
+      "rawDisplayText": "Say the word then and I'll research a clean Option-B MCP server.\ncan you do this",
+      "canonicalText": "Say the word then and I'll research a clean Option-B MCP server.\ncan you do this",
+      "images": [],
+      "contentDigest": "607423cd43b01e99a375feb1691fcb0dc3b26527e13b3ad307727890b17296d0",
+      "providerUserMessageId": "91af54b8-6620-48d8-9497-54ba8e2fd3dc",
+      "providerAssistantMessageId": "26a5bb21-f3bb-477e-8f47-47b399745545"
+    }
+  ]
+}

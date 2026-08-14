@@ -820,7 +820,7 @@ The project maintains two parallel data sources:
 
 **Seed Users:**
 
-- `Dr. Maneesh Vishnoi` (DENTIST, ID: `11111111-...`)
+- `Dr. Aryan Sharma` (DENTIST, ID: `11111111-...`)
 - `Advance Dental Export` (LAB_ADMIN, ID: `22222222-...`, lab_id: `33333333-...`)
 
 **Seed Labs:** Advance Dental Export, Kanpur Dental Lab, Vaishali Dental Lab

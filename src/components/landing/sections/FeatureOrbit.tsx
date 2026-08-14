@@ -12,6 +12,7 @@ import {
   Sparkles,
   Zap,
 } from 'lucide-react';
+import { AntigravityCard } from '@/components/ui/AntigravityCard';
 
 const features = [
   {

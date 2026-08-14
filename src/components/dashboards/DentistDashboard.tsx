@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
 import { Plus, Activity, CheckCircle2, UploadCloud, FileBox, Filter, FileText, Box, Building2, ChevronRight, ChevronLeft, Camera, Minus, RotateCcw, Hand, Maximize2, Minimize2, Undo, Redo, Trash2, ChevronDown } from 'lucide-react';
+import { ClinicLiveCockpit } from '@/components/dashboards/cockpit/ClinicLiveCockpit';
 import { Case, User, DoctorInventoryItem } from '@/types';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -1471,9 +1472,18 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Dentist Dashboard</h1>
-          <p className="text-muted-foreground mt-1">Manage your patients' lab cases and track progress.</p>
+          <p className="text-muted-foreground mt-1">Your chairs, your queue, your lab cases — all in one glance.</p>
         </div>
+        <Button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="h-10 px-5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-semibold flex items-center gap-2 shadow-md shadow-teal-600/20 transition-all hover:scale-[1.02] active:scale-98"
+        >
+          <Plus className="h-4 w-4" />
+          <span>New Case Prescription</span>
+        </Button>
       </div>
+
+      <ClinicLiveCockpit />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 items-stretch mb-6">
         <SummaryChart cases={cases} />
@@ -1624,21 +1634,31 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
             <CardTitle>Recent Case Submissions</CardTitle>
             <CardDescription>View and track your patients' restorations.</CardDescription>
           </div>
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-muted-foreground" />
-            <Select value={filterStatus} onValueChange={(val) => setFilterStatus(val || 'ALL')}>
-              <SelectTrigger className="w-[140px] h-8 text-xs">
-                <SelectValue placeholder="All Statuses" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">All Statuses</SelectItem>
-                <SelectItem value="PENDING">Pending</SelectItem>
-                <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                <SelectItem value="QUALITY_CHECK">QC Hold</SelectItem>
-                <SelectItem value="DISPATCHED">Dispatched</SelectItem>
-                <SelectItem value="DELIVERED">Delivered</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={() => setIsCreateModalOpen(true)}
+              size="sm"
+              className="h-8 px-3 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>New Case</span>
+            </Button>
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-muted-foreground" />
+              <Select value={filterStatus} onValueChange={(val) => setFilterStatus(val || 'ALL')}>
+                <SelectTrigger className="w-[140px] h-8 text-xs">
+                  <SelectValue placeholder="All Statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Statuses</SelectItem>
+                  <SelectItem value="PENDING">Pending</SelectItem>
+                  <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                  <SelectItem value="QUALITY_CHECK">QC Hold</SelectItem>
+                  <SelectItem value="DISPATCHED">Dispatched</SelectItem>
+                  <SelectItem value="DELIVERED">Delivered</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -1740,9 +1760,6 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
           }, 300);
         }
       }}>
-        <DialogTrigger render={<Button className="fixed bottom-6 right-6 md:bottom-10 md:right-10 h-14 w-14 rounded-full shadow-xl bg-primary hover:bg-primary-hover p-0 z-50 focus:outline-none" />}>
-          <Plus className="h-6 w-6 text-primary-foreground" />
-        </DialogTrigger>
         <DialogContent className="sm:max-w-[950px] w-[95vw] h-[90vh] md:h-[80vh] flex flex-col bg-background border-border p-0 overflow-hidden">
           <DialogHeader className="p-6 border-b border-border">
             <DialogTitle className="text-foreground">Create New Lab Case</DialogTitle>

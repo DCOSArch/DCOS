@@ -33,7 +33,7 @@ A column `cases.dicom_url` stores references to 3D DICOM / CBCT scan files uploa
 ## Realtime RLS Optimizations
 To support Supabase Realtime WebSocket notifications on tables containing RLS, we configured `REPLICA IDENTITY FULL` on `cases` and `timeline_events`. We also denormalized `dentist_id` and `lab_id` onto `timeline_events` via a `BEFORE INSERT` trigger function `populate_timeline_event_participants()`, ensuring that RLS rules (`dentist_id = auth.uid()`) can be evaluated directly on the row by the Supabase Realtime filter without subqueries.
 
-## VishnoiOS V1 Database Hierarchy (Phase 1)
+## DCOS 2.0 Database Hierarchy (Phase 1)
 To support the guiding principle of "One Patient, One Record, One Timeline" and eliminate the flat case structure, the plan proposes to introduce the following schemas (to be implemented by Cline in Phase 1):
 - **`public.patients`**: Stores patient records with a unique `patient_id` (e.g. PT-100234), age, gender, and prescribing dentist.
 - **`public.appointments`**: Logs scheduled visits per operatory, linked to patients.

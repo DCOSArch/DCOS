@@ -199,7 +199,7 @@ async function runPhase2Verification() {
   console.log('\n--- TEST GROUP 5: ABDM Ecosystem & Fidelius Encryption ---');
 
   assert(ABHAService.isValidABHANumber('91-1234-5678-9012'), 'ABHA Number format validation succeeds');
-  assert(ABHAService.isValidABHAAddress('maneesh.vishnoi@abdm'), 'ABHA Address validation succeeds');
+  assert(ABHAService.isValidABHAAddress('aryan.sharma@abdm'), 'ABHA Address validation succeeds');
 
   CareContextEngine.registerCareContext(patientId, {
     referenceNumber: `ENC-${encounterId.slice(-6)}`,

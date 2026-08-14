@@ -804,7 +804,7 @@ The project maintains two parallel data sources:
 2. **[seed.sql](file:///c:/Users/bentn/OneDrive/Desktop/DEs/supabase/seed.sql)** — SQL seed data for Supabase local development. Uses hardcoded UUIDs for deterministic testing.
 
 **Seed Users:**
-- `Dr. Maneesh Vishnoi` (DENTIST, ID: `11111111-...`)
+- `Dr. Aryan Sharma` (DENTIST, ID: `11111111-...`)
 - `Advance Dental Export` (LAB_ADMIN, ID: `22222222-...`, lab_id: `33333333-...`)
 
 **Seed Labs:** Advance Dental Export, Kanpur Dental Lab, Vaishali Dental Lab

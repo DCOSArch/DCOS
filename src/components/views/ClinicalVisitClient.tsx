@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ToothChart } from '@/components/dentos/ToothChart';
+import { ArchToothChart as ToothChart } from '@/components/dental/ArchToothChart';
 import { VisitVoiceRecorder } from '@/components/dentos/VisitVoiceRecorder';
 import {
   Patient,

@@ -39,7 +39,7 @@ export const getCachedUserProfile = cache(async () => {
     if (userProfile) {
       return {
         id: userProfile.id,
-        name: userProfile.name || userProfile.full_name || 'Dr. Maneesh Vishnoi',
+        name: userProfile.name || userProfile.full_name || 'Dr. Aryan Sharma',
         role: userProfile.role || 'DENTIST',
         labId: userProfile.lab_id,
         avatarUrl: userProfile.avatar_url || `https://i.pravatar.cc/150?u=${user.id}`,
@@ -56,7 +56,7 @@ export const getCachedUserProfile = cache(async () => {
     if (profile) {
       return {
         id: profile.id,
-        name: profile.name || profile.full_name || 'Dr. Maneesh Vishnoi',
+        name: profile.name || profile.full_name || 'Dr. Aryan Sharma',
         role: profile.role || 'DENTIST',
         labId: profile.lab_id,
         avatarUrl: profile.avatar_url || `https://i.pravatar.cc/150?u=${user.id}`,
@@ -67,7 +67,7 @@ export const getCachedUserProfile = cache(async () => {
     const meta = user.user_metadata || {};
     return {
       id: user.id,
-      name: meta.full_name || meta.name || user.email?.split('@')[0] || 'Dr. Maneesh Vishnoi',
+      name: meta.full_name || meta.name || user.email?.split('@')[0] || 'Dr. Aryan Sharma',
       role: (meta.role as 'DENTIST' | 'LAB_ADMIN') || 'DENTIST',
       labId: meta.lab_name || meta.labId,
       avatarUrl: meta.avatar_url || `https://i.pravatar.cc/150?u=${user.id}`,

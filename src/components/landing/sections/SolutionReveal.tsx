@@ -22,27 +22,27 @@ export default function SolutionReveal() {
       num: '01',
       title: 'Build the Prescription',
       badge: 'Parametric Clinical Rx',
-      desc: 'Select treatment, FDI tooth numbers, restorative material (Zirconia HT, IPS e.max, BruxZir), and calibrated VITA Classical/3D Master shade with zero missing fields.',
+      desc: 'Treatment, FDI tooth number, material, VITA shade — every field required, every case complete before it leaves your chair.',
       icon: <FileText className="w-5 h-5 text-teal-400" />,
-      tag: 'Zero-Omission Validation',
+      tag: 'Every field mandatory',
       accentColor: '#2dd4bf',
     },
     {
       num: '02',
       title: 'Send the Complete Case',
       badge: 'Scanner-Agnostic Ingestion',
-      desc: 'Direct ingestion from Medit, 3Shape, iTero, and Sirona (STL/PLY/OBJ). Instant client-side manifold mesh verification and sub-millimeter occlusal clearance analysis.',
+      desc: 'Upload from Medit, 3Shape, iTero, or Sirona. We verify the mesh and flag occlusal issues before your lab even opens the file.',
       icon: <Scan className="w-5 h-5 text-cyan-400" />,
-      tag: 'Automatic Mesh Inspection',
+      tag: 'Bad scans caught pre-upload',
       accentColor: '#38bdf8',
     },
     {
       num: '03',
       title: 'Follow Every Handoff',
       badge: 'Live Production Telemetry',
-      desc: 'Real-time production milestones from lab intake to 5-axis CAM milling, sintering furnace, glaze inspection, and dispatch with in-context case messaging.',
+      desc: 'Every stage — intake, milling, sintering, glaze, dispatch — shown live on your dashboard. Chat stays on the case, not on WhatsApp.',
       icon: <Activity className="w-5 h-5 text-emerald-400" />,
-      tag: 'Real-Time Milestones',
+      tag: 'Live on your dashboard',
       accentColor: '#34d399',
     },
   ];
@@ -67,11 +67,11 @@ export default function SolutionReveal() {
           </div>
 
           <h2 className="landing-heading text-white" style={{ margin: '0 auto 16px' }}>
-            A calmer handoff for <span className="gradient-text">every restoration.</span>
+            One clean handoff for <span className="gradient-text">every restoration.</span>
           </h2>
 
           <p className="landing-subheading mx-auto text-neutral-300">
-            DentalConnect establishes a deterministic 3-stage protocol between clinic operatory and laboratory production.
+            Three steps between your chair and the lab bench. Nothing missing, nothing lost, nothing to chase.
           </p>
         </div>
 
