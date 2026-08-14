@@ -140,27 +140,27 @@ export function PatientWorkspace({ patient, cases }: PatientWorkspaceProps) {
       </div>
 
       {/* Main Workspace Navigation Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="bg-muted/60 border border-border p-1 rounded-xl w-full justify-start overflow-x-auto flex-nowrap">
-          <TabsTrigger value="overview" className="text-xs sm:text-sm flex items-center gap-1.5">
+      <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val || 'overview')} className="w-full space-y-6">
+        <TabsList className="bg-muted/60 border border-border p-1 rounded-xl inline-flex w-fit max-w-full overflow-x-auto gap-1">
+          <TabsTrigger value="overview" className="text-xs sm:text-sm flex items-center gap-1.5 px-3.5 py-2">
             <User className="w-4 h-4" /> Overview
           </TabsTrigger>
-          <TabsTrigger value="tooth-chart" className="text-xs sm:text-sm flex items-center gap-1.5">
+          <TabsTrigger value="tooth-chart" className="text-xs sm:text-sm flex items-center gap-1.5 px-3.5 py-2">
             <Layers className="w-4 h-4" /> Tooth Chart
           </TabsTrigger>
-          <TabsTrigger value="visits" className="text-xs sm:text-sm flex items-center gap-1.5">
+          <TabsTrigger value="visits" className="text-xs sm:text-sm flex items-center gap-1.5 px-3.5 py-2">
             <FileText className="w-4 h-4" /> Visits ({visits.length})
           </TabsTrigger>
-          <TabsTrigger value="prescriptions" className="text-xs sm:text-sm flex items-center gap-1.5">
+          <TabsTrigger value="prescriptions" className="text-xs sm:text-sm flex items-center gap-1.5 px-3.5 py-2">
             <Activity className="w-4 h-4" /> Prescriptions (Rx)
           </TabsTrigger>
-          <TabsTrigger value="cases" className="text-xs sm:text-sm flex items-center gap-1.5">
+          <TabsTrigger value="cases" className="text-xs sm:text-sm flex items-center gap-1.5 px-3.5 py-2">
             <Sparkles className="w-4 h-4" /> Lab Cases ({cases.length})
           </TabsTrigger>
-          <TabsTrigger value="billing" className="text-xs sm:text-sm flex items-center gap-1.5">
+          <TabsTrigger value="billing" className="text-xs sm:text-sm flex items-center gap-1.5 px-3.5 py-2">
             <DollarSign className="w-4 h-4" /> Invoices & Dues
           </TabsTrigger>
-          <TabsTrigger value="communication" className="text-xs sm:text-sm flex items-center gap-1.5">
+          <TabsTrigger value="communication" className="text-xs sm:text-sm flex items-center gap-1.5 px-3.5 py-2">
             <MessageSquare className="w-4 h-4" /> WhatsApp
           </TabsTrigger>
         </TabsList>

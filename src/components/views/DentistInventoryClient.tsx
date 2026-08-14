@@ -181,12 +181,12 @@ export default function DentistInventoryClient({
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="bg-muted/60 border border-border p-1 rounded-xl w-full justify-start overflow-x-auto flex-nowrap">
-          <TabsTrigger value="cad-blocks" className="text-xs sm:text-sm flex items-center gap-1.5">
+      <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val || 'cad-blocks')} className="w-full space-y-6">
+        <TabsList className="bg-muted/60 border border-border p-1 rounded-xl inline-flex w-fit max-w-full overflow-x-auto gap-1">
+          <TabsTrigger value="cad-blocks" className="text-xs sm:text-sm flex items-center gap-1.5 px-4 py-2">
             <Box className="w-4 h-4" /> CAD/CAM Milling Blocks (Pre-Paid)
           </TabsTrigger>
-          <TabsTrigger value="consumables" className="text-xs sm:text-sm flex items-center gap-1.5">
+          <TabsTrigger value="consumables" className="text-xs sm:text-sm flex items-center gap-1.5 px-4 py-2">
             <Layers className="w-4 h-4" /> Clinical Consumables & Materials
           </TabsTrigger>
         </TabsList>
