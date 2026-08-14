@@ -129,12 +129,12 @@ export default function DualDashboard() {
             {/* Summary cards row */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
               <div style={{ padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, borderLeft: '3px solid var(--landing-teal)' }}>
-                <div style={{ fontSize: '0.6rem', opacity: 0.5 }}>Active Cases</div>
-                <div style={{ fontSize: '1.2rem', fontWeight: 800, fontFamily: 'var(--font-geist-mono)' }}>12</div>
+                <div style={{ fontSize: '0.6rem', opacity: 0.5 }}>Clinical Prescriptions</div>
+                <div style={{ fontSize: '1.2rem', fontWeight: 800, fontFamily: 'var(--font-geist-mono)' }}>100% Validated</div>
               </div>
               <div style={{ padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, borderLeft: '3px solid var(--landing-green)' }}>
-                <div style={{ fontSize: '0.6rem', opacity: 0.5 }}>Completed</div>
-                <div style={{ fontSize: '1.2rem', fontWeight: 800, fontFamily: 'var(--font-geist-mono)' }}>47</div>
+                <div style={{ fontSize: '0.6rem', opacity: 0.5 }}>Follow-up Calls</div>
+                <div style={{ fontSize: '1.2rem', fontWeight: 800, fontFamily: 'var(--font-geist-mono)' }}>Zero Needed</div>
               </div>
             </div>
 
@@ -142,10 +142,10 @@ export default function DualDashboard() {
             <table className="mock-table" style={{ width: '100%' }}>
               <tbody>
                 {[
-                  { id: 'DC-0847', treatment: 'Zirconia Crown', status: 'In Production', color: 'var(--landing-cyan)' },
-                  { id: 'DC-0846', treatment: 'E.max Veneer × 4', status: 'QC', color: 'var(--landing-orange)' },
-                  { id: 'DC-0845', treatment: 'PFM Bridge', status: 'Dispatched', color: 'var(--landing-green)' },
-                  { id: 'DC-0844', treatment: 'Implant Crown', status: 'Pending', color: 'rgba(248,248,242,0.4)' },
+                  { id: 'DC-0847', treatment: 'Zirconia HT Crown (Tooth #16)', status: 'In Milling', color: 'var(--landing-cyan)' },
+                  { id: 'DC-0846', treatment: 'IPS e.max Veneers × 4 (A1)', status: 'Sintering', color: 'var(--landing-orange)' },
+                  { id: 'DC-0845', treatment: 'PFM Bridge (Teeth 45-47)', status: 'Dispatched', color: 'var(--landing-green)' },
+                  { id: 'DC-0844', treatment: 'Custom Ti Abutment', status: 'Approved', color: 'var(--landing-teal)' },
                 ].map((row, i) => (
                   <tr key={i} className="mock-table-row">
                     <td className="mock-table-cell" style={{ fontFamily: 'var(--font-geist-mono)', opacity: 0.4, fontSize: '0.7rem' }}>{row.id}</td>
@@ -174,35 +174,35 @@ export default function DualDashboard() {
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
               <span style={{ fontSize: '1.2rem' }}>🔬</span>
-              <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>Lab Dashboard — Kanban</span>
+              <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>Laboratory Production & CAD/CAM Hub</span>
             </div>
 
             {/* Mini Kanban */}
             <div className="mock-kanban">
               {[
                 {
-                  title: 'Incoming',
+                  title: 'Incoming Scans',
                   cards: [
-                    { text: 'Zirconia Crown', color: 'var(--landing-orange)', urgency: 'HIGH' },
-                    { text: 'Full Arch', color: 'var(--landing-pink)', urgency: 'URGENT' },
+                    { text: '3Shape Upper/Lower', color: 'var(--landing-orange)', urgency: 'READY' },
+                    { text: 'Medit i700 Bite', color: 'var(--landing-pink)', urgency: 'VALIDATED' },
                   ],
                 },
                 {
-                  title: 'In Production',
+                  title: 'CAD Design & Milling',
                   cards: [
-                    { text: 'PFM Bridge', color: 'var(--landing-cyan)', urgency: 'NORMAL' },
+                    { text: '5-Axis Zirconia Mill', color: 'var(--landing-cyan)', urgency: 'IN PROGRESS' },
                   ],
                 },
                 {
-                  title: 'QC',
+                  title: 'Sintering & Glaze',
                   cards: [
-                    { text: 'E.max Veneer', color: 'var(--landing-green)', urgency: 'NORMAL' },
+                    { text: 'Ceramill Furnace 1500°C', color: 'var(--landing-green)', urgency: 'HEATING' },
                   ],
                 },
                 {
-                  title: 'Dispatched',
+                  title: 'Dispatched & Vault',
                   cards: [
-                    { text: 'Implant Abut.', color: 'var(--landing-teal)', urgency: 'LOW' },
+                    { text: 'Soft-Copy Archiving', color: 'var(--landing-teal)', urgency: 'SECURED' },
                   ],
                 },
               ].map((col, i) => (
@@ -223,14 +223,15 @@ export default function DualDashboard() {
         </div>
 
         {/* Callout labels */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 48, marginTop: 32, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 36, marginTop: 32, flexWrap: 'wrap' }}>
           {[
-            { text: 'Filterable case table', icon: '📋' },
-            { text: 'Drag-and-drop Kanban', icon: '🖱️' },
-            { text: 'Real-time status sync', icon: '⚡' },
-            { text: 'Auto inventory deduction', icon: '📦' },
+            { text: 'Scanner-Agnostic Ingestion (Medit, 3Shape, iTero, Sirona)', icon: '📥' },
+            { text: 'Asynchronous Chairside Cart & Mobile Prescription', icon: '📱' },
+            { text: 'Animated Zomato-Style Production Milestones', icon: '⚡' },
+            { text: 'Permanent CAD Soft-Copy Vault & Remake Assurance', icon: '🛡️' },
+            { text: '1-Tap UPI Deep-Linking & Bulk Credit Wallets', icon: '💳' },
           ].map((item, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.85rem', opacity: 0.6 }}>
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.85rem', opacity: 0.75 }}>
               <span>{item.icon}</span>
               <span>{item.text}</span>
             </div>

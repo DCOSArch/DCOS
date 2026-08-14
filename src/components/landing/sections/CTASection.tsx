@@ -103,18 +103,17 @@ export default function CTASection({
 
         <div className="section-inner text-center" style={{ position: 'relative', zIndex: 2 }}>
           <h2 className="landing-display cta-title" style={{ opacity: 0, maxWidth: 800, margin: '0 auto 20px' }}>
-            Ready to modernize your{' '}
-            <span className="gradient-text">practice?</span>
+            Your next case can be{' '}
+            <span className="gradient-text">clearer than your last.</span>
           </h2>
 
           <p className="landing-subheading mx-auto" style={{ marginBottom: 40 }}>
-            Join dentists and labs already connected on DCOS.
-            Send your first case in under 3 minutes.
+            DentalConnect brings scans, prescriptions, shade details, lab communication, and live production updates into one calm clinical workspace.
           </p>
 
           <div className="cta-buttons" style={{ display: 'flex', gap: 16, justifySelf: 'center', justifyContent: 'center', flexWrap: 'wrap', opacity: 0 }}>
             <Link href="/login" className="landing-btn landing-btn-primary" style={{ fontSize: '1.05rem', padding: '16px 36px' }}>
-              Create Free Account
+              Create your dentist workspace
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </Link>
             <button onClick={onRequestDemo} className="landing-btn landing-btn-outline" style={{ fontSize: '1.05rem', padding: '16px 36px' }}>

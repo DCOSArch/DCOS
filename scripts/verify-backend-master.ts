@@ -94,15 +94,20 @@ async function runMasterBackendAudit() {
   const obsPayload: DentalObservationPayload = {
     patient_id: patientId,
     encounter_id: `enc-${Date.now()}`,
-    dentist_id: dentistId,
     tooth_fdi: 46,
     tooth_universal: 30,
     observation_type: 'caries',
     surfaces: ['M', 'O', 'D'],
-    snomed_ct_code: '429672002',
     perio_metrics: {
       probingDepthMm: [4, 3, 5, 3, 3, 4],
       bleedingOnProbing: [true, false, true, false, false, false],
+    },
+    fhir_observation: {
+      resourceType: 'Observation',
+      status: 'final',
+      code: {
+        coding: [{ system: 'http://snomed.info/sct', code: '429672002', display: 'CARIES' }],
+      },
     },
   };
 

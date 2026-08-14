@@ -131,18 +131,59 @@ export default function SolutionReveal() {
     <section ref={sectionRef} className="landing-section light-section" id="solution">
       <div className="section-inner text-center">
         <span className="landing-label" style={{ color: 'var(--landing-teal)', marginBottom: 16, display: 'block' }}>
-          The Solution
+          From Scan to Fit
         </span>
 
-        <h2 className="landing-heading solution-title" style={{ opacity: 0, maxWidth: 700, margin: '0 auto 16px' }}>
-          One platform.{' '}
-          <span className="gradient-text-warm">Complete clarity.</span>
+        <h2 className="landing-heading solution-title" style={{ opacity: 0, maxWidth: 800, margin: '0 auto 16px' }}>
+          A clearer handoff for{' '}
+          <span className="gradient-text-warm">every restoration.</span>
         </h2>
 
-        <p className="landing-subheading mx-auto" style={{ marginBottom: 56, color: 'var(--landing-ink-muted)' }}>
-          DentalConnect OS replaces the chaos with a structured, real-time workspace
-          that both dentists and labs trust.
+        <p className="landing-subheading mx-auto" style={{ marginBottom: 48, color: 'var(--landing-ink-muted)' }}>
+          DentalConnect replaces chaotic phone calls and lost files with a structured, 3-step clinical workflow.
         </p>
+
+        {/* 3-Step "From Scan to Fit" Story Sequence */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto mb-16 text-left">
+          {/* Step 1 */}
+          <div className="p-6 rounded-2xl bg-white/70 dark:bg-neutral-900/60 border border-neutral-200 dark:border-neutral-800 backdrop-blur-md hover:-translate-y-1 transition-all duration-200 shadow-xs">
+            <div className="w-10 h-10 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center font-bold text-sm mb-4 border border-teal-500/20">
+              01
+            </div>
+            <h3 className="font-bold text-base text-neutral-900 dark:text-white mb-2">
+              Build the prescription
+            </h3>
+            <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
+              Choose treatment, FDI teeth, material (Zirconia HT, IPS e.max, BruxZir), VITA Classical/3D Master shades, and delivery date with only the details this case needs.
+            </p>
+          </div>
+
+          {/* Step 2 */}
+          <div className="p-6 rounded-2xl bg-white/70 dark:bg-neutral-900/60 border border-neutral-200 dark:border-neutral-800 backdrop-blur-md hover:-translate-y-1 transition-all duration-200 shadow-xs">
+            <div className="w-10 h-10 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center font-bold text-sm mb-4 border border-cyan-500/20">
+              02
+            </div>
+            <h3 className="font-bold text-base text-neutral-900 dark:text-white mb-2">
+              Send the complete case
+            </h3>
+            <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
+              Upload scans from any scanner (Medit, 3Shape, iTero, Sirona STL/PLY/OBJ), see automatic file integrity checks, and submit to your trusted lab with a clear case record.
+            </p>
+          </div>
+
+          {/* Step 3 */}
+          <div className="p-6 rounded-2xl bg-white/70 dark:bg-neutral-900/60 border border-neutral-200 dark:border-neutral-800 backdrop-blur-md hover:-translate-y-1 transition-all duration-200 shadow-xs">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-sm mb-4 border border-amber-500/20">
+              03
+            </div>
+            <h3 className="font-bold text-base text-neutral-900 dark:text-white mb-2">
+              Follow every handoff
+            </h3>
+            <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
+              Receive acceptance, CAD/CAM milling, sintering/glazing, delivery, and in-context case messaging in the same live case timeline.
+            </p>
+          </div>
+        </div>
 
         <div ref={frameRef} className="browser-frame" style={{ opacity: 0, color: '#F8F8F2' }}>
           <div className="browser-frame-bar">

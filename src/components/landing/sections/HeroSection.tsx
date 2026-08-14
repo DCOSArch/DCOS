@@ -237,7 +237,7 @@ export default function HeroSection({ onRequestDemo }: HeroSectionProps) {
     animate();
   }, []);
 
-  const headline = 'The Operating System for Modern Dentistry: DCOS';
+  const headline = 'Send a complete lab case. Know exactly what happens next.';
   const words = headline.split(' ');
 
   return (
@@ -258,10 +258,15 @@ export default function HeroSection({ onRequestDemo }: HeroSectionProps) {
         <div className="hero-grid-container">
           {/* Left Text Column */}
           <div className="hero-text-side">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-semibold uppercase tracking-wider mb-4">
+              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+              THE DIGITAL HANDOFF, MADE CLINICAL
+            </div>
+
             <h1 ref={headlineRef} className="landing-display">
               {words.map((word, i) => (
                 <span key={i} className="hero-word" style={{ marginRight: '0.25em' }}>
-                  {word.includes('DCOS') ? (
+                  {word.includes('complete') || word.includes('next.') ? (
                     <span className="gradient-text">{word}</span>
                   ) : (
                     word
@@ -270,19 +275,37 @@ export default function HeroSection({ onRequestDemo }: HeroSectionProps) {
               ))}
             </h1>
 
-            <p ref={subtitleRef} className="landing-subheading" style={{ opacity: 0, margin: 0 }}>
-              DentalConnect OS is a B2B SaaS platform that unifies dental clinics and fabrication laboratories on a single real-time channel. Streamline prescriptions, 3D model annotations, and inventory tracking without friction.
+            <p ref={subtitleRef} className="landing-subheading text-neutral-300" style={{ opacity: 0, margin: 0, lineHeight: 1.6 }}>
+              DentalConnect brings scans, prescriptions, shade details, lab communication, and live production updates into one calm clinical workspace.
             </p>
 
             <div ref={ctaRef} className="hero-ctas" style={{ opacity: 0 }}>
-              <Link href="/login" className="landing-btn landing-btn-primary">
-                Start Free
+              <Link href="/login" className="landing-btn landing-btn-primary shadow-lg shadow-cyan-500/20">
+                Start your dentist workspace
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </Link>
               <button onClick={onRequestDemo} className="landing-btn landing-btn-outline">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                Request Demo
+                See a case journey
               </button>
+            </div>
+
+            {/* Trust Line */}
+            <div className="flex items-center gap-4 text-xs text-neutral-400 font-medium pt-2">
+              <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                Structured prescriptions
+              </span>
+              <span>•</span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                Controlled file access
+              </span>
+              <span>•</span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                Live case updates
+              </span>
             </div>
           </div>
 
