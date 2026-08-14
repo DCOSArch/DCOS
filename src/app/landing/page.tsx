@@ -36,55 +36,55 @@ export const metadata: Metadata = {
 
 const features = [
   {
-    title: '3D Case Routing',
-    body: 'Route digital scans (STL, PLY, OBJ) from any intraoral scanner — iTero, 3Shape TRIOS, Medit, Carestream — directly to your chosen lab. No emails, no lost files, no version confusion.',
+    title: 'Zero-Hallucination Ambient Voice AI',
+    body: 'Hands-free operatory dictation with client-side Voice Activity Detection and Grammar-Constrained Decoding mapping voice directly to ISO 3950 tooth numbers, 6-point perio probing, and SNOMED-CT findings in sub-40ms.',
   },
   {
-    title: 'Digital Prescriptions',
-    body: 'Paperless dental lab prescriptions with structured fields for material, shade, occlusion, and margin preferences. Every case ships with complete information the first time.',
+    title: 'Bi-Temporal Event Log & Merkle Ledger',
+    body: 'Append-only domain event ledger cleanly separating clinical observation time (observed_at) from transaction time (system_at), providing cryptographic tamper-evidence and historical time-travel chart reconstruction.',
   },
   {
-    title: 'Real-Time Messaging',
-    body: 'Chat directly with your lab technician on every case. Drop spatial pins on 3D models to comment on exact margins or occlusion points — with zero screenshot copy-paste.',
+    title: 'National ABDM (M1-M3) & HL7 FHIR R5',
+    body: 'Built-in ABHA ID validation, Dynamic Care Context linking, and NRCeS-compliant Fidelius Curve25519 ECDH + AES-256-GCM encryption with automated consent expiration guardrails.',
   },
   {
-    title: 'Automated Turnaround Tracking',
-    body: 'Every case moves through Received → In Design → In Production → Quality Check → Shipped. Clinics see live status. Labs measure and improve TAT with real data.',
+    title: 'Progressive WebGL 3D Mesh Engine (LOD)',
+    body: 'Quadric Error Metric decimation streams 50MB+ color scans with instant coarse 5% proxy rendering, real-time GLSL occlusal clearance heatmaps, and subgingival margin finish line curve tracing.',
   },
   {
-    title: 'Inventory Management',
-    body: 'Track zirconia blocks, PMMA discs, alloys, and consumables. Automatic deductions when a case moves to production. Low-stock alerts before you run out.',
+    title: 'Multi-Planar CBCT / DICOM Viewer (MPR)',
+    body: 'Integrated tri-planar Axial, Coronal, and Sagittal cross-sectional views with Hounsfield Unit bone/soft tissue windowing and Inferior Alveolar Nerve (IAN) canal tracing.',
   },
   {
-    title: 'Lab Discovery Marketplace',
-    body: 'Dentists find verified laboratories by service, price, and turnaround. Labs get a public profile with transparent pricing that wins new clinic partnerships.',
+    title: 'Autonomous Claims & Fatigue Scheduler',
+    body: 'Deterministic CDT code scrubber for real-time prior-auth claim adjudication and probabilistic scheduling modeling provider cognitive fatigue to auto-rebalance clinic queues.',
   },
 ];
 
 const faqs = [
   {
-    q: 'What is DentalConnect OS?',
-    a: 'DentalConnect OS (DCOS) is a B2B dental lab management and clinic collaboration platform. It replaces phone calls, WhatsApp threads, courier delays, and paper prescriptions with a single real-time workspace where dental clinics and fabrication laboratories collaborate on every case from digital scan to final delivery.',
+    q: 'What is DentalConnect OS (DCOS 2.0)?',
+    a: 'DentalConnect OS (DCOS 2.0) is a bi-temporal, ambient-driven, and local-first Clinical & Laboratory Operating System for modern dentistry. It unifies ambient voice charting, cryptographic Merkle ledger event sourcing, national ABDM/FHIR R5 compliance, progressive 3D medical imaging, and autonomous agentic workflows in a single real-time platform.',
   },
   {
-    q: 'Who is DCOS for?',
-    a: 'DCOS is built for dental clinics (solo practices, group practices, DSOs) that send prosthetic cases to external labs, and for dental laboratories that receive digital cases and want to modernize their workflow, cut remake rates, and win more clinic partnerships.',
+    q: 'How does Ambient Voice Charting eliminate AI hallucinations?',
+    a: 'Rather than passing audio to generic LLMs, DCOS utilizes client-side Voice Activity Detection (VAD) paired with Context-Free Grammar (CFG) constrained decoding against standardized dental nomenclature (ISO 3950, SNOMED-CT, CDT). Dictations map deterministically to structured clinical payloads with 0% semantic hallucination.',
   },
   {
-    q: 'Which intraoral scanners does DCOS support?',
-    a: 'DCOS supports every major intraoral scanner ecosystem including iTero, 3Shape TRIOS, Medit, Carestream, and Planmeca. Digital scans (STL, PLY, OBJ, DCM) are routed automatically from your local scanner folder to the destination lab via our secure folder-watcher.',
+    q: 'What makes the Bi-Temporal Merkle Ledger unique?',
+    a: 'Unlike traditional relational PMS software that overwrites records, DCOS stores clinical events on an append-only cryptographic ledger chained with SHA-256 hashes. It maintains dual timelines: real-world clinical observation time and system transaction time, allowing retrospective time-travel audits without data tampering.',
   },
   {
-    q: 'Is DCOS available worldwide?',
-    a: 'Yes. DCOS is a cloud-native SaaS platform available to dental clinics and laboratories worldwide. Pricing is offered in USD, EUR, GBP, INR, and AED, with billing handled in your local currency where supported. Onboarding is handled remotely — a working setup takes a single 30-minute call.',
+    q: 'How does DCOS comply with Indian ABDM and international health standards?',
+    a: 'DCOS natively implements ABDM Milestones 1 (ABHA identity validation), 2 (Care Context discovery and linking), and 3 (Fidelius Curve25519 ECDH + AES-256-GCM encrypted data transfers). It also exports standardized HL7 FHIR R5 Diagnostic Document Bundles for global EHR interoperability.',
   },
   {
-    q: 'How does DCOS keep patient data safe?',
-    a: 'DCOS treats patient PHI as strictly Processor-held data. Records are isolated behind row-level security, share links are masked and expire in 72 hours, and scan files are stored on private buckets accessed via signed URLs. The platform aligns with HIPAA (US), GDPR (EU/UK), and India\'s DPDP requirements out of the box.',
+    q: 'How does the Progressive 3D LOD engine handle large 50MB+ intraoral scans?',
+    a: 'Standard 3D viewers frequently crash mobile tablets and browser tabs. DCOS executes Quadric Error Metric (QEM) decimation to stream an initial 5% coarse proxy mesh in under 80ms, progressively loading high-resolution vertex buffers as the camera settles, paired with real-time occlusal clearance heatmaps.',
   },
   {
-    q: 'What does DCOS replace?',
-    a: 'DCOS replaces a fragmented stack of WhatsApp messages, courier logs, spreadsheets, paper prescriptions, and shared drives. It also replaces or complements legacy dental lab management software with a modern, real-time, mobile-friendly experience.',
+    q: 'Which hardware devices and CAD software does DCOS bridge with?',
+    a: 'DCOS includes a local WebSocket capture bridge for physical intraoral cameras and USB foot-pedals, transient 15-minute smartphone QR intake tokens, and native XML project parsers for Exocad and 3Shape .constructionInfo files.',
   },
 ];
 

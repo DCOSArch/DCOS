@@ -5,13 +5,14 @@ import { User, Case } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
-import { Stethoscope, Sun, Moon, Search, Bell, LogOut } from 'lucide-react';
+import { Stethoscope, Sun, Moon, Search, Bell, LogOut, Mic } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuSeparator, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { StatusBadge } from '@/components/StatusBadge';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { MediaCaptureHub } from '@/components/media/MediaCaptureHub';
 
 interface NavbarProps {
   currentUser: User;
@@ -23,6 +24,7 @@ export default function Navbar({ currentUser, cases }: NavbarProps) {
   const [showResults, setShowResults] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isMediaHubOpen, setIsMediaHubOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const supabase = createClient();
@@ -408,6 +410,18 @@ export default function Navbar({ currentUser, cases }: NavbarProps) {
             );
           })()}
 
+          {currentUser.role === 'DENTIST' && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsMediaHubOpen(true)}
+              className="hidden sm:flex items-center gap-1.5 text-xs font-semibold border-primary/30 text-primary hover:bg-primary/10 transition-all hover:shadow-xs rounded-lg h-9"
+            >
+              <Mic className="w-3.5 h-3.5 text-primary animate-pulse" />
+              Capture Hub
+            </Button>
+          )}
+
           <Button variant="ghost" size="icon" onClick={toggleDarkMode} className="text-muted-foreground hidden sm:flex">
             {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </Button>
@@ -434,6 +448,18 @@ export default function Navbar({ currentUser, cases }: NavbarProps) {
           </div>
         </div>
       </div>
+
+      {/* Multimodal Media Capture Cockpit Modal */}
+      {isMediaHubOpen && (
+        <MediaCaptureHub
+          isOpen={isMediaHubOpen}
+          onClose={() => setIsMediaHubOpen(false)}
+          patientId="pat-active-session"
+          patientName="Active Patient"
+          encounterId="enc-active-session"
+          dentistId={currentUser.id}
+        />
+      )}
     </nav>
   );
 }

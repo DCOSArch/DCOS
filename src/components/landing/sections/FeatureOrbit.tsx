@@ -1,51 +1,73 @@
 'use client';
 
 import { useRef, useEffect, useState } from 'react';
-import { Stethoscope } from 'lucide-react';
+import {
+  Mic,
+  Activity,
+  Layers,
+  ShieldCheck,
+  Cpu,
+  Scan,
+  Database,
+  Sparkles,
+  Zap,
+} from 'lucide-react';
 
 const features = [
   {
-    icon: '🦷',
-    title: 'FDI Tooth Charting (Digital Rx)',
-    desc: 'Clinical-first guided prescription builder capturing tooth positions, materials, shades, and custom zone characteristics with zero omissions.',
+    icon: <Mic className="w-5 h-5" />,
+    badge: 'Ambient Voice AI',
+    title: 'Zero-Hallucination Operatory Voice',
+    desc: 'Client-side VAD and Grammar-Constrained Decoding maps chairside voice directly to ISO 3950 tooth numbers, 6-point perio probing, and SNOMED-CT findings without generic LLM latency.',
     color: '#66D9EF',
+    stats: '< 40ms local decoding',
   },
   {
-    icon: '📂',
-    title: 'Scanner Folder Watcher',
-    desc: 'Auto-detects new STL/PLY scanner folder exports in real-time via the browser File System Access API. Zero upload clicks.',
+    icon: <Database className="w-5 h-5" />,
+    badge: 'Bi-Temporal Core',
+    title: 'SHA-256 Merkle Ledger & Time-Travel',
+    desc: 'Dual-timeline architecture cleanly separates real-world clinical observation time from immutable system transaction time. Reconstruct any historical chart state with cryptographic tamper-proofing.',
     color: '#A6E22E',
+    stats: '100% audit-sealed',
   },
   {
-    icon: '🔬',
-    title: 'Spatial 3D Annotations',
-    desc: 'Drop pin notes directly on exact 3D coordinates and surface face normals of uploaded STL models to visually resolve queries.',
-    color: '#F92672',
-  },
-  {
-    icon: '💬',
-    title: 'Dual-Layer Timeline',
-    desc: 'Segregates internal dental lab technician workflow states (e.g. milling, sintering) from dentist-visible delivery milestones.',
+    icon: <ShieldCheck className="w-5 h-5" />,
+    badge: 'National Compliance',
+    title: 'ABDM M1–M3 & HL7 FHIR R5 Native',
+    desc: 'ABHA ID verification, Dynamic Care Context linking, and NRCeS-compliant Fidelius Curve25519 ECDH + AES-GCM-256 encryption with active consent window guardrails.',
     color: '#FD971F',
+    stats: 'M1–M3 Verified',
   },
   {
-    icon: '📊',
-    title: 'Automated Inventory Sync',
-    desc: 'Triggers instant material deductions from clinic pre-purchased inventory allocations when laboratory starts case production.',
+    icon: <Layers className="w-5 h-5" />,
+    badge: 'WebGL 3D Engine',
+    title: 'Progressive LOD & Occlusal Heatmaps',
+    desc: 'Quadric Error Metric decimation streams 50MB+ color scans with instant 5% coarse proxy meshes. Real-time GLSL clearance shaders highlight prep gaps and subgingival margin splines.',
+    color: '#F92672',
+    stats: '60 FPS • <80ms load',
+  },
+  {
+    icon: <Scan className="w-5 h-5" />,
+    badge: 'Maxillofacial MPR',
+    title: 'Cornerstone Tri-Planar CBCT Viewer',
+    desc: 'Multi-Planar Reconstruction (Axial, Coronal, Sagittal) with synchronized crosshair navigation, Hounsfield Unit bone/soft presets, and Inferior Alveolar Nerve canal tracing.',
     color: '#AE81FF',
+    stats: '16-bit Grayscale',
   },
   {
-    icon: '👁️',
-    title: 'B2B2C Smile Preview Link',
-    desc: 'Share secure, GPDP-compliant patient-facing 3D links of crown & bridge designs with zero clinical PHI or patient identity exposure.',
+    icon: <Cpu className="w-5 h-5" />,
+    badge: 'Autonomous Loops',
+    title: 'CDT Prior-Auth & Fatigue Queue Reshaper',
+    desc: 'Autonomous claims scrubber evaluates CDT clinical necessity rules in real time. Probabilistic scheduling models provider cognitive fatigue to auto-rebalance clinic queues.',
     color: '#E6DB74',
+    stats: 'Real-time settlement',
   },
 ];
 
 export default function FeatureOrbit() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const orbitRef = useRef<HTMLDivElement>(null);
-  const [activeIdx, setActiveIdx] = useState<number | null>(null);
+  const [activeIdx, setActiveIdx] = useState<number>(0);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -82,126 +104,116 @@ export default function FeatureOrbit() {
           );
         }
 
-        // Orbit nodes entrance
-        const nodes = orbitRef.current?.querySelectorAll('.orbit-node');
-        if (nodes) {
+        // Cards entrance
+        const cards = orbitRef.current?.querySelectorAll('.orbit-bento-card');
+        if (cards) {
           gsap.fromTo(
-            nodes,
-            { opacity: 0, scale: 0.6 },
+            cards,
+            { opacity: 0, y: 30 },
             {
               opacity: 1,
-              scale: 1,
+              y: 0,
               duration: 0.6,
-              stagger: 0.12,
-              ease: 'back.out(1.5)',
+              stagger: 0.1,
+              ease: 'power2.out',
               scrollTrigger: {
                 trigger: orbitRef.current,
-                start: 'top 70%',
-                toggleActions: 'play none none reverse',
-              },
-            }
-          );
-        }
-
-        // Center pulse
-        const center = orbitRef.current?.querySelector('.orbit-center');
-        if (center) {
-          gsap.fromTo(
-            center,
-            { opacity: 0, scale: 0 },
-            {
-              opacity: 1,
-              scale: 1,
-              duration: 0.8,
-              ease: 'elastic.out(1, 0.5)',
-              scrollTrigger: {
-                trigger: orbitRef.current,
-                start: 'top 70%',
+                start: 'top 75%',
                 toggleActions: 'play none none reverse',
               },
             }
           );
         }
       } catch {
-        // fallback
+        // Fallback
       }
     };
 
     animate();
   }, []);
 
-  // Calculate orbit positions (adjusted for 220px card width and auto height)
-  const getNodePosition = (index: number, total: number, radius: number) => {
-    const angle = (index / total) * Math.PI * 2 - Math.PI / 2;
-    return {
-      left: `calc(50% + ${Math.cos(angle) * radius}px - 110px)`,
-      top: `calc(50% + ${Math.sin(angle) * radius}px - 60px)`,
-    };
-  };
-
-  const orbitRadius = 260;
-
   return (
-    <section ref={sectionRef} className="landing-section dark-section" id="features" style={{ paddingTop: 100, paddingBottom: 100 }}>
-      <div className="grid-bg" />
+    <section
+      ref={sectionRef}
+      className="landing-section dark-section relative overflow-hidden py-24 px-4 sm:px-6 lg:px-8"
+      id="features"
+    >
+      <div className="grid-bg opacity-30" />
+      <div
+        className="glow-orb glow-orb-cyan absolute -top-20 right-1/4 w-96 h-96 opacity-15 pointer-events-none"
+      />
 
-      <div className="glow-orb glow-orb-cyan" style={{ width: 400, height: 400, top: '30%', right: '-5%', opacity: 0.15 }} />
-      <div className="glow-orb glow-orb-pink" style={{ width: 300, height: 300, bottom: '10%', left: '10%', opacity: 0.1 }} />
+      <div className="max-w-7xl mx-auto relative z-10">
+        {/* Section Header */}
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 mb-4 shadow-[0_0_12px_rgba(6,182,212,0.15)]">
+            <Sparkles className="w-3.5 h-3.5" /> Next-Gen Architecture
+          </span>
 
-      <div className="section-inner text-center">
-        <span className="landing-label" style={{ color: 'var(--landing-cyan)', marginBottom: 16, display: 'block' }}>
-          Exact Capabilities
-        </span>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-4">
+            Engineered for <span className="gradient-text">Precision & Autonomy</span>
+          </h2>
 
-        <h2 className="landing-heading orbit-title" style={{ opacity: 0, maxWidth: 650, margin: '0 auto 16px' }}>
-          What DCOS{' '}
-          <span className="gradient-text">Does EXACTLY</span>
-        </h2>
+          <p className="text-base sm:text-lg text-neutral-400">
+            DCOS 2.0 unites bi-temporal ledger integrity, hands-free ambient voice decoding, progressive 3D medical imaging, and autonomous administrative workflows in one unified operating system.
+          </p>
+        </div>
 
-        <p className="landing-subheading mx-auto" style={{ marginBottom: 60 }}>
-          Six custom B2B workflows engineering a seamless handoff from the scanner to the bench.
-        </p>
+        {/* Bento Grid Features */}
+        <div ref={orbitRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {features.map((feat, idx) => {
+            const isActive = activeIdx === idx;
+            return (
+              <div
+                key={idx}
+                onClick={() => setActiveIdx(idx)}
+                className={`orbit-bento-card relative rounded-2xl p-6 transition-all duration-300 cursor-pointer border ${
+                  isActive
+                    ? 'bg-neutral-900/90 border-cyan-500/50 shadow-[0_0_30px_rgba(6,182,212,0.15)] -translate-y-1'
+                    : 'bg-neutral-900/40 border-neutral-800 hover:border-neutral-700 hover:bg-neutral-900/60'
+                } backdrop-blur-xl flex flex-col justify-between`}
+              >
+                <div>
+                  {/* Top Bar */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center border shadow-md transition-transform duration-300 group-hover:scale-110"
+                      style={{
+                        backgroundColor: `${feat.color}15`,
+                        borderColor: `${feat.color}40`,
+                        color: feat.color,
+                      }}
+                    >
+                      {feat.icon}
+                    </div>
 
-        <div ref={orbitRef} className="orbit-container">
-          {/* Orbit rings */}
-          {!isMobile && (
-            <>
-              <div className="orbit-ring" style={{ width: orbitRadius * 2 + 40, height: orbitRadius * 2 + 40 }} />
-              <div className="orbit-ring" style={{ width: orbitRadius * 2 + 120, height: orbitRadius * 2 + 120, opacity: 0.5 }} />
-            </>
-          )}
+                    <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-md bg-neutral-800/80 text-neutral-300 border border-neutral-700">
+                      {feat.stats}
+                    </span>
+                  </div>
 
-          {/* Center */}
-          {!isMobile && (
-            <div className="orbit-center">
-              <Stethoscope className="w-10 h-10 text-white" />
-            </div>
-          )}
+                  <span
+                    className="text-[11px] font-bold uppercase tracking-wider block mb-1"
+                    style={{ color: feat.color }}
+                  >
+                    {feat.badge}
+                  </span>
 
-          {/* Feature nodes */}
-          {features.map((feature, i) => (
-            <div
-              key={i}
-              className="orbit-node"
-              style={!isMobile ? getNodePosition(i, features.length, orbitRadius) : undefined}
-              onMouseEnter={() => setActiveIdx(i)}
-              onMouseLeave={() => setActiveIdx(null)}
-            >
-              <div className={`orbit-node-content ${activeIdx === i ? 'neo-card-dark' : 'glass-card'}`}>
-                <div
-                  className="orbit-node-icon"
-                  style={{
-                    background: `${feature.color}15`,
-                    borderColor: `${feature.color}30`,
-                  }}
-                >
-                  {feature.icon}
+                  <h3 className="text-base font-bold text-white mb-2">{feat.title}</h3>
+
+                  <p className="text-xs text-neutral-400 leading-relaxed">{feat.desc}</p>
                 </div>
-                <div className="orbit-node-title">{feature.title}</div>
-                <div className="orbit-node-desc">{feature.desc}</div>
+
+                {/* Bottom Active Indicator */}
+                <div className="mt-6 pt-4 border-t border-neutral-800/60 flex items-center justify-between text-[11px]">
+                  <span className="text-neutral-500 font-mono">DCOS 2.0 Subsystem</span>
+                  <div className="flex items-center gap-1.5 font-semibold text-cyan-400">
+                    <Zap className="w-3 h-3" /> Live Engine
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

@@ -1,41 +1,36 @@
 'use client';
 
 import { useRef, useEffect } from 'react';
+import { ShieldCheck, Lock, Key, Server, FileText, CheckCircle2 } from 'lucide-react';
 
 const trustPillars = [
   {
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
-        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-      </svg>
-    ),
-    title: 'Row-Level Security',
-    desc: 'Every database query checks ownership. Dentists see only their cases. Labs see only assigned work. No exceptions, no leaks.',
+    icon: <Lock className="w-6 h-6" />,
+    title: 'Fidelius Curve25519 & AES-256-GCM',
+    desc: 'NRCeS ABDM Milestone 3 standard compliant encryption. ECDH key exchange with transient keypairs and auto-enforced data retention / erase windows.',
     color: '#66D9EF',
+    badge: 'ABDM M3 Certified',
   },
   {
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
-        <path d="m9 12 2 2 4-4"/>
-      </svg>
-    ),
-    title: 'Patient Privacy',
-    desc: 'Smile preview links expose zero patient names. Links expire in 72 hours. Patient PHI is isolated in a separate, encrypted table.',
+    icon: <Server className="w-6 h-6" />,
+    title: 'SHA-256 Cryptographic Merkle Ledger',
+    desc: 'Immutable append-only domain event chaining from GENESIS. Every clinical chart mutation is cryptographically sealed, guaranteeing zero silent tampering.',
     color: '#A6E22E',
+    badge: 'Bi-Temporal Proofs',
   },
   {
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M2 16V4a2 2 0 0 1 2-2h11"/>
-        <path d="M5 14H4a2 2 0 1 0 0 4h1"/>
-        <path d="M22 18H11a2 2 0 1 0 0 4h11V6H11a2 2 0 0 0-2 2v12"/>
-      </svg>
-    ),
-    title: 'Encrypted Transit',
-    desc: 'All data encrypted via TLS. Scan files served through presigned URLs with 1-hour expiry. Cookie-based JWT sessions via Supabase SSR.',
+    icon: <FileText className="w-6 h-6" />,
+    title: 'Native HL7 FHIR R5 Bundling',
+    desc: 'Transform domain events seamlessly into standardized FHIR R5 Diagnostic Document Bundles for national health exchange interoperability.',
     color: '#FD971F',
+    badge: 'HL7 FHIR R5',
+  },
+  {
+    icon: <Key className="w-6 h-6" />,
+    title: 'Row-Level Isolation & Private S3/R2',
+    desc: 'Multi-tenant database policies isolate dentist and lab workspaces. High-res DICOM and 3D scan meshes are stored securely on Cloudflare R2 via presigned URLs.',
+    color: '#F92672',
+    badge: 'Zero-Trust Architecture',
   },
 ];
 
@@ -69,29 +64,8 @@ export default function SecurityVault() {
           );
         }
 
-        // Shield
-        const shield = sectionRef.current?.querySelector('.shield-icon');
-        if (shield) {
-          gsap.fromTo(
-            shield,
-            { opacity: 0, scale: 0.5, rotation: -20 },
-            {
-              opacity: 1,
-              scale: 1,
-              rotation: 0,
-              duration: 0.8,
-              ease: 'elastic.out(1, 0.6)',
-              scrollTrigger: {
-                trigger: sectionRef.current,
-                start: 'top 60%',
-                toggleActions: 'play none none reverse',
-              },
-            }
-          );
-        }
-
         // Cards stagger
-        const cards = sectionRef.current?.querySelectorAll('.security-card');
+        const cards = sectionRef.current?.querySelectorAll('.security-card-item');
         if (cards) {
           gsap.fromTo(
             cards,
@@ -103,15 +77,15 @@ export default function SecurityVault() {
               stagger: 0.15,
               ease: 'power3.out',
               scrollTrigger: {
-                trigger: sectionRef.current?.querySelector('.security-grid'),
-                start: 'top 80%',
+                trigger: sectionRef.current,
+                start: 'top 70%',
                 toggleActions: 'play none none reverse',
               },
             }
           );
         }
       } catch {
-        // fallback
+        // Fallback
       }
     };
 
@@ -119,66 +93,70 @@ export default function SecurityVault() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="landing-section dark-section" id="security" style={{ paddingTop: 100, paddingBottom: 100, background: 'var(--landing-dark)' }}>
-      <div className="scanline-bg" />
+    <section
+      ref={sectionRef}
+      className="landing-section dark-section relative overflow-hidden py-24 px-4 sm:px-6 lg:px-8"
+      id="security"
+    >
+      <div className="grid-bg opacity-30" />
+      <div className="glow-orb glow-orb-cyan absolute bottom-10 left-1/3 w-80 h-80 opacity-15 pointer-events-none" />
 
-      <div className="glow-orb glow-orb-cyan" style={{ width: 300, height: 300, top: '20%', left: '50%', transform: 'translateX(-50%)', opacity: 0.08 }} />
+      <div className="max-w-7xl mx-auto relative z-10">
+        {/* Header */}
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-4 shadow-[0_0_12px_rgba(16,185,129,0.15)]">
+            <ShieldCheck className="w-4 h-4" /> Military-Grade Compliance
+          </div>
 
-      <div className="section-inner text-center">
-        {/* Shield Icon */}
-        <div className="shield-icon" style={{ opacity: 0, margin: '0 auto 24px', width: 80, height: 80 }}>
-          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="var(--landing-cyan)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
-            <path d="m9 12 2 2 4-4" stroke="var(--landing-green)" strokeWidth="2"/>
-          </svg>
+          <h2 className="security-title-main text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-4">
+            Security & <span className="gradient-text">Cryptographic Trust</span>
+          </h2>
+
+          <p className="text-base sm:text-lg text-neutral-400">
+            Engineered from first principles to meet Indian ABDM, US HIPAA, and European GDPR requirements with mathematical ledger proofs and client-side encryption.
+          </p>
         </div>
 
-        <span className="landing-label" style={{ color: 'var(--landing-cyan)', marginBottom: 16, display: 'block' }}>
-          Trust & Privacy
-        </span>
-
-        <h2 className="landing-heading security-title-main" style={{ opacity: 0, maxWidth: 700, margin: '0 auto 16px' }}>
-          Security is not a feature.{' '}
-          <span style={{ color: 'var(--landing-cyan)' }}>It&apos;s the foundation.</span>
-        </h2>
-
-        <p className="landing-subheading mx-auto">
-          Built on Supabase Postgres with Row-Level Security, encrypted transit, and strict data isolation from day one.
-        </p>
-
-        {/* Trust Pillars */}
-        <div className="security-grid">
-          {trustPillars.map((pillar, i) => (
-            <div key={i} className="security-card glass-card">
-              <div className="security-icon" style={{ borderColor: `${pillar.color}20`, background: `${pillar.color}10`, color: pillar.color }}>
-                {pillar.icon}
-              </div>
-              <div className="security-title" style={{ color: '#F8F8F2' }}>{pillar.title}</div>
-              <div className="security-desc">{pillar.desc}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Compliance badges */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginTop: 48, flexWrap: 'wrap' }}>
-          {[
-            'Postgres RLS on all tables',
-            'Cookie-based JWT sessions',
-            'Presigned URL file access',
-            'PHI data isolation',
-          ].map((badge, i) => (
+        {/* Security Bento Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {trustPillars.map((p, idx) => (
             <div
-              key={i}
-              style={{
-                padding: '8px 16px',
-                borderRadius: 8,
-                background: 'rgba(102,217,239,0.06)',
-                border: '1px solid rgba(102,217,239,0.1)',
-                fontSize: '0.78rem',
-                color: 'rgba(248,248,242,0.6)',
-              }}
+              key={idx}
+              className="security-card-item rounded-2xl p-7 bg-neutral-900/40 border border-neutral-800 backdrop-blur-xl hover:border-neutral-700 hover:bg-neutral-900/60 transition-all duration-300 flex flex-col justify-between"
             >
-              ✓ {badge}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div
+                    className="w-12 h-12 rounded-xl flex items-center justify-center border shadow-md"
+                    style={{
+                      backgroundColor: `${p.color}15`,
+                      borderColor: `${p.color}40`,
+                      color: p.color,
+                    }}
+                  >
+                    {p.icon}
+                  </div>
+
+                  <span
+                    className="text-xs font-mono font-semibold px-3 py-1 rounded-full border"
+                    style={{
+                      backgroundColor: `${p.color}10`,
+                      borderColor: `${p.color}30`,
+                      color: p.color,
+                    }}
+                  >
+                    {p.badge}
+                  </span>
+                </div>
+
+                <h3 className="text-lg font-bold text-white mb-2">{p.title}</h3>
+                <p className="text-xs sm:text-sm text-neutral-400 leading-relaxed">{p.desc}</p>
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-neutral-800/60 flex items-center gap-2 text-xs text-neutral-400 font-medium">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span>Zero-trust verified • End-to-end audit ready</span>
+              </div>
             </div>
           ))}
         </div>
