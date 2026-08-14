@@ -18,21 +18,19 @@ import {
   ArrowUpRight,
   Plus,
   Search,
-  Filter,
   CheckCircle2,
   Boxes,
-  TrendingDown,
   Layers,
 } from 'lucide-react';
 
 const CATEGORY_MAP: Record<ConsumableCategory, { label: string; color: string }> = {
-  RESTORATIVE: { label: 'Restorative & Composites', color: '#66D9EF' },
-  ENDODONTICS: { label: 'Endodontics & Rotary', color: '#FD971F' },
-  PROSTHODONTICS: { label: 'Prostho & Impression', color: '#F92672' },
+  RESTORATIVE: { label: 'Restorative & Composites', color: 'var(--primary)' },
+  ENDODONTICS: { label: 'Endodontics & Rotary', color: '#F59E0B' },
+  PROSTHODONTICS: { label: 'Prostho & Impression', color: '#8B5CF6' },
   SURGICAL: { label: 'Surgical & Anesthetics', color: '#EF4444' },
-  PERIODONTICS: { label: 'Periodontics & Scalers', color: '#A6E22E' },
-  PREVENTIVE: { label: 'Preventive & Sealants', color: '#10B981' },
-  PPE_DISPOSABLES: { label: 'PPE & Sterilization', color: '#94A3B8' },
+  PERIODONTICS: { label: 'Periodontics & Scalers', color: '#10B981' },
+  PREVENTIVE: { label: 'Preventive & Sealants', color: '#06B6D4' },
+  PPE_DISPOSABLES: { label: 'PPE & Sterilization', color: '#64748B' },
 };
 
 export function ConsumableInventoryHub() {
@@ -135,23 +133,23 @@ export function ConsumableInventoryHub() {
     <div className="space-y-6">
       {/* Low Stock Warning Banner */}
       {lowStockItems.length > 0 && (
-        <Card className="bg-amber-950/20 border border-amber-600/40 p-4 rounded-xl">
+        <Card className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-xl">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400">
+              <div className="p-2 rounded-lg bg-amber-500/20 text-amber-600 dark:text-amber-400">
                 <AlertTriangle className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-amber-300">
-                  {lowStockItems.length} Clinical Consumable Items at Reorder Threshold
+                <h4 className="text-sm font-bold text-foreground">
+                  {lowStockItems.length} Consumable Items at Reorder Threshold
                 </h4>
-                <p className="text-xs text-amber-200/80 mt-0.5">
-                  Items requiring purchase orders: {lowStockItems.map((i) => `${i.name} (${i.currentStock} ${i.unit} left)`).join(', ')}
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Items requiring restock: {lowStockItems.map((i) => `${i.name} (${i.currentStock} ${i.unit} left)`).join(', ')}
                 </p>
               </div>
             </div>
-            <Badge variant="outline" className="text-xs border-amber-500 text-amber-400 bg-amber-500/10">
-              Low Stock Alert
+            <Badge variant="outline" className="text-xs border-amber-500/40 text-amber-600 dark:text-amber-400">
+              Low Stock
             </Badge>
           </div>
         </Card>
@@ -167,7 +165,7 @@ export function ConsumableInventoryHub() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search materials, composites, anesthetics, burs..."
-              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg bg-[#272822] border border-border text-foreground focus:ring-1 focus:ring-[#66D9EF]"
+              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg bg-background border border-border text-foreground focus:ring-1 focus:ring-primary"
             />
           </div>
         </div>
@@ -176,7 +174,7 @@ export function ConsumableInventoryHub() {
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-3 py-1.5 text-xs rounded-lg bg-[#272822] border border-border text-foreground"
+            className="px-3 py-1.5 text-xs rounded-lg bg-background border border-border text-foreground"
           >
             <option value="ALL">All Categories</option>
             {Object.entries(CATEGORY_MAP).map(([key, info]) => (
@@ -189,7 +187,7 @@ export function ConsumableInventoryHub() {
           <Button
             size="sm"
             onClick={() => setShowAddModal(true)}
-            className="bg-[#A6E22E] text-[#272822] hover:bg-[#A6E22E]/90 font-bold text-xs"
+            className="bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-xs"
           >
             <Plus className="w-3.5 h-3.5 mr-1" /> Add Clinical Item
           </Button>
@@ -203,7 +201,7 @@ export function ConsumableInventoryHub() {
           const catInfo = CATEGORY_MAP[item.category] || CATEGORY_MAP.RESTORATIVE;
 
           return (
-            <Card key={item.id} className="bg-[#1E1F1C] border-border hover:border-[#66D9EF]/40 transition-all">
+            <Card key={item.id} className="bg-card border-border hover:border-primary/50 transition-all shadow-xs">
               <CardHeader className="p-4 pb-2 border-b border-border flex flex-row items-start justify-between">
                 <div>
                   <span className="text-[10px] font-mono uppercase font-bold text-muted-foreground">{item.sku}</span>
@@ -220,10 +218,10 @@ export function ConsumableInventoryHub() {
               </CardHeader>
 
               <CardContent className="p-4 space-y-3 text-xs">
-                <div className="flex justify-between items-center p-2.5 rounded-lg bg-[#272822] border border-border">
+                <div className="flex justify-between items-center p-2.5 rounded-lg bg-muted/40 border border-border">
                   <div>
                     <span className="text-muted-foreground block text-[10px]">Current Stock:</span>
-                    <span className={`text-base font-extrabold font-mono ${isLow ? 'text-red-400' : 'text-[#A6E22E]'}`}>
+                    <span className={`text-base font-extrabold font-mono ${isLow ? 'text-red-500' : 'text-foreground'}`}>
                       {item.currentStock} {item.unit}
                     </span>
                   </div>
@@ -234,7 +232,7 @@ export function ConsumableInventoryHub() {
                 </div>
 
                 <div className="flex justify-between items-center text-muted-foreground text-[11px]">
-                  <span>Unit Cost: <strong className="text-foreground">₹{item.costPerUnit.toLocaleString()}</strong></span>
+                  <span>Unit Cost: <strong className="text-foreground">₹{item.costPerUnit.toLocaleString('en-IN')}</strong></span>
                   {item.location && <span>Loc: <strong className="text-foreground">{item.location}</strong></span>}
                 </div>
 
@@ -246,7 +244,7 @@ export function ConsumableInventoryHub() {
                       setShowStockModal(item);
                       setStockAction('STOCK_IN');
                     }}
-                    className="flex-1 text-xs h-7 border-border hover:border-green-500 text-green-400"
+                    className="flex-1 text-xs h-7 border-border hover:border-emerald-500 text-emerald-600 dark:text-emerald-400"
                   >
                     <ArrowDownLeft className="w-3 h-3 mr-1" /> Stock In
                   </Button>
@@ -257,7 +255,7 @@ export function ConsumableInventoryHub() {
                       setShowStockModal(item);
                       setStockAction('STOCK_OUT');
                     }}
-                    className="flex-1 text-xs h-7 border-border hover:border-red-500 text-red-400"
+                    className="flex-1 text-xs h-7 border-border hover:border-red-500 text-red-500"
                   >
                     <ArrowUpRight className="w-3 h-3 mr-1" /> Dispense
                   </Button>
@@ -271,18 +269,18 @@ export function ConsumableInventoryHub() {
       {/* Stock In / Dispense Modal */}
       {showStockModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-[#1E1F1C] border border-border rounded-xl shadow-2xl max-w-md w-full p-6 space-y-4 text-foreground">
+          <div className="bg-card border border-border rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4 text-card-foreground">
             <div className="flex items-center justify-between pb-3 border-b border-border">
-              <h3 className="text-base font-bold flex items-center gap-2">
-                {stockAction === 'STOCK_IN' ? <ArrowDownLeft className="w-4 h-4 text-green-400" /> : <ArrowUpRight className="w-4 h-4 text-red-400" />}
-                {stockAction === 'STOCK_IN' ? 'Log Material Stock-In' : 'Dispense / Use in Procedure'}
+              <h3 className="text-base font-bold flex items-center gap-2 text-foreground">
+                {stockAction === 'STOCK_IN' ? <ArrowDownLeft className="w-4 h-4 text-emerald-600" /> : <ArrowUpRight className="w-4 h-4 text-red-500" />}
+                {stockAction === 'STOCK_IN' ? 'Log Material Stock-In' : 'Dispense Material'}
               </h3>
               <button type="button" onClick={() => setShowStockModal(null)} className="text-muted-foreground hover:text-foreground">
                 ✕
               </button>
             </div>
 
-            <div className="p-3 rounded-lg bg-[#272822] border border-border text-xs">
+            <div className="p-3 rounded-lg bg-muted/40 border border-border text-xs">
               <span className="text-muted-foreground">Target Consumable Item:</span>
               <p className="font-bold text-foreground text-sm mt-0.5">{showStockModal.name}</p>
               <p className="text-muted-foreground mt-0.5">Current Balance: {showStockModal.currentStock} {showStockModal.unit}</p>
@@ -296,18 +294,18 @@ export function ConsumableInventoryHub() {
                   min="1"
                   value={stockDelta}
                   onChange={(e) => setStockDelta(Math.max(1, parseInt(e.target.value) || 1))}
-                  className="w-full px-3 py-2 rounded bg-[#272822] border border-border text-foreground font-mono font-bold"
+                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground font-mono font-bold"
                 />
               </div>
 
               <div>
-                <label className="text-muted-foreground block mb-1 font-semibold">Procedure / Supplier Reason:</label>
+                <label className="text-muted-foreground block mb-1 font-semibold">Procedure / Order Reason:</label>
                 <input
                   type="text"
                   value={stockReason}
                   onChange={(e) => setStockReason(e.target.value)}
-                  placeholder={stockAction === 'STOCK_IN' ? 'e.g. Monthly replenishment PO #9912' : 'e.g. Tooth 36 Endodontic Access'}
-                  className="w-full px-3 py-2 rounded bg-[#272822] border border-border text-foreground"
+                  placeholder={stockAction === 'STOCK_IN' ? 'e.g. Monthly replenishment PO' : 'e.g. Tooth 36 Endodontic Procedure'}
+                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground"
                 />
               </div>
             </div>
@@ -316,7 +314,7 @@ export function ConsumableInventoryHub() {
               <Button variant="outline" size="sm" onClick={() => setShowStockModal(null)} className="text-xs">
                 Cancel
               </Button>
-              <Button size="sm" onClick={handleStockUpdate} className="bg-[#F92672] text-white text-xs font-semibold">
+              <Button size="sm" onClick={handleStockUpdate} className="bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-semibold">
                 Confirm {stockAction === 'STOCK_IN' ? 'Stock In' : 'Dispensation'}
               </Button>
             </div>
@@ -327,10 +325,10 @@ export function ConsumableInventoryHub() {
       {/* Add New Consumable Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-[#1E1F1C] border border-border rounded-xl shadow-2xl max-w-lg w-full p-6 space-y-4 text-foreground">
+          <div className="bg-card border border-border rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4 text-card-foreground">
             <div className="flex items-center justify-between pb-3 border-b border-border">
-              <h3 className="text-base font-bold flex items-center gap-2">
-                <Plus className="w-4 h-4 text-[#A6E22E]" /> Add New Dental Consumable Item
+              <h3 className="text-base font-bold flex items-center gap-2 text-foreground">
+                <Plus className="w-4 h-4 text-primary" /> Add New Clinical Consumable Item
               </h3>
               <button type="button" onClick={() => setShowAddModal(false)} className="text-muted-foreground hover:text-foreground">
                 ✕
@@ -345,7 +343,7 @@ export function ConsumableInventoryHub() {
                   value={newItemName}
                   onChange={(e) => setNewItemName(e.target.value)}
                   placeholder="e.g. 3M ESPE Scotchbond Universal Adhesive"
-                  className="w-full px-3 py-2 rounded bg-[#272822] border border-border text-foreground font-semibold"
+                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground font-semibold"
                 />
               </div>
 
@@ -355,7 +353,7 @@ export function ConsumableInventoryHub() {
                   <select
                     value={newItemCategory}
                     onChange={(e) => setNewItemCategory(e.target.value as ConsumableCategory)}
-                    className="w-full px-3 py-2 rounded bg-[#272822] border border-border text-foreground"
+                    className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground"
                   >
                     {Object.entries(CATEGORY_MAP).map(([key, info]) => (
                       <option key={key} value={key}>{info.label}</option>
@@ -370,7 +368,7 @@ export function ConsumableInventoryHub() {
                     value={newItemBrand}
                     onChange={(e) => setNewItemBrand(e.target.value)}
                     placeholder="e.g. 3M, Septodont, Dentsply"
-                    className="w-full px-3 py-2 rounded bg-[#272822] border border-border text-foreground"
+                    className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground"
                   />
                 </div>
               </div>
@@ -382,7 +380,7 @@ export function ConsumableInventoryHub() {
                     type="number"
                     value={newItemStock}
                     onChange={(e) => setNewItemStock(parseInt(e.target.value) || 0)}
-                    className="w-full px-3 py-2 rounded bg-[#272822] border border-border text-foreground font-mono"
+                    className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground font-mono"
                   />
                 </div>
 
@@ -392,7 +390,7 @@ export function ConsumableInventoryHub() {
                     type="number"
                     value={newItemThreshold}
                     onChange={(e) => setNewItemThreshold(parseInt(e.target.value) || 0)}
-                    className="w-full px-3 py-2 rounded bg-[#272822] border border-border text-foreground font-mono"
+                    className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground font-mono"
                   />
                 </div>
 
@@ -403,7 +401,7 @@ export function ConsumableInventoryHub() {
                     value={newItemUnit}
                     onChange={(e) => setNewItemUnit(e.target.value)}
                     placeholder="Syringe / Box"
-                    className="w-full px-3 py-2 rounded bg-[#272822] border border-border text-foreground"
+                    className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground"
                   />
                 </div>
               </div>
@@ -413,7 +411,7 @@ export function ConsumableInventoryHub() {
               <Button variant="outline" size="sm" onClick={() => setShowAddModal(false)} className="text-xs">
                 Cancel
               </Button>
-              <Button size="sm" onClick={handleAddNewItem} className="bg-[#A6E22E] text-[#272822] font-bold text-xs">
+              <Button size="sm" onClick={handleAddNewItem} className="bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-xs">
                 Save Consumable
               </Button>
             </div>

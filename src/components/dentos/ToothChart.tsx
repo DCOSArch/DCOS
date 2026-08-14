@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ToothChartData, ToothCondition, ToothData, ToothSurface } from '@/types';
-import { Check, X, Edit3, RotateCcw, Info, Sparkles } from 'lucide-react';
+import { Check, X, Edit3, RotateCcw, Sparkles, Layers } from 'lucide-react';
 
 export const CONDITIONS: Record<
   ToothCondition,
@@ -13,86 +13,86 @@ export const CONDITIONS: Record<
 > = {
   healthy: {
     label: 'Healthy / Intact',
-    color: '#F8F8F2',
-    border: '#4A4B40',
-    bg: '#272822',
+    color: 'var(--foreground)',
+    border: 'var(--border)',
+    bg: 'var(--card)',
     description: 'No pathology detected',
   },
   cavity: {
     label: 'Carious Cavity',
     color: '#EF4444',
     border: '#DC2626',
-    bg: '#450A0A',
+    bg: 'rgba(239, 68, 68, 0.15)',
     description: 'Active dental caries',
   },
   filling: {
     label: 'Restoration / Filling',
     color: '#3B82F6',
     border: '#2563EB',
-    bg: '#172554',
+    bg: 'rgba(59, 130, 246, 0.15)',
     description: 'Composite or amalgam filling',
   },
   rct: {
     label: 'Root Canal (RCT)',
     color: '#A855F7',
     border: '#9333EA',
-    bg: '#3B0764',
+    bg: 'rgba(168, 85, 247, 0.15)',
     description: 'Endodontically treated',
   },
   crown: {
     label: 'Prosthetic Crown',
     color: '#F59E0B',
     border: '#D97706',
-    bg: '#451A03',
+    bg: 'rgba(245, 158, 11, 0.15)',
     description: 'Full coverage crown (Zirconia / Ceramic / PFM)',
   },
   missing: {
     label: 'Missing / Extracted',
     color: '#9CA3AF',
     border: '#6B7280',
-    bg: '#1F2937',
+    bg: 'rgba(156, 163, 175, 0.2)',
     description: 'Tooth is absent',
   },
   implant: {
     label: 'Dental Implant',
     color: '#14B8A6',
     border: '#0D9488',
-    bg: '#042F2E',
+    bg: 'rgba(20, 184, 166, 0.15)',
     description: 'Osseointegrated fixture with abutment',
   },
   bridge: {
     label: 'Bridge Pontic/Abutment',
     color: '#F97316',
     border: '#EA580C',
-    bg: '#431407',
+    bg: 'rgba(249, 115, 22, 0.15)',
     description: 'Fixed partial denture unit',
   },
   fracture: {
     label: 'Fractured Tooth',
     color: '#DC2626',
     border: '#B91C1C',
-    bg: '#450A0A',
+    bg: 'rgba(220, 38, 38, 0.2)',
     description: 'Cusp or enamel/dentin fracture',
   },
   sealant: {
     label: 'Pit & Fissure Sealant',
     color: '#10B981',
     border: '#059669',
-    bg: '#022C22',
+    bg: 'rgba(16, 185, 129, 0.15)',
     description: 'Preventive sealant applied',
   },
   watch: {
     label: 'Watch / Monitor',
     color: '#EAB308',
     border: '#CA8A04',
-    bg: '#422006',
+    bg: 'rgba(234, 179, 8, 0.15)',
     description: 'Incipient lesion or wear under observation',
   },
   unerupted: {
     label: 'Unerupted / Impacted',
     color: '#94A3B8',
     border: '#64748B',
-    bg: '#0F172A',
+    bg: 'rgba(148, 163, 184, 0.15)',
     description: 'Not yet erupted or surgically impacted',
   },
 };
@@ -183,19 +183,16 @@ export function ToothChart({
     let updatedTooth: ToothData;
 
     if (activeSurface) {
-      // Surface-specific condition
       updatedTooth = {
         ...currentTooth,
         surfaces: {
           ...currentTooth.surfaces,
           [activeSurface]: condition,
         },
-        // If dominant condition was healthy, elevate to this condition
         condition: condition !== 'healthy' ? condition : currentTooth.condition,
         note: toothNote,
       };
     } else {
-      // Whole-tooth condition
       updatedTooth = {
         condition,
         surfaces: {
@@ -243,12 +240,12 @@ export function ToothChart({
 
     const getSurfaceColor = (surf: ToothSurface) => {
       const cond = data?.surfaces?.[surf] || data?.condition || 'healthy';
-      return CONDITIONS[cond]?.color || '#F8F8F2';
+      return CONDITIONS[cond]?.color || 'var(--foreground)';
     };
 
     const getSurfaceBg = (surf: ToothSurface) => {
       const cond = data?.surfaces?.[surf] || data?.condition || 'healthy';
-      return CONDITIONS[cond]?.bg || '#272822';
+      return CONDITIONS[cond]?.bg || 'var(--card)';
     };
 
     const isSelected = selectedTeeth.includes(fdiNumber) || activeTooth === fdiNumber;
@@ -258,8 +255,8 @@ export function ToothChart({
         key={fdiNumber}
         className={`group relative flex flex-col items-center p-1 rounded-lg transition-all duration-200 ${
           isSelected
-            ? 'ring-2 ring-[#F92672] bg-[#F92672]/10 scale-105'
-            : 'hover:bg-muted/40 hover:scale-105'
+            ? 'ring-2 ring-primary bg-primary/10 scale-105'
+            : 'hover:bg-muted/60 hover:scale-105'
         } ${!readOnly ? 'cursor-pointer' : ''}`}
         onClick={() => handleOpenToothModal(fdiNumber, null)}
       >
@@ -270,26 +267,26 @@ export function ToothChart({
 
         {/* 5-Surface Odontogram Box */}
         <div
-          className={`relative w-8 h-8 sm:w-9 sm:h-9 rounded border ${
-            isCrown ? 'border-amber-400 ring-1 ring-amber-400' : 'border-border'
-          } bg-[#1E1F1C] overflow-hidden`}
+          className={`relative w-8 h-8 sm:w-9 sm:h-9 rounded-md border ${
+            isCrown ? 'border-amber-500 ring-2 ring-amber-500/40' : 'border-border'
+          } bg-card overflow-hidden shadow-xs`}
         >
           {isMissing ? (
-            <div className="absolute inset-0 bg-muted/60 flex items-center justify-center text-red-400 font-bold text-lg">
+            <div className="absolute inset-0 bg-muted flex items-center justify-center text-muted-foreground font-bold text-base">
               ✕
             </div>
           ) : isImplant ? (
-            <div className="absolute inset-0 bg-teal-950/80 border border-teal-500 flex flex-col items-center justify-center text-teal-400 text-[10px] font-bold">
+            <div className="absolute inset-0 bg-teal-500/15 border border-teal-500 flex flex-col items-center justify-center text-teal-600 dark:text-teal-400 text-[10px] font-bold">
               <span>🔩</span>
               <span className="text-[8px]">IMP</span>
             </div>
           ) : (
-            <div className="w-full h-full grid grid-cols-3 grid-rows-3 gap-[1px] p-[1px]">
+            <div className="w-full h-full grid grid-cols-3 grid-rows-3 gap-[1px] p-[1px] bg-border/40">
               {/* Buccal / Facial (Top Center) */}
               <div
                 title="Buccal / Facial surface"
-                className="col-start-2 row-start-1 rounded-t-[2px] transition-colors hover:brightness-125"
-                style={{ backgroundColor: getSurfaceBg('B'), borderBottom: '1px solid #3E3D32' }}
+                className="col-start-2 row-start-1 rounded-t-[2px] transition-colors hover:brightness-110"
+                style={{ backgroundColor: getSurfaceBg('B') }}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleOpenToothModal(fdiNumber, 'B');
@@ -299,8 +296,8 @@ export function ToothChart({
               {/* Mesial (Left Center) */}
               <div
                 title="Mesial surface"
-                className="col-start-1 row-start-2 rounded-l-[2px] transition-colors hover:brightness-125"
-                style={{ backgroundColor: getSurfaceBg('M'), borderRight: '1px solid #3E3D32' }}
+                className="col-start-1 row-start-2 rounded-l-[2px] transition-colors hover:brightness-110"
+                style={{ backgroundColor: getSurfaceBg('M') }}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleOpenToothModal(fdiNumber, 'M');
@@ -310,7 +307,7 @@ export function ToothChart({
               {/* Occlusal / Incisal (Center) */}
               <div
                 title={`${isAnterior ? 'Incisal' : 'Occlusal'} surface`}
-                className="col-start-2 row-start-2 transition-colors hover:brightness-125 flex items-center justify-center text-[7px] font-bold font-mono"
+                className="col-start-2 row-start-2 transition-colors hover:brightness-110 flex items-center justify-center text-[7px] font-bold font-mono"
                 style={{
                   backgroundColor: getSurfaceBg(occlusalSurfaceKey as ToothSurface),
                   color: getSurfaceColor(occlusalSurfaceKey as ToothSurface),
@@ -326,8 +323,8 @@ export function ToothChart({
               {/* Distal (Right Center) */}
               <div
                 title="Distal surface"
-                className="col-start-3 row-start-2 rounded-r-[2px] transition-colors hover:brightness-125"
-                style={{ backgroundColor: getSurfaceBg('D'), borderLeft: '1px solid #3E3D32' }}
+                className="col-start-3 row-start-2 rounded-r-[2px] transition-colors hover:brightness-110"
+                style={{ backgroundColor: getSurfaceBg('D') }}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleOpenToothModal(fdiNumber, 'D');
@@ -337,8 +334,8 @@ export function ToothChart({
               {/* Lingual / Palatal (Bottom Center) */}
               <div
                 title="Lingual / Palatal surface"
-                className="col-start-2 row-start-3 rounded-b-[2px] transition-colors hover:brightness-125"
-                style={{ backgroundColor: getSurfaceBg('L'), borderTop: '1px solid #3E3D32' }}
+                className="col-start-2 row-start-3 rounded-b-[2px] transition-colors hover:brightness-110"
+                style={{ backgroundColor: getSurfaceBg('L') }}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleOpenToothModal(fdiNumber, 'L');
@@ -352,7 +349,7 @@ export function ToothChart({
         {toothCondition !== 'healthy' && (
           <span
             className="w-1.5 h-1.5 rounded-full mt-1"
-            style={{ backgroundColor: CONDITIONS[toothCondition]?.color || '#F92672' }}
+            style={{ backgroundColor: CONDITIONS[toothCondition]?.color || 'var(--primary)' }}
             title={CONDITIONS[toothCondition]?.label}
           />
         )}
@@ -361,11 +358,11 @@ export function ToothChart({
   };
 
   return (
-    <Card className="w-full border-border bg-[#1E1F1C] text-foreground">
+    <Card className="w-full border-border bg-card text-card-foreground shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-border">
         <div>
-          <CardTitle className="text-lg font-bold flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-[#F92672]" />
+          <CardTitle className="text-base sm:text-lg font-bold flex items-center gap-2 text-foreground">
+            <Layers className="w-5 h-5 text-primary" />
             {title}
           </CardTitle>
           <CardDescription className="text-xs text-muted-foreground mt-0.5">
@@ -375,13 +372,13 @@ export function ToothChart({
 
         <div className="flex items-center gap-2">
           {/* Notation Toggle */}
-          <div className="flex rounded-md border border-border bg-[#272822] p-0.5 text-xs">
+          <div className="flex rounded-lg border border-border bg-muted/40 p-0.5 text-xs">
             <button
               type="button"
               onClick={() => setSystem('FDI')}
-              className={`px-2.5 py-1 rounded font-medium transition-all ${
+              className={`px-2.5 py-1 rounded-md font-semibold transition-all ${
                 system === 'FDI'
-                  ? 'bg-[#F92672] text-white shadow'
+                  ? 'bg-primary text-primary-foreground shadow-xs'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -390,9 +387,9 @@ export function ToothChart({
             <button
               type="button"
               onClick={() => setSystem('UNIVERSAL')}
-              className={`px-2.5 py-1 rounded font-medium transition-all ${
+              className={`px-2.5 py-1 rounded-md font-semibold transition-all ${
                 system === 'UNIVERSAL'
-                  ? 'bg-[#66D9EF] text-[#272822] font-semibold shadow'
+                  ? 'bg-primary text-primary-foreground shadow-xs'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -405,19 +402,19 @@ export function ToothChart({
       <CardContent className="p-4 sm:p-6 space-y-6">
         {/* Upper Arch (Maxilla) */}
         <div className="space-y-2">
-          <div className="flex justify-between items-center px-2 text-xs font-semibold uppercase tracking-wider text-[#66D9EF]">
+          <div className="flex justify-between items-center px-2 text-xs font-bold uppercase tracking-wider text-primary">
             <span>Upper Right (Q1)</span>
-            <span className="text-muted-foreground font-mono">MAXILLARY ARCH</span>
+            <span className="text-muted-foreground font-mono text-[10px]">MAXILLARY ARCH</span>
             <span>Upper Left (Q2)</span>
           </div>
-          <div className="flex items-center justify-center gap-1 sm:gap-2 p-3 rounded-xl bg-[#272822]/70 border border-border overflow-x-auto">
+          <div className="flex items-center justify-center gap-1 sm:gap-2 p-3 sm:p-4 rounded-xl bg-muted/20 border border-border overflow-x-auto">
             {/* Upper Right (18 to 11) */}
             <div className="flex items-center gap-1">
               {UPPER_RIGHT_FDI.map(renderSurfaceGrid)}
             </div>
 
             {/* Midline Divider */}
-            <div className="h-10 w-[2px] bg-[#F92672]/50 mx-1.5 rounded-full" />
+            <div className="h-10 w-[2px] bg-primary/40 mx-1.5 rounded-full" />
 
             {/* Upper Left (21 to 28) */}
             <div className="flex items-center gap-1">
@@ -428,43 +425,41 @@ export function ToothChart({
 
         {/* Lower Arch (Mandible) */}
         <div className="space-y-2">
-          <div className="flex items-center justify-center gap-1 sm:gap-2 p-3 rounded-xl bg-[#272822]/70 border border-border overflow-x-auto">
+          <div className="flex items-center justify-center gap-1 sm:gap-2 p-3 sm:p-4 rounded-xl bg-muted/20 border border-border overflow-x-auto">
             {/* Lower Right (48 to 41) */}
             <div className="flex items-center gap-1">
               {LOWER_RIGHT_FDI.map(renderSurfaceGrid)}
             </div>
 
             {/* Midline Divider */}
-            <div className="h-10 w-[2px] bg-[#F92672]/50 mx-1.5 rounded-full" />
+            <div className="h-10 w-[2px] bg-primary/40 mx-1.5 rounded-full" />
 
             {/* Lower Left (31 to 38) */}
             <div className="flex items-center gap-1">
               {LOWER_LEFT_FDI.map(renderSurfaceGrid)}
             </div>
           </div>
-          <div className="flex justify-between items-center px-2 text-xs font-semibold uppercase tracking-wider text-[#A6E22E]">
+          <div className="flex justify-between items-center px-2 text-xs font-bold uppercase tracking-wider text-primary">
             <span>Lower Right (Q4)</span>
-            <span className="text-muted-foreground font-mono">MANDIBULAR ARCH</span>
+            <span className="text-muted-foreground font-mono text-[10px]">MANDIBULAR ARCH</span>
             <span>Lower Left (Q3)</span>
           </div>
         </div>
 
         {/* Condition Legends Bar */}
-        <div className="pt-2 border-t border-border">
-          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+        <div className="pt-3 border-t border-border">
+          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2">
             Clinical Conditions Legend:
           </p>
           <div className="flex flex-wrap gap-2">
             {Object.entries(CONDITIONS).map(([key, info]) => (
-              <Badge
+              <span
                 key={key}
-                variant="outline"
-                className="text-[11px] font-medium py-0.5 px-2 flex items-center gap-1.5 border"
-                style={{ borderColor: info.border, color: info.color, backgroundColor: info.bg }}
+                className="text-[11px] font-medium py-0.5 px-2 rounded-md flex items-center gap-1.5 border border-border/80 bg-card text-foreground"
               >
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: info.color }} />
+                <span className="w-2.5 h-2.5 rounded-full border border-black/10" style={{ backgroundColor: info.color }} />
                 {info.label}
-              </Badge>
+              </span>
             ))}
           </div>
         </div>
@@ -473,16 +468,16 @@ export function ToothChart({
       {/* Condition Selection Dialog / Drawer */}
       {activeTooth && !readOnly && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-[#1E1F1C] border border-border rounded-xl shadow-2xl max-w-lg w-full p-6 space-y-4 text-foreground">
+          <div className="bg-card border border-border rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4 text-card-foreground">
             <div className="flex items-start justify-between pb-3 border-b border-border">
               <div>
                 <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-                  <Edit3 className="w-5 h-5 text-[#F92672]" />
-                  Diagnose Tooth {getToothDisplayNumber(activeTooth)}
+                  <Edit3 className="w-5 h-5 text-primary" />
+                  Diagnose Tooth #{getToothDisplayNumber(activeTooth)}
                 </h3>
-                <p className="text-xs text-[#66D9EF] mt-0.5">{getToothName(activeTooth)}</p>
+                <p className="text-xs text-primary font-medium mt-0.5">{getToothName(activeTooth)}</p>
                 {activeSurface && (
-                  <Badge variant="secondary" className="mt-1 text-[10px] bg-[#272822] text-[#F8F8F2]">
+                  <Badge variant="secondary" className="mt-1 text-[10px]">
                     Targeting Surface: {activeSurface} (
                     {activeSurface === 'B'
                       ? 'Buccal'
@@ -511,8 +506,8 @@ export function ToothChart({
 
             {/* Condition Picker Grid */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">
-                Select Diagnosis / Restorative Condition
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                Select Diagnosis / Condition
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-60 overflow-y-auto pr-1">
                 {Object.entries(CONDITIONS).map(([key, info]) => (
@@ -520,15 +515,13 @@ export function ToothChart({
                     key={key}
                     type="button"
                     onClick={() => applyCondition(key as ToothCondition)}
-                    className="flex flex-col items-start p-2 rounded-lg border text-left transition-all hover:scale-[1.02] active:scale-95"
-                    style={{
-                      borderColor: info.border,
-                      backgroundColor: info.bg,
-                      color: info.color,
-                    }}
+                    className="flex flex-col items-start p-2.5 rounded-xl border border-border hover:border-primary text-left transition-all hover:scale-[1.02] active:scale-95 bg-muted/30"
                   >
-                    <span className="text-xs font-bold">{info.label}</span>
-                    <span className="text-[10px] opacity-75 line-clamp-1">{info.description}</span>
+                    <span className="text-xs font-bold flex items-center gap-1.5 text-foreground">
+                      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: info.color }} />
+                      {info.label}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">{info.description}</span>
                   </button>
                 ))}
               </div>
@@ -536,7 +529,7 @@ export function ToothChart({
 
             {/* Tooth Notes */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                 Clinical Notes / Remarks
               </label>
               <input
@@ -544,7 +537,7 @@ export function ToothChart({
                 value={toothNote}
                 onChange={(e) => setToothNote(e.target.value)}
                 placeholder="e.g., Deep mesial pocket, cold sensitivity, shade A2 required"
-                className="w-full px-3 py-2 text-sm rounded-lg bg-[#272822] border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-[#F92672]"
+                className="w-full px-3 py-2 text-sm rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
 
@@ -554,7 +547,7 @@ export function ToothChart({
                 variant="destructive"
                 size="sm"
                 onClick={clearTooth}
-                className="text-xs bg-red-950/80 hover:bg-red-900 border border-red-800 text-red-300"
+                className="text-xs"
               >
                 <RotateCcw className="w-3.5 h-3.5 mr-1" />
                 Clear Status
@@ -575,7 +568,7 @@ export function ToothChart({
                 <Button
                   size="sm"
                   onClick={() => applyCondition(chartData[activeTooth]?.condition || 'healthy')}
-                  className="bg-[#F92672] text-white hover:bg-[#F92672]/90 text-xs font-semibold"
+                  className="bg-primary text-primary-foreground hover:bg-primary-hover text-xs font-semibold"
                 >
                   <Check className="w-3.5 h-3.5 mr-1" />
                   Save Note

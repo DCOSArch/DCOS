@@ -15,14 +15,12 @@ import {
   ToothChartData,
   ClinicalVisit,
   ClinicalInvoice,
-  PrescriptionItem,
 } from '@/types';
 import {
   getPatientToothChart,
   savePatientToothChart,
   getPatientVisits,
   getInvoices,
-  saveInvoice,
 } from '@/lib/services';
 import {
   ArrowLeft,
@@ -42,10 +40,8 @@ import {
   MessageSquare,
   Sparkles,
   Printer,
-  Share2,
-  CheckCircle2,
-  ExternalLink,
   ChevronRight,
+  Stethoscope,
 } from 'lucide-react';
 
 interface PatientWorkspaceProps {
@@ -59,7 +55,6 @@ export function PatientWorkspace({ patient, cases }: PatientWorkspaceProps) {
   const [toothChart, setToothChart] = useState<ToothChartData>({});
   const [visits, setVisits] = useState<ClinicalVisit[]>([]);
   const [invoices, setInvoices] = useState<ClinicalInvoice[]>([]);
-  const [showAddInvoiceModal, setShowAddInvoiceModal] = useState(false);
 
   useEffect(() => {
     if (patient?.id) {
@@ -82,11 +77,11 @@ export function PatientWorkspace({ patient, cases }: PatientWorkspaceProps) {
     const cleanPhone = (patient.phone || patient.contactInfo || '').replace(/[^0-9]/g, '');
     let text = '';
     if (messageType === 'reminder') {
-      text = `Dear ${patient.name}, this is a reminder from Dr. Maneesh Vishnoi's Dental Clinic regarding your upcoming appointment. Please reply to confirm.`;
+      text = `Dear ${patient.name}, this is a reminder from Dr. Maneesh Vishnoi's clinic regarding your upcoming appointment. Please reply to confirm.`;
     } else if (messageType === 'balance') {
-      text = `Dear ${patient.name}, your current dental treatment statement has a pending balance of ₹${totalOutstanding.toLocaleString()}. You can clear it via UPI/Card at your next visit.`;
+      text = `Dear ${patient.name}, your current treatment balance is ₹${totalOutstanding.toLocaleString('en-IN')}. You can clear it via UPI/Card at your next visit.`;
     } else {
-      text = `Dear ${patient.name}, Dr. Maneesh Vishnoi's clinic following up on your recent dental procedure. How are you feeling today? Please let us know if you experience any sensitivity or pain.`;
+      text = `Dear ${patient.name}, following up on your recent dental procedure. How are you feeling today? Please reach out if you experience any discomfort.`;
     }
     return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
   };
@@ -97,7 +92,7 @@ export function PatientWorkspace({ patient, cases }: PatientWorkspaceProps) {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-border">
         <div className="flex items-center gap-3">
           <Link href="/patients">
-            <Button variant="ghost" size="icon" className="hover:bg-muted/40">
+            <Button variant="ghost" size="icon" className="hover:bg-muted">
               <ArrowLeft className="w-5 h-5" />
             </Button>
           </Link>
@@ -106,22 +101,22 @@ export function PatientWorkspace({ patient, cases }: PatientWorkspaceProps) {
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
                 {patient.name}
               </h1>
-              <Badge variant="outline" className="font-mono text-xs border-[#66D9EF] text-[#66D9EF]">
+              <Badge variant="outline" className="font-mono text-xs border-primary/40 text-primary">
                 ID: {patient.id.toUpperCase()}
               </Badge>
               {patient.medicalAlerts && patient.medicalAlerts.length > 0 && (
-                <Badge variant="destructive" className="bg-red-500/20 text-red-400 border border-red-500/40 text-xs flex items-center gap-1">
+                <Badge variant="destructive" className="text-xs flex items-center gap-1">
                   <AlertTriangle className="w-3 h-3" />
                   {patient.medicalAlerts.join(', ')}
                 </Badge>
               )}
             </div>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1 flex items-center gap-4 flex-wrap">
-              <span>{patient.age ? `${patient.age} yrs` : 'Age N/A'}, {patient.gender || 'Gender N/A'}</span>
-              <span>•</span>
-              <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-[#66D9EF]" /> {patient.phone || patient.contactInfo || 'No Phone'}</span>
-              <span>•</span>
-              <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5 text-[#A6E22E]" /> Registered: {new Date(patient.createdAt).toLocaleDateString()}</span>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1 flex items-center gap-3 flex-wrap">
+              <span>{patient.age ? `${patient.age} yrs` : 'Age N/A'}, {patient.gender || 'Unspecified'}</span>
+              <span>&bull;</span>
+              <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-primary" /> {patient.phone || patient.contactInfo || 'No Phone'}</span>
+              <span>&bull;</span>
+              <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5 text-muted-foreground" /> Registered: {new Date(patient.createdAt).toLocaleDateString()}</span>
             </p>
           </div>
         </div>
@@ -129,16 +124,16 @@ export function PatientWorkspace({ patient, cases }: PatientWorkspaceProps) {
         {/* Quick Action Buttons */}
         <div className="flex items-center gap-2 flex-wrap">
           <Link href={`/patients/${patient.id}/capture`}>
-            <Button variant="outline" size="sm" className="border-border hover:border-[#66D9EF] text-xs">
-              <Camera className="w-4 h-4 mr-1.5 text-[#66D9EF]" />
+            <Button variant="outline" size="sm" className="text-xs">
+              <Camera className="w-4 h-4 mr-1.5 text-primary" />
               IOS Scan
             </Button>
           </Link>
 
           <Link href={`/visits/new?patientId=${patient.id}`}>
-            <Button size="sm" className="bg-[#F92672] hover:bg-[#F92672]/90 text-white font-semibold text-xs shadow-lg shadow-[#F92672]/20">
+            <Button size="sm" className="bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-xs shadow-sm">
               <Plus className="w-4 h-4 mr-1.5" />
-              New Clinical Visit
+              New Clinical Encounter
             </Button>
           </Link>
         </div>
@@ -146,27 +141,27 @@ export function PatientWorkspace({ patient, cases }: PatientWorkspaceProps) {
 
       {/* Main Workspace Navigation Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="bg-[#1E1F1C] border border-border p-1 rounded-xl w-full justify-start overflow-x-auto flex-nowrap scrollbar-none">
-          <TabsTrigger value="overview" className="text-xs sm:text-sm data-[state=active]:bg-[#F92672] data-[state=active]:text-white flex items-center gap-1.5">
+        <TabsList className="bg-muted/60 border border-border p-1 rounded-xl w-full justify-start overflow-x-auto flex-nowrap">
+          <TabsTrigger value="overview" className="text-xs sm:text-sm flex items-center gap-1.5">
             <User className="w-4 h-4" /> Overview
           </TabsTrigger>
-          <TabsTrigger value="tooth-chart" className="text-xs sm:text-sm data-[state=active]:bg-[#F92672] data-[state=active]:text-white flex items-center gap-1.5">
-            <Layers className="w-4 h-4" /> Tooth Chart (Odontogram)
+          <TabsTrigger value="tooth-chart" className="text-xs sm:text-sm flex items-center gap-1.5">
+            <Layers className="w-4 h-4" /> Tooth Chart
           </TabsTrigger>
-          <TabsTrigger value="visits" className="text-xs sm:text-sm data-[state=active]:bg-[#F92672] data-[state=active]:text-white flex items-center gap-1.5">
-            <FileText className="w-4 h-4" /> Clinical Encounters ({visits.length})
+          <TabsTrigger value="visits" className="text-xs sm:text-sm flex items-center gap-1.5">
+            <FileText className="w-4 h-4" /> Visits ({visits.length})
           </TabsTrigger>
-          <TabsTrigger value="prescriptions" className="text-xs sm:text-sm data-[state=active]:bg-[#F92672] data-[state=active]:text-white flex items-center gap-1.5">
+          <TabsTrigger value="prescriptions" className="text-xs sm:text-sm flex items-center gap-1.5">
             <Activity className="w-4 h-4" /> Prescriptions (Rx)
           </TabsTrigger>
-          <TabsTrigger value="cases" className="text-xs sm:text-sm data-[state=active]:bg-[#F92672] data-[state=active]:text-white flex items-center gap-1.5">
-            <Sparkles className="w-4 h-4" /> CAD/CAM Lab Cases ({cases.length})
+          <TabsTrigger value="cases" className="text-xs sm:text-sm flex items-center gap-1.5">
+            <Sparkles className="w-4 h-4" /> Lab Cases ({cases.length})
           </TabsTrigger>
-          <TabsTrigger value="billing" className="text-xs sm:text-sm data-[state=active]:bg-[#F92672] data-[state=active]:text-white flex items-center gap-1.5">
-            <DollarSign className="w-4 h-4" /> Billing & Invoices
+          <TabsTrigger value="billing" className="text-xs sm:text-sm flex items-center gap-1.5">
+            <DollarSign className="w-4 h-4" /> Invoices & Dues
           </TabsTrigger>
-          <TabsTrigger value="communication" className="text-xs sm:text-sm data-[state=active]:bg-[#F92672] data-[state=active]:text-white flex items-center gap-1.5">
-            <MessageSquare className="w-4 h-4" /> WhatsApp / Comms
+          <TabsTrigger value="communication" className="text-xs sm:text-sm flex items-center gap-1.5">
+            <MessageSquare className="w-4 h-4" /> WhatsApp
           </TabsTrigger>
         </TabsList>
 
@@ -174,34 +169,34 @@ export function PatientWorkspace({ patient, cases }: PatientWorkspaceProps) {
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Demographic & Medical History */}
-            <Card className="bg-[#1E1F1C] border-border md:col-span-1">
+            <Card className="bg-card border-border md:col-span-1 shadow-xs">
               <CardHeader className="pb-3 border-b border-border">
-                <CardTitle className="text-base font-bold flex items-center gap-2">
-                  <User className="w-4 h-4 text-[#66D9EF]" /> Clinical Demographics
+                <CardTitle className="text-base font-bold flex items-center gap-2 text-foreground">
+                  <User className="w-4 h-4 text-primary" /> Patient Details
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4 space-y-3.5 text-xs">
                 <div className="flex justify-between py-1.5 border-b border-border">
-                  <span className="text-muted-foreground">Contact Phone:</span>
-                  <span className="font-semibold">{patient.phone || patient.contactInfo || 'N/A'}</span>
+                  <span className="text-muted-foreground">Phone:</span>
+                  <span className="font-semibold text-foreground">{patient.phone || patient.contactInfo || 'N/A'}</span>
                 </div>
                 <div className="flex justify-between py-1.5 border-b border-border">
                   <span className="text-muted-foreground">Email:</span>
-                  <span className="font-semibold">{patient.email || 'N/A'}</span>
+                  <span className="font-semibold text-foreground">{patient.email || 'N/A'}</span>
                 </div>
                 <div className="flex justify-between py-1.5 border-b border-border">
                   <span className="text-muted-foreground">Address:</span>
-                  <span className="font-semibold text-right max-w-[180px] truncate">{patient.address || 'Bengaluru, India'}</span>
+                  <span className="font-semibold text-foreground text-right max-w-[180px] truncate">{patient.address || 'Bengaluru, India'}</span>
                 </div>
                 <div className="py-2 border-b border-border">
-                  <span className="text-muted-foreground block mb-1 font-semibold text-[#FD971F]">Documented Allergies:</span>
-                  <p className="bg-[#272822] p-2 rounded border border-border text-foreground font-medium">
+                  <span className="text-muted-foreground block mb-1 font-semibold text-amber-600 dark:text-amber-400">Allergies:</span>
+                  <p className="bg-muted/40 p-2 rounded-lg border border-border text-foreground font-medium">
                     {patient.allergies && patient.allergies.length > 0 ? patient.allergies.join(', ') : 'No known drug allergies reported'}
                   </p>
                 </div>
                 <div className="pt-1">
-                  <span className="text-muted-foreground block mb-1 font-semibold text-[#A6E22E]">Medical History & Conditions:</span>
-                  <p className="bg-[#272822] p-2.5 rounded border border-border text-foreground">
+                  <span className="text-muted-foreground block mb-1 font-semibold text-primary">Medical History:</span>
+                  <p className="bg-muted/40 p-2.5 rounded-lg border border-border text-foreground">
                     {patient.medicalHistory || 'Fit for routine dental care. No systemic contraindications.'}
                   </p>
                 </div>
@@ -212,36 +207,36 @@ export function PatientWorkspace({ patient, cases }: PatientWorkspaceProps) {
             <div className="md:col-span-2 space-y-6">
               {/* Financial & Status Bar */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Card className="bg-[#1E1F1C] border-border p-4 flex items-center justify-between">
+                <Card className="bg-card border-border p-4 flex items-center justify-between shadow-xs">
                   <div>
                     <span className="text-xs text-muted-foreground">Outstanding Balance</span>
-                    <h3 className={`text-xl font-bold mt-0.5 ${totalOutstanding > 0 ? 'text-red-400' : 'text-[#A6E22E]'}`}>
-                      ₹{totalOutstanding.toLocaleString()}
+                    <h3 className={`text-xl font-bold mt-0.5 ${totalOutstanding > 0 ? 'text-red-500' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                      ₹{totalOutstanding.toLocaleString('en-IN')}
                     </h3>
                   </div>
-                  <div className={`p-2.5 rounded-xl ${totalOutstanding > 0 ? 'bg-red-500/10 text-red-400' : 'bg-green-500/10 text-[#A6E22E]'}`}>
+                  <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
                     <DollarSign className="w-5 h-5" />
                   </div>
                 </Card>
 
-                <Card className="bg-[#1E1F1C] border-border p-4 flex items-center justify-between">
+                <Card className="bg-card border-border p-4 flex items-center justify-between shadow-xs">
                   <div>
                     <span className="text-xs text-muted-foreground">Active Lab Cases</span>
                     <h3 className="text-xl font-bold text-foreground mt-0.5">
                       {cases.filter((c) => c.status !== 'DELIVERED' && c.status !== 'COMPLETED').length} Active
                     </h3>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-[#66D9EF]/10 text-[#66D9EF]">
+                  <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
                     <Sparkles className="w-5 h-5" />
                   </div>
                 </Card>
 
-                <Card className="bg-[#1E1F1C] border-border p-4 flex items-center justify-between">
+                <Card className="bg-card border-border p-4 flex items-center justify-between shadow-xs">
                   <div>
                     <span className="text-xs text-muted-foreground">Total Visits</span>
                     <h3 className="text-xl font-bold text-foreground mt-0.5">{visits.length} Recorded</h3>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-[#A6E22E]/10 text-[#A6E22E]">
+                  <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
                     <Activity className="w-5 h-5" />
                   </div>
                 </Card>
@@ -251,45 +246,45 @@ export function PatientWorkspace({ patient, cases }: PatientWorkspaceProps) {
               <ToothChart
                 initialData={toothChart}
                 readOnly={true}
-                title="Current Dentition Chart"
+                title="Current Dentition Overview"
                 description="Live dental record reflecting ongoing restorations, cavities, and planned crowns."
               />
             </div>
           </div>
         </TabsContent>
 
-        {/* 2. TOOTH CHART (ODONTOGRAM) TAB */}
+        {/* 2. TOOTH CHART TAB */}
         <TabsContent value="tooth-chart" className="space-y-4">
           <ToothChart
             initialData={toothChart}
             onChange={handleChartChange}
             readOnly={false}
-            title="Interactive FDI / Universal Odontogram"
+            title="Interactive Odontogram & Treatment Planning"
             description="Select any tooth or anatomical surface (Buccal, Mesial, Occlusal/Incisal, Distal, Lingual) to apply diagnoses, restorations, or crowns."
           />
         </TabsContent>
 
-        {/* 3. VISITS & CLINICAL ENCOUNTERS TAB */}
+        {/* 3. VISITS TAB */}
         <TabsContent value="visits" className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-bold text-foreground">Clinical Encounters & SOAP Notes</h3>
             <Link href={`/visits/new?patientId=${patient.id}`}>
-              <Button size="sm" className="bg-[#F92672] text-white text-xs font-semibold">
-                <Plus className="w-4 h-4 mr-1.5" /> Start New Visit
+              <Button size="sm" className="bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-semibold">
+                <Plus className="w-4 h-4 mr-1.5" /> Start New Encounter
               </Button>
             </Link>
           </div>
 
           {visits.length === 0 ? (
-            <Card className="bg-[#1E1F1C] border-border text-center py-12">
+            <Card className="bg-card border-border text-center py-12">
               <CardContent className="space-y-3">
                 <FileText className="w-10 h-10 mx-auto text-muted-foreground opacity-30" />
-                <h4 className="text-sm font-semibold text-foreground">No clinical visits logged yet</h4>
+                <h4 className="text-sm font-semibold text-foreground">No clinical encounters logged yet</h4>
                 <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                  Log your first encounter with hands-free voice dictation, tooth charting, and prescription generation.
+                  Log your first encounter with voice dictation, tooth charting, and prescription generation.
                 </p>
                 <Link href={`/visits/new?patientId=${patient.id}`}>
-                  <Button size="sm" className="bg-[#F92672] text-white text-xs mt-2">
+                  <Button size="sm" className="bg-primary text-primary-foreground text-xs mt-2">
                     Create Visit Note
                   </Button>
                 </Link>
@@ -298,10 +293,10 @@ export function PatientWorkspace({ patient, cases }: PatientWorkspaceProps) {
           ) : (
             <div className="space-y-4">
               {visits.map((visit) => (
-                <Card key={visit.id} className="bg-[#1E1F1C] border-border overflow-hidden">
-                  <CardHeader className="p-4 bg-[#272822]/80 border-b border-border flex flex-row items-center justify-between">
+                <Card key={visit.id} className="bg-card border-border overflow-hidden shadow-xs">
+                  <CardHeader className="p-4 bg-muted/30 border-b border-border flex flex-row items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-[#F92672]/20 text-[#F92672]">
+                      <div className="p-2 rounded-lg bg-primary/10 text-primary">
                         <Activity className="w-4 h-4" />
                       </div>
                       <div>
@@ -313,38 +308,38 @@ export function PatientWorkspace({ patient, cases }: PatientWorkspaceProps) {
                         </CardDescription>
                       </div>
                     </div>
-                    <Badge variant="outline" className="text-xs border-[#A6E22E] text-[#A6E22E]">
+                    <Badge variant="outline" className="text-xs border-primary/40 text-primary">
                       {visit.status}
                     </Badge>
                   </CardHeader>
 
                   <CardContent className="p-4 sm:p-5 space-y-3 text-xs">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="p-2.5 rounded-lg bg-[#272822] border border-border">
-                        <span className="text-[10px] font-bold uppercase text-[#66D9EF]">Chief Complaint:</span>
+                      <div className="p-2.5 rounded-lg bg-muted/40 border border-border">
+                        <span className="text-[10px] font-bold uppercase text-primary">Chief Complaint:</span>
                         <p className="text-foreground mt-0.5">{visit.chiefComplaint}</p>
                       </div>
 
-                      <div className="p-2.5 rounded-lg bg-[#272822] border border-border">
-                        <span className="text-[10px] font-bold uppercase text-[#A6E22E]">Clinical Findings:</span>
+                      <div className="p-2.5 rounded-lg bg-muted/40 border border-border">
+                        <span className="text-[10px] font-bold uppercase text-primary">Clinical Findings:</span>
                         <p className="text-foreground mt-0.5">{visit.clinicalFindings}</p>
                       </div>
                     </div>
 
-                    <div className="p-2.5 rounded-lg bg-[#272822] border border-border">
-                      <span className="text-[10px] font-bold uppercase text-[#F92672]">Treatment Rendered & Procedures:</span>
+                    <div className="p-2.5 rounded-lg bg-muted/40 border border-border">
+                      <span className="text-[10px] font-bold uppercase text-primary">Treatment Rendered & Procedures:</span>
                       <p className="text-foreground mt-0.5 font-medium">{visit.treatmentRendered}</p>
                     </div>
 
                     {visit.prescriptions && visit.prescriptions.length > 0 && (
                       <div className="pt-2 border-t border-border">
-                        <span className="text-[10px] font-bold uppercase text-[#FD971F] block mb-1.5">
+                        <span className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">
                           Prescribed Medications (Rx):
                         </span>
                         <div className="flex flex-wrap gap-2">
                           {visit.prescriptions.map((rx) => (
-                            <Badge key={rx.id} variant="secondary" className="bg-[#272822] border border-border text-foreground text-xs py-1 px-2.5">
-                              💊 <strong className="ml-1 text-[#66D9EF]">{rx.drugName}</strong> — {rx.dosage} ({rx.frequency}) for {rx.duration}
+                            <Badge key={rx.id} variant="secondary" className="bg-muted text-foreground text-xs py-1 px-2.5">
+                              💊 <strong className="ml-1 text-primary">{rx.drugName}</strong> — {rx.dosage} ({rx.frequency}) for {rx.duration}
                             </Badge>
                           ))}
                         </div>
@@ -357,19 +352,19 @@ export function PatientWorkspace({ patient, cases }: PatientWorkspaceProps) {
           )}
         </TabsContent>
 
-        {/* 4. PRESCRIPTIONS (Rx) TAB */}
+        {/* 4. PRESCRIPTIONS TAB */}
         <TabsContent value="prescriptions" className="space-y-4">
-          <Card className="bg-[#1E1F1C] border-border">
+          <Card className="bg-card border-border shadow-xs">
             <CardHeader className="pb-3 border-b border-border flex flex-row items-center justify-between">
               <div>
-                <CardTitle className="text-base font-bold flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-[#FD971F]" /> Active & Historical Prescriptions
+                <CardTitle className="text-base font-bold flex items-center gap-2 text-foreground">
+                  <Activity className="w-4 h-4 text-primary" /> Active & Historical Prescriptions
                 </CardTitle>
                 <CardDescription className="text-xs text-muted-foreground">
-                  Complete pharmacological history prescribed at this clinic.
+                  Complete pharmacological history prescribed at this practice.
                 </CardDescription>
               </div>
-              <Button size="sm" variant="outline" className="text-xs border-border flex items-center gap-1.5" onClick={() => window.print()}>
+              <Button size="sm" variant="outline" className="text-xs flex items-center gap-1.5" onClick={() => window.print()}>
                 <Printer className="w-3.5 h-3.5" /> Print Rx Slip
               </Button>
             </CardHeader>
@@ -380,14 +375,14 @@ export function PatientWorkspace({ patient, cases }: PatientWorkspaceProps) {
                 <div className="space-y-3">
                   {visits.map((v) =>
                     v.prescriptions?.map((rx) => (
-                      <div key={rx.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-lg bg-[#272822] border border-border gap-2 text-xs">
+                      <div key={rx.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-lg bg-muted/40 border border-border gap-2 text-xs">
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-bold text-sm text-[#F8F8F2]">{rx.drugName}</span>
-                            <Badge variant="outline" className="text-[10px] border-[#FD971F] text-[#FD971F]">{rx.dosage}</Badge>
+                            <span className="font-bold text-sm text-foreground">{rx.drugName}</span>
+                            <Badge variant="outline" className="text-[10px] border-primary/40 text-primary">{rx.dosage}</Badge>
                           </div>
                           <p className="text-muted-foreground mt-1">
-                            Frequency: <span className="text-[#66D9EF]">{rx.frequency}</span> • Duration: <span className="text-[#A6E22E]">{rx.duration}</span>
+                            Frequency: <span className="text-foreground font-medium">{rx.frequency}</span> &bull; Duration: <span className="text-foreground font-medium">{rx.duration}</span>
                           </p>
                           {rx.instructions && (
                             <p className="text-muted-foreground mt-0.5 italic">Instructions: {rx.instructions}</p>
@@ -410,14 +405,14 @@ export function PatientWorkspace({ patient, cases }: PatientWorkspaceProps) {
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-bold text-foreground">Digital CAD/CAM & Dental Lab Cases</h3>
             <Link href="/?action=create">
-              <Button size="sm" className="bg-[#66D9EF] text-[#272822] hover:bg-[#66D9EF]/90 font-bold text-xs">
+              <Button size="sm" className="bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-xs">
                 <Plus className="w-4 h-4 mr-1" /> New Lab Order
               </Button>
             </Link>
           </div>
 
           {cases.length === 0 ? (
-            <Card className="bg-[#1E1F1C] border-border text-center py-12">
+            <Card className="bg-card border-border text-center py-12">
               <CardContent className="space-y-2">
                 <Sparkles className="w-10 h-10 mx-auto text-muted-foreground opacity-30" />
                 <p className="text-xs text-muted-foreground">No active lab cases linked to this patient.</p>
@@ -426,12 +421,12 @@ export function PatientWorkspace({ patient, cases }: PatientWorkspaceProps) {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {cases.map((c) => (
-                <Card key={c.id} className="bg-[#1E1F1C] border-border hover:border-primary/50 transition-all">
+                <Card key={c.id} className="bg-card border-border hover:border-primary/50 transition-all shadow-xs">
                   <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between">
                     <div>
                       <CardTitle className="text-sm font-bold text-foreground">{c.requestedTreatment}</CardTitle>
                       <CardDescription className="text-xs text-muted-foreground">
-                        Material: {c.material || 'Standard Zirconia'} • Shade: {c.shade || 'A2'}
+                        Material: {c.material || 'Zirconia'} &bull; Shade: {c.shade || 'A2'}
                       </CardDescription>
                     </div>
                     <StatusBadge status={c.status} />
@@ -442,7 +437,7 @@ export function PatientWorkspace({ patient, cases }: PatientWorkspaceProps) {
                     </span>
                     <div className="flex items-center gap-2">
                       <Link href={`/viewer/${c.id}`}>
-                        <Button size="sm" variant="outline" className="text-xs h-7 px-2 border-border text-[#66D9EF]">
+                        <Button size="sm" variant="outline" className="text-xs h-7 px-2 text-primary">
                           3D STL
                         </Button>
                       </Link>
@@ -459,24 +454,22 @@ export function PatientWorkspace({ patient, cases }: PatientWorkspaceProps) {
           )}
         </TabsContent>
 
-        {/* 6. BILLING & INVOICING TAB */}
+        {/* 6. BILLING TAB */}
         <TabsContent value="billing" className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-bold text-foreground">Invoices & Financial Records</h3>
+              <h3 className="text-lg font-bold text-foreground">Invoices & Statements</h3>
               <p className="text-xs text-muted-foreground">Track procedure charges, payment receipts, and outstanding dues.</p>
             </div>
-            <Button
-              size="sm"
-              onClick={() => setShowAddInvoiceModal(true)}
-              className="bg-[#A6E22E] text-[#272822] hover:bg-[#A6E22E]/90 font-bold text-xs"
-            >
-              <Plus className="w-4 h-4 mr-1" /> Create Invoice
-            </Button>
+            <Link href="/billing">
+              <Button size="sm" className="bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-xs">
+                Open Billing Hub
+              </Button>
+            </Link>
           </div>
 
           {invoices.length === 0 ? (
-            <Card className="bg-[#1E1F1C] border-border text-center py-10">
+            <Card className="bg-card border-border text-center py-10">
               <CardContent>
                 <DollarSign className="w-10 h-10 mx-auto text-muted-foreground opacity-30 mb-2" />
                 <p className="text-xs text-muted-foreground">No invoices generated for this patient.</p>
@@ -485,26 +478,25 @@ export function PatientWorkspace({ patient, cases }: PatientWorkspaceProps) {
           ) : (
             <div className="space-y-4">
               {invoices.map((inv) => (
-                <Card key={inv.id} className="bg-[#1E1F1C] border-border overflow-hidden">
-                  <CardHeader className="p-4 bg-[#272822] flex flex-row items-center justify-between border-b border-border">
+                <Card key={inv.id} className="bg-card border-border overflow-hidden shadow-xs">
+                  <CardHeader className="p-4 bg-muted/30 flex flex-row items-center justify-between border-b border-border">
                     <div className="flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-[#66D9EF]" />
+                      <FileText className="w-4 h-4 text-primary" />
                       <CardTitle className="text-sm font-bold">{inv.invoiceNumber}</CardTitle>
-                      <span className="text-xs text-muted-foreground">• {new Date(inv.createdAt).toLocaleDateString()}</span>
+                      <span className="text-xs text-muted-foreground">&bull; {new Date(inv.createdAt).toLocaleDateString()}</span>
                     </div>
                     <Badge
                       variant="outline"
                       className={`text-xs ${
                         inv.paymentStatus === 'PAID'
-                          ? 'border-green-500 text-green-400 bg-green-500/10'
-                          : 'border-amber-500 text-amber-400 bg-amber-500/10'
+                          ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10'
+                          : 'border-amber-500 text-amber-600 dark:text-amber-400 bg-amber-500/10'
                       }`}
                     >
                       {inv.paymentStatus}
                     </Badge>
                   </CardHeader>
                   <CardContent className="p-4 space-y-3 text-xs">
-                    {/* Line Items Table */}
                     <div className="divide-y divide-border">
                       {inv.items.map((item) => (
                         <div key={item.id} className="py-2 flex justify-between items-center">
@@ -516,25 +508,25 @@ export function PatientWorkspace({ patient, cases }: PatientWorkspaceProps) {
                               </Badge>
                             )}
                           </div>
-                          <span className="font-mono text-foreground">₹{item.total.toLocaleString()}</span>
+                          <span className="font-mono text-foreground">₹{item.total.toLocaleString('en-IN')}</span>
                         </div>
                       ))}
                     </div>
 
                     <div className="pt-3 border-t border-border flex justify-between items-center font-bold">
                       <span>Total Amount:</span>
-                      <span className="text-sm font-mono text-[#66D9EF]">₹{inv.grandTotal.toLocaleString()}</span>
+                      <span className="text-sm font-mono text-primary">₹{inv.grandTotal.toLocaleString('en-IN')}</span>
                     </div>
 
                     <div className="flex justify-between items-center text-muted-foreground">
                       <span>Paid ({inv.paymentMethod || 'Cash'}):</span>
-                      <span className="font-mono text-[#A6E22E]">₹{inv.paidAmount.toLocaleString()}</span>
+                      <span className="font-mono text-emerald-600 dark:text-emerald-400">₹{inv.paidAmount.toLocaleString('en-IN')}</span>
                     </div>
 
                     {inv.balanceAmount > 0 && (
-                      <div className="flex justify-between items-center text-red-400 font-bold">
+                      <div className="flex justify-between items-center text-red-500 font-bold">
                         <span>Balance Due:</span>
-                        <span className="font-mono">₹{inv.balanceAmount.toLocaleString()}</span>
+                        <span className="font-mono">₹{inv.balanceAmount.toLocaleString('en-IN')}</span>
                       </div>
                     )}
                   </CardContent>
@@ -546,13 +538,13 @@ export function PatientWorkspace({ patient, cases }: PatientWorkspaceProps) {
 
         {/* 7. WHATSAPP & COMMUNICATION TAB */}
         <TabsContent value="communication" className="space-y-4">
-          <Card className="bg-[#1E1F1C] border-border">
+          <Card className="bg-card border-border shadow-xs">
             <CardHeader className="pb-3 border-b border-border">
-              <CardTitle className="text-base font-bold flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-[#25D366]" /> Patient WhatsApp Communication Hub
+              <CardTitle className="text-base font-bold flex items-center gap-2 text-foreground">
+                <MessageSquare className="w-4 h-4 text-emerald-600" /> Patient WhatsApp Communication
               </CardTitle>
               <CardDescription className="text-xs text-muted-foreground">
-                One-click WhatsApp triggers for appointment reminders, post-operative recalls, and invoice receipts.
+                Send appointment reminders, post-operative recalls, and invoice receipts directly to the patient's phone.
               </CardDescription>
             </CardHeader>
             <CardContent className="p-4 sm:p-6 space-y-4">
@@ -561,16 +553,16 @@ export function PatientWorkspace({ patient, cases }: PatientWorkspaceProps) {
                   href={generateWhatsAppLink('reminder')}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex flex-col items-start p-4 rounded-xl border border-border bg-[#272822] hover:border-[#25D366] hover:scale-[1.02] transition-all group"
+                  className="flex flex-col items-start p-4 rounded-xl border border-border bg-muted/20 hover:border-emerald-500 hover:shadow-md transition-all group"
                 >
-                  <div className="p-2 rounded-lg bg-[#25D366]/20 text-[#25D366] mb-3">
+                  <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 mb-3">
                     <Calendar className="w-5 h-5" />
                   </div>
-                  <h4 className="text-sm font-bold text-foreground group-hover:text-[#25D366]">
+                  <h4 className="text-sm font-bold text-foreground group-hover:text-emerald-600 transition-colors">
                     Appointment Reminder
                   </h4>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Send automated booking confirmation with date, time, and clinic map location.
+                    Send booking confirmation with scheduled date and time.
                   </p>
                 </a>
 
@@ -578,16 +570,16 @@ export function PatientWorkspace({ patient, cases }: PatientWorkspaceProps) {
                   href={generateWhatsAppLink('followup')}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex flex-col items-start p-4 rounded-xl border border-border bg-[#272822] hover:border-[#25D366] hover:scale-[1.02] transition-all group"
+                  className="flex flex-col items-start p-4 rounded-xl border border-border bg-muted/20 hover:border-emerald-500 hover:shadow-md transition-all group"
                 >
-                  <div className="p-2 rounded-lg bg-[#25D366]/20 text-[#25D366] mb-3">
+                  <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 mb-3">
                     <Activity className="w-5 h-5" />
                   </div>
-                  <h4 className="text-sm font-bold text-foreground group-hover:text-[#25D366]">
+                  <h4 className="text-sm font-bold text-foreground group-hover:text-emerald-600 transition-colors">
                     Post-Op Care Follow-Up
                   </h4>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Check on patient recovery, pain levels, and medication instructions after surgery or RCT.
+                    Check on patient healing and medication instructions after procedure.
                   </p>
                 </a>
 
@@ -595,16 +587,16 @@ export function PatientWorkspace({ patient, cases }: PatientWorkspaceProps) {
                   href={generateWhatsAppLink('balance')}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex flex-col items-start p-4 rounded-xl border border-border bg-[#272822] hover:border-[#25D366] hover:scale-[1.02] transition-all group"
+                  className="flex flex-col items-start p-4 rounded-xl border border-border bg-muted/20 hover:border-emerald-500 hover:shadow-md transition-all group"
                 >
-                  <div className="p-2 rounded-lg bg-[#25D366]/20 text-[#25D366] mb-3">
+                  <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 mb-3">
                     <DollarSign className="w-5 h-5" />
                   </div>
-                  <h4 className="text-sm font-bold text-foreground group-hover:text-[#25D366]">
-                    Invoice & Balance Link
+                  <h4 className="text-sm font-bold text-foreground group-hover:text-emerald-600 transition-colors">
+                    Statement & Balance Due
                   </h4>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Send digital invoice receipt and pending balance UPI payment request.
+                    Send treatment statement and pending balance payment reminder.
                   </p>
                 </a>
               </div>

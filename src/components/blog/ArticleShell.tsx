@@ -1,123 +1,136 @@
-import Link from 'next/link';
-import type { ReactNode } from 'react';
+'use client';
 
-const styles = {
-  page: {
-    minHeight: '100vh',
-    background: '#F8F7F2',
-    color: '#1E1F1C',
-    fontFamily:
-      "'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
-    lineHeight: 1.7,
-  } as const,
-  nav: {
-    borderBottom: '1px solid #E5E2D6',
-    background: '#F3F1E7',
-  } as const,
-  navInner: {
-    maxWidth: '1120px',
-    margin: '0 auto',
-    padding: '18px 24px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    fontSize: '15px',
-  } as const,
-  brand: {
-    color: '#1E1F1C',
-    fontWeight: 800,
-    letterSpacing: '-0.01em',
-    textDecoration: 'none',
-    fontSize: '17px',
-  } as const,
-  navLinks: {
-    display: 'flex',
-    gap: '24px',
-    alignItems: 'center',
-  } as const,
-  navLink: {
-    color: '#3E3D32',
-    textDecoration: 'none',
-    fontWeight: 500,
-  } as const,
-  ctaLink: {
-    background: '#1E1F1C',
-    color: '#F3F1E7',
-    padding: '8px 16px',
-    borderRadius: '8px',
-    textDecoration: 'none',
-    fontWeight: 600,
-  } as const,
-  article: {
-    maxWidth: '760px',
-    margin: '0 auto',
-    padding: '64px 24px 96px',
-  } as const,
-  eyebrow: {
-    color: '#66D9EF',
-    fontWeight: 700,
-    letterSpacing: '0.08em',
-    textTransform: 'uppercase',
-    fontSize: '13px',
-    marginBottom: '16px',
-  } as const,
-  h1: {
-    fontSize: 'clamp(32px, 5vw, 48px)',
-    lineHeight: 1.15,
+import Link from 'next/link';
+import type { ReactNode, CSSProperties } from 'react';
+import { Stethoscope, ArrowRight, Clock, Calendar, Sun, Moon, ArrowLeft } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+
+export const proseStyles: Record<string, CSSProperties> = {
+  p: {
+    fontSize: '1rem',
+    lineHeight: '1.75',
+    color: 'var(--foreground)',
+    marginBottom: '1.25rem',
+  },
+  h2: {
+    fontSize: '1.5rem',
+    fontWeight: '700',
     letterSpacing: '-0.02em',
-    fontWeight: 800,
-    margin: '0 0 20px',
-    color: '#1E1F1C',
-  } as const,
-  lede: {
-    fontSize: '20px',
-    color: '#3E3D32',
-    lineHeight: 1.55,
-    margin: '0 0 32px',
-  } as const,
-  meta: {
-    fontSize: '14px',
-    color: '#8E8B7F',
-    marginBottom: '48px',
-    borderTop: '1px solid #E5E2D6',
-    borderBottom: '1px solid #E5E2D6',
-    padding: '12px 0',
-  } as const,
-  footer: {
-    borderTop: '1px solid #E5E2D6',
-    background: '#F3F1E7',
-    padding: '48px 24px',
-    textAlign: 'center' as const,
-    color: '#3E3D32',
-    fontSize: '14px',
-  } as const,
-  cta: {
-    display: 'block',
-    marginTop: '48px',
-    padding: '32px',
-    background: '#1E1F1C',
-    color: '#F3F1E7',
-    borderRadius: '16px',
-    textDecoration: 'none',
-  } as const,
+    color: 'var(--foreground)',
+    marginTop: '2.5rem',
+    marginBottom: '1rem',
+  },
+  h3: {
+    fontSize: '1.25rem',
+    fontWeight: '600',
+    color: 'var(--foreground)',
+    marginTop: '2rem',
+    marginBottom: '0.75rem',
+  },
+  ul: {
+    listStyleType: 'disc',
+    paddingLeft: '1.5rem',
+    marginBottom: '1.25rem',
+    color: 'var(--foreground)',
+  },
+  ol: {
+    listStyleType: 'decimal',
+    paddingLeft: '1.5rem',
+    marginBottom: '1.25rem',
+    color: 'var(--foreground)',
+  },
+  li: {
+    marginBottom: '0.5rem',
+    lineHeight: '1.6',
+  },
+  a: {
+    color: 'var(--primary)',
+    textDecoration: 'underline',
+    fontWeight: '500',
+  },
+  table: {
+    width: '100%',
+    borderCollapse: 'collapse',
+    marginBottom: '1.5rem',
+    fontSize: '0.875rem',
+  },
+  th: {
+    textAlign: 'left',
+    padding: '0.75rem',
+    borderBottom: '2px solid var(--border)',
+    fontWeight: '700',
+    color: 'var(--foreground)',
+  },
+  td: {
+    padding: '0.75rem',
+    borderBottom: '1px solid var(--border)',
+    color: 'var(--foreground)',
+  },
+  blockquote: {
+    borderLeft: '4px solid var(--primary)',
+    paddingLeft: '1rem',
+    fontStyle: 'italic',
+    margin: '1.5rem 0',
+    color: 'var(--muted-foreground)',
+  },
 };
 
 export function BlogNav() {
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    const isDark = document.documentElement.classList.contains('dark');
+    setIsDarkMode(isDark);
+  }, []);
+
+  const toggleTheme = () => {
+    const root = document.documentElement;
+    const newMode = !isDarkMode;
+    if (newMode) {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+    setIsDarkMode(newMode);
+    localStorage.setItem('darkMode', String(newMode));
+  };
+
   return (
-    <nav style={styles.nav}>
-      <div style={styles.navInner}>
-        <Link href="/landing" style={styles.brand}>
-          DentalConnect OS
+    <nav className="border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-50 transition-colors">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-2 text-primary font-extrabold tracking-tight text-lg hover:opacity-90 transition-opacity">
+          <Stethoscope className="w-6 h-6 text-primary" />
+          <span className="font-bold text-foreground">
+            DentalConnect <span className="font-light text-muted-foreground">OS</span>
+          </span>
         </Link>
-        <div style={styles.navLinks}>
-          <Link href="/blog" style={styles.navLink}>
+        <div className="flex items-center gap-4 sm:gap-6 text-sm font-medium">
+          <Link href="/landing" className="text-muted-foreground hover:text-foreground transition-colors hidden sm:inline-block">
+            Home
+          </Link>
+          <Link href="/labs" className="text-muted-foreground hover:text-foreground transition-colors">
+            Find Labs
+          </Link>
+          <Link href="/blog" className="text-primary font-semibold">
             Blog
           </Link>
-          <Link href="/labs" style={styles.navLink}>
-            Labs
-          </Link>
-          <Link href="/login" style={styles.ctaLink}>
-            Get started
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleTheme}
+            className="text-muted-foreground hover:text-foreground h-9 w-9"
+            aria-label="Toggle theme"
+          >
+            {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
+          </Button>
+
+          <Link
+            href="/login"
+            className="inline-flex items-center justify-center px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-xs tracking-wide transition-all shadow-sm"
+          >
+            Sign In
           </Link>
         </div>
       </div>
@@ -127,14 +140,21 @@ export function BlogNav() {
 
 export function BlogFooter() {
   return (
-    <footer style={styles.footer}>
-      <p>
-        DentalConnect OS — the operating system for modern dentistry.{' '}
-        <Link href="/login" style={{ color: '#1E1F1C', fontWeight: 700 }}>
-          Start free
-        </Link>
-        .
-      </p>
+    <footer className="border-t border-border bg-card py-12 mt-20 text-muted-foreground text-sm transition-colors">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
+        <div className="flex items-center gap-2 text-foreground font-bold">
+          <Stethoscope className="w-5 h-5 text-primary" />
+          <span>DentalConnect OS</span>
+        </div>
+        <p className="text-xs max-w-md">
+          A calm, clinically precise workspace connecting modern dental practices and digital laboratories.
+        </p>
+        <div className="flex items-center gap-5 text-xs font-medium">
+          <Link href="/labs" className="hover:text-foreground transition-colors">Lab Directory</Link>
+          <Link href="/blog" className="hover:text-foreground transition-colors">Articles</Link>
+          <Link href="/login" className="text-primary hover:underline font-semibold">Sign In</Link>
+        </div>
+      </div>
     </footer>
   );
 }
@@ -157,94 +177,56 @@ export function ArticleShell({
   children: ReactNode;
 }) {
   return (
-    <div style={styles.page}>
+    <div className="min-h-screen bg-background text-foreground transition-colors flex flex-col justify-between">
       <BlogNav />
-      <article style={styles.article}>
-        <div style={styles.eyebrow}>{eyebrow}</div>
-        <h1 style={styles.h1}>{title}</h1>
-        <p style={styles.lede}>{lede}</p>
-        <div style={styles.meta}>
-          <time dateTime={publishedISO}>{publishedLabel}</time>
-          {' · '}
-          {readMinutes} min read
+      <article className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 flex-1 w-full">
+        <div className="mb-6">
+          <Link href="/blog" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary font-medium transition-colors">
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to all articles
+          </Link>
         </div>
-        <div className="blog-body">{children}</div>
-        <Link href="/login" style={styles.cta}>
-          <div style={{ fontSize: '13px', color: '#A6E22E', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-            Try DentalConnect OS
+        <header className="mb-10">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary-soft text-primary font-bold text-xs uppercase tracking-wider mb-4">
+            {eyebrow}
           </div>
-          <div style={{ fontSize: '22px', fontWeight: 700, marginTop: '8px' }}>
-            Route your next case in minutes, not days.
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground leading-[1.15] mb-6">
+            {title}
+          </h1>
+          <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed mb-6 font-normal">
+            {lede}
+          </p>
+          <div className="flex items-center gap-4 py-3 border-y border-border text-xs text-muted-foreground font-medium">
+            <span className="inline-flex items-center gap-1">
+              <Calendar className="w-3.5 h-3.5" />
+              <time dateTime={publishedISO}>{publishedLabel}</time>
+            </span>
+            <span>&bull;</span>
+            <span className="inline-flex items-center gap-1">
+              <Clock className="w-3.5 h-3.5" />
+              {readMinutes} min read
+            </span>
           </div>
-          <div style={{ fontSize: '15px', opacity: 0.75, marginTop: '8px' }}>
-            Free for the first clinic-lab pair. No credit card. Setup in one call.
-          </div>
-        </Link>
+        </header>
+
+        <div className="prose prose-slate dark:prose-invert max-w-none text-base leading-relaxed space-y-4">
+          {children}
+        </div>
+
+        {/* CTA Card at bottom of article */}
+        <div className="mt-16 p-8 rounded-2xl bg-card border border-border text-center space-y-4">
+          <h3 className="text-xl font-bold text-foreground">Ready to streamline your digital dental cases?</h3>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto">
+            Connect directly with verified laboratories, route STL/DICOM scans, and track orders in real time.
+          </p>
+          <Link
+            href="/login"
+            className="inline-flex items-center justify-center px-6 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-sm transition-all shadow-md gap-2"
+          >
+            Start Free with DentalConnect OS <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
       </article>
       <BlogFooter />
     </div>
   );
 }
-
-export const proseStyles = {
-  h2: {
-    fontSize: '30px',
-    lineHeight: 1.25,
-    fontWeight: 700,
-    letterSpacing: '-0.015em',
-    margin: '48px 0 16px',
-    color: '#1E1F1C',
-  } as const,
-  h3: {
-    fontSize: '22px',
-    lineHeight: 1.3,
-    fontWeight: 700,
-    margin: '32px 0 12px',
-    color: '#1E1F1C',
-  } as const,
-  p: {
-    fontSize: '18px',
-    color: '#272822',
-    margin: '0 0 20px',
-  } as const,
-  ul: {
-    fontSize: '18px',
-    color: '#272822',
-    margin: '0 0 20px',
-    paddingLeft: '24px',
-  } as const,
-  li: {
-    marginBottom: '10px',
-  } as const,
-  quote: {
-    fontSize: '20px',
-    fontStyle: 'italic' as const,
-    borderLeft: '4px solid #A6E22E',
-    padding: '4px 20px',
-    color: '#3E3D32',
-    margin: '32px 0',
-  } as const,
-  table: {
-    width: '100%',
-    borderCollapse: 'collapse' as const,
-    margin: '24px 0 32px',
-    fontSize: '16px',
-  } as const,
-  th: {
-    textAlign: 'left' as const,
-    borderBottom: '2px solid #1E1F1C',
-    padding: '10px 12px',
-    fontWeight: 700,
-  } as const,
-  td: {
-    borderBottom: '1px solid #E5E2D6',
-    padding: '10px 12px',
-    verticalAlign: 'top' as const,
-  } as const,
-  a: {
-    color: '#1E1F1C',
-    textDecoration: 'underline',
-    textDecorationColor: '#A6E22E',
-    textDecorationThickness: '2px',
-  } as const,
-};

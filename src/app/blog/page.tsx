@@ -1,16 +1,17 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { BlogNav, BlogFooter } from '@/components/blog/ArticleShell';
+import { ArrowRight, BookOpen, Clock, Calendar } from 'lucide-react';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.dcos.in';
 
 export const metadata: Metadata = {
-  title: 'DentalConnect OS Blog — Dental Lab & Clinic Insights',
+  title: 'DentalConnect OS Blog — Clinical & Lab Insights',
   description:
-    'Guides, comparisons, and playbooks on dental lab management software, clinic-to-lab collaboration, and digital dentistry workflows for clinics and labs in India and beyond.',
+    'Guides, comparisons, and playbooks on dental lab management software, clinic-to-lab collaboration, and digital dentistry workflows for clinics and labs.',
   alternates: { canonical: '/blog' },
   openGraph: {
-    title: 'DentalConnect OS Blog',
+    title: 'DentalConnect OS Blog — Digital Dentistry & Lab Insights',
     description:
       'Guides and comparisons on dental lab management software and clinic-to-lab collaboration.',
     url: `${SITE_URL}/blog`,
@@ -33,6 +34,7 @@ const posts = [
     dek: 'What to look for, what to skip, and how the top platforms compare when your clinic or lab is picking software this year.',
     date: '2026-08-13',
     dateLabel: 'August 13, 2026',
+    category: 'Buyer Guide',
     readMinutes: 9,
   },
   {
@@ -41,6 +43,7 @@ const posts = [
     dek: 'A side-by-side look at how DentalConnect OS and Labyx approach clinic-lab collaboration, pricing, digital workflows, and scanner integration.',
     date: '2026-08-13',
     dateLabel: 'August 13, 2026',
+    category: 'Comparison',
     readMinutes: 7,
   },
   {
@@ -49,6 +52,7 @@ const posts = [
     dek: 'The framework we use with dentists and lab owners to cut through demos, marketing pages, and edge features — and pick software that ships cases faster.',
     date: '2026-08-13',
     dateLabel: 'August 13, 2026',
+    category: 'Playbook',
     readMinutes: 8,
   },
 ];
@@ -71,105 +75,65 @@ const jsonLd = {
 
 export default function BlogIndexPage() {
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: '#F8F7F2',
-        color: '#1E1F1C',
-        fontFamily: "'Inter', system-ui, sans-serif",
-      }}
-    >
+    <div className="min-h-screen bg-background text-foreground transition-colors flex flex-col justify-between">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <BlogNav />
-      <main style={{ maxWidth: '840px', margin: '0 auto', padding: '64px 24px 96px' }}>
-        <header style={{ marginBottom: '48px' }}>
-          <div
-            style={{
-              color: '#66D9EF',
-              fontWeight: 700,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              fontSize: '13px',
-              marginBottom: '12px',
-            }}
-          >
-            Blog
+
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 flex-1 w-full animate-fade-in">
+        <header className="mb-12 sm:mb-16">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/10 text-primary font-bold text-xs uppercase tracking-wider mb-4 border border-primary/20">
+            <BookOpen className="w-3.5 h-3.5" /> Clinical & Lab Insights
           </div>
-          <h1
-            style={{
-              fontSize: 'clamp(32px, 5vw, 48px)',
-              lineHeight: 1.15,
-              letterSpacing: '-0.02em',
-              fontWeight: 800,
-              margin: 0,
-            }}
-          >
-            Playbooks for modern dental clinics and labs.
+          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-foreground leading-[1.15] mb-4">
+            The DentalConnect Blog
           </h1>
-          <p
-            style={{
-              fontSize: '20px',
-              color: '#3E3D32',
-              marginTop: '16px',
-              lineHeight: 1.55,
-            }}
-          >
-            Straight-talk guides on dental lab software, clinic-to-lab collaboration, and
-            the digital dentistry workflow. No fluff.
+          <p className="text-base sm:text-lg text-muted-foreground max-w-2xl font-normal leading-relaxed">
+            Practical guides on dental lab software, intraoral scan routing, transparent pricing, and seamless clinic-to-lab digital handoffs.
           </p>
         </header>
 
-        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-          {posts.map((p) => (
-            <li
-              key={p.slug}
-              style={{
-                borderTop: '1px solid #E5E2D6',
-                padding: '32px 0',
-              }}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {posts.map((post) => (
+            <Link
+              key={post.slug}
+              href={`/blog/${post.slug}`}
+              className="group flex flex-col justify-between bg-card text-card-foreground p-6 sm:p-7 rounded-2xl border border-border hover:border-primary/50 shadow-sm hover:shadow-lg transition-all duration-300"
             >
-              <article>
-                <div
-                  style={{
-                    fontSize: '13px',
-                    color: '#8E8B7F',
-                    marginBottom: '10px',
-                  }}
-                >
-                  <time dateTime={p.date}>{p.dateLabel}</time> · {p.readMinutes} min read
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-4">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-primary bg-primary/10 px-2.5 py-1 rounded-md border border-primary/20">
+                    {post.category}
+                  </span>
+                  <span className="text-xs text-muted-foreground font-medium flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5" />
+                    {post.readMinutes} min
+                  </span>
                 </div>
-                <h2 style={{ fontSize: '28px', lineHeight: 1.2, margin: '0 0 12px' }}>
-                  <Link
-                    href={`/blog/${p.slug}`}
-                    style={{ color: '#1E1F1C', textDecoration: 'none' }}
-                  >
-                    {p.title}
-                  </Link>
+                <h2 className="text-lg sm:text-xl font-bold text-foreground group-hover:text-primary transition-colors leading-snug mb-3">
+                  {post.title}
                 </h2>
-                <p style={{ fontSize: '17px', color: '#3E3D32', margin: '0 0 12px' }}>
-                  {p.dek}
+                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed line-clamp-3">
+                  {post.dek}
                 </p>
-                <Link
-                  href={`/blog/${p.slug}`}
-                  style={{
-                    fontSize: '15px',
-                    fontWeight: 700,
-                    color: '#1E1F1C',
-                    textDecoration: 'underline',
-                    textDecorationColor: '#A6E22E',
-                    textDecorationThickness: '2px',
-                  }}
-                >
-                  Read the guide →
-                </Link>
-              </article>
-            </li>
+              </div>
+
+              <div className="flex items-center justify-between pt-6 mt-6 border-t border-border text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
+                  {post.dateLabel}
+                </span>
+                <span className="text-primary font-semibold inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                  Read <ArrowRight className="w-3.5 h-3.5" />
+                </span>
+              </div>
+            </Link>
           ))}
-        </ul>
+        </div>
       </main>
+
       <BlogFooter />
     </div>
   );

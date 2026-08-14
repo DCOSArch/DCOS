@@ -266,7 +266,7 @@ export interface InvoiceLineItem {
   toothNumber?: number;
   unitPrice: number;
   quantity: number;
-  discount: number;
+  discount?: number;
   total: number;
 }
 

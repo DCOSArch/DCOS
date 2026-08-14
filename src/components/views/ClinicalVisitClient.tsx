@@ -16,7 +16,6 @@ import {
 } from '@/types';
 import {
   mockPatients,
-  mockClinicalVisits,
 } from '@/mockData';
 import {
   getPatientToothChart,
@@ -31,7 +30,6 @@ import {
   Trash2,
   Activity,
   FileText,
-  User,
   Heart,
   Sparkles,
   Layers,
@@ -150,16 +148,16 @@ export function ClinicalVisitClient({ visitId }: { visitId: string }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
         <div className="flex items-center gap-3">
           <Link href={`/patients/${patient.id}`}>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className="hover:bg-muted">
               <ArrowLeft className="w-5 h-5" />
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
               Clinical Encounter & SOAP Notes
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-              Patient: <strong className="text-[#66D9EF]">{patient.name}</strong> ({patient.id.toUpperCase()}) • Date: {new Date().toLocaleDateString()}
+              Patient: <strong className="text-primary">{patient.name}</strong> ({patient.id.toUpperCase()}) &bull; Date: {new Date().toLocaleDateString()}
             </p>
           </div>
         </div>
@@ -168,11 +166,11 @@ export function ClinicalVisitClient({ visitId }: { visitId: string }) {
           <Button
             onClick={handleSaveVisit}
             disabled={isSaving}
-            className="bg-[#A6E22E] text-[#272822] hover:bg-[#A6E22E]/90 font-bold text-xs shadow-lg shadow-[#A6E22E]/20"
+            className="bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-xs shadow-sm"
           >
             {savedSuccess ? (
               <>
-                <CheckCircle2 className="w-4 h-4 mr-1.5 text-[#272822]" /> Visit Saved!
+                <CheckCircle2 className="w-4 h-4 mr-1.5" /> Visit Saved!
               </>
             ) : (
               <>
@@ -191,10 +189,10 @@ export function ClinicalVisitClient({ visitId }: { visitId: string }) {
         {/* Left Column: SOAP Notes & Vitals */}
         <div className="lg:col-span-2 space-y-6">
           {/* Patient Vitals Card */}
-          <Card className="bg-[#1E1F1C] border-border">
+          <Card className="bg-card border-border shadow-xs">
             <CardHeader className="p-4 pb-2 border-b border-border">
-              <CardTitle className="text-sm font-bold flex items-center gap-2">
-                <Heart className="w-4 h-4 text-red-400" /> Patient Vitals
+              <CardTitle className="text-sm font-bold flex items-center gap-2 text-foreground">
+                <Heart className="w-4 h-4 text-red-500" /> Patient Vitals
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
@@ -204,7 +202,7 @@ export function ClinicalVisitClient({ visitId }: { visitId: string }) {
                   type="text"
                   value={bp}
                   onChange={(e) => setBp(e.target.value)}
-                  className="w-full px-2.5 py-1.5 rounded bg-[#272822] border border-border font-mono text-foreground"
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-background border border-border font-mono text-foreground"
                 />
               </div>
               <div>
@@ -213,7 +211,7 @@ export function ClinicalVisitClient({ visitId }: { visitId: string }) {
                   type="text"
                   value={pulse}
                   onChange={(e) => setPulse(e.target.value)}
-                  className="w-full px-2.5 py-1.5 rounded bg-[#272822] border border-border font-mono text-foreground"
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-background border border-border font-mono text-foreground"
                 />
               </div>
               <div>
@@ -222,7 +220,7 @@ export function ClinicalVisitClient({ visitId }: { visitId: string }) {
                   type="text"
                   value={temp}
                   onChange={(e) => setTemp(e.target.value)}
-                  className="w-full px-2.5 py-1.5 rounded bg-[#272822] border border-border font-mono text-foreground"
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-background border border-border font-mono text-foreground"
                 />
               </div>
               <div>
@@ -231,23 +229,23 @@ export function ClinicalVisitClient({ visitId }: { visitId: string }) {
                   type="text"
                   value={spO2}
                   onChange={(e) => setSpO2(e.target.value)}
-                  className="w-full px-2.5 py-1.5 rounded bg-[#272822] border border-border font-mono text-foreground"
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-background border border-border font-mono text-foreground"
                 />
               </div>
             </CardContent>
           </Card>
 
           {/* SOAP Clinical Entry Form */}
-          <Card className="bg-[#1E1F1C] border-border">
+          <Card className="bg-card border-border shadow-xs">
             <CardHeader className="p-4 pb-2 border-b border-border">
-              <CardTitle className="text-sm font-bold flex items-center gap-2">
-                <FileText className="w-4 h-4 text-[#F92672]" /> SOAP Clinical Documentation
+              <CardTitle className="text-sm font-bold flex items-center gap-2 text-foreground">
+                <FileText className="w-4 h-4 text-primary" /> SOAP Clinical Documentation
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 space-y-4 text-xs">
               {/* S: Subjective / Chief Complaint */}
               <div>
-                <label className="font-bold text-[#66D9EF] uppercase block mb-1">
+                <label className="font-bold text-foreground block mb-1">
                   1. Subjective / Chief Complaint:
                 </label>
                 <textarea
@@ -255,13 +253,13 @@ export function ClinicalVisitClient({ visitId }: { visitId: string }) {
                   value={chiefComplaint}
                   onChange={(e) => setChiefComplaint(e.target.value)}
                   placeholder="Patient's reported symptoms, duration, triggers (e.g. sharp cold sensitivity on lower left molar)..."
-                  className="w-full p-2.5 rounded-lg bg-[#272822] border border-border text-foreground focus:ring-1 focus:ring-[#66D9EF]"
+                  className="w-full p-2.5 rounded-lg bg-background border border-border text-foreground focus:ring-1 focus:ring-primary"
                 />
               </div>
 
               {/* O: Objective / Clinical Findings */}
               <div>
-                <label className="font-bold text-[#A6E22E] uppercase block mb-1">
+                <label className="font-bold text-foreground block mb-1">
                   2. Objective / Clinical & Radiographic Findings:
                 </label>
                 <textarea
@@ -269,13 +267,13 @@ export function ClinicalVisitClient({ visitId }: { visitId: string }) {
                   value={clinicalFindings}
                   onChange={(e) => setClinicalFindings(e.target.value)}
                   placeholder="Intraoral examination, percussion testing, IOPA radiographic assessment, probing depths..."
-                  className="w-full p-2.5 rounded-lg bg-[#272822] border border-border text-foreground focus:ring-1 focus:ring-[#A6E22E]"
+                  className="w-full p-2.5 rounded-lg bg-background border border-border text-foreground focus:ring-1 focus:ring-primary"
                 />
               </div>
 
               {/* A: Assessment / Diagnosis */}
               <div>
-                <label className="font-bold text-[#F92672] uppercase block mb-1">
+                <label className="font-bold text-foreground block mb-1">
                   3. Assessment / Clinical Diagnosis:
                 </label>
                 <input
@@ -283,13 +281,13 @@ export function ClinicalVisitClient({ visitId }: { visitId: string }) {
                   value={diagnosis}
                   onChange={(e) => setDiagnosis(e.target.value)}
                   placeholder="e.g. Symptomatic Irreversible Pulpitis #36 / Dental Caries #26..."
-                  className="w-full p-2.5 rounded-lg bg-[#272822] border border-border text-foreground font-semibold focus:ring-1 focus:ring-[#F92672]"
+                  className="w-full p-2.5 rounded-lg bg-background border border-border text-foreground font-semibold focus:ring-1 focus:ring-primary"
                 />
               </div>
 
               {/* P: Plan & Treatment Rendered */}
               <div>
-                <label className="font-bold text-[#FD971F] uppercase block mb-1">
+                <label className="font-bold text-foreground block mb-1">
                   4. Plan / Treatment Rendered Today:
                 </label>
                 <textarea
@@ -297,7 +295,7 @@ export function ClinicalVisitClient({ visitId }: { visitId: string }) {
                   value={treatmentRendered}
                   onChange={(e) => setTreatmentRendered(e.target.value)}
                   placeholder="Exact clinical procedure performed, local anesthesia administered, restorative materials used..."
-                  className="w-full p-2.5 rounded-lg bg-[#272822] border border-border text-foreground focus:ring-1 focus:ring-[#FD971F]"
+                  className="w-full p-2.5 rounded-lg bg-background border border-border text-foreground focus:ring-1 focus:ring-primary"
                 />
               </div>
 
@@ -308,12 +306,12 @@ export function ClinicalVisitClient({ visitId }: { visitId: string }) {
                 </label>
                 <div className="flex flex-wrap gap-1.5 mb-2">
                   {procedures.map((p, idx) => (
-                    <Badge key={idx} variant="secondary" className="bg-[#272822] text-xs py-1 px-2 border border-border flex items-center gap-1">
+                    <Badge key={idx} variant="secondary" className="text-xs py-1 px-2 flex items-center gap-1">
                       {p}
                       <button
                         type="button"
                         onClick={() => setProcedures(procedures.filter((_, i) => i !== idx))}
-                        className="hover:text-red-400 ml-1"
+                        className="hover:text-red-500 ml-1"
                       >
                         ×
                       </button>
@@ -326,7 +324,7 @@ export function ClinicalVisitClient({ visitId }: { visitId: string }) {
                     value={newProcedure}
                     onChange={(e) => setNewProcedure(e.target.value)}
                     placeholder="Add procedure (e.g. Rubber Dam Isolation, Composite Restoration)..."
-                    className="flex-1 px-2.5 py-1.5 rounded bg-[#272822] border border-border text-foreground text-xs"
+                    className="flex-1 px-2.5 py-1.5 rounded-lg bg-background border border-border text-foreground text-xs"
                     onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddProcedure())}
                   />
                   <Button size="sm" variant="outline" onClick={handleAddProcedure} className="text-xs">
@@ -338,10 +336,10 @@ export function ClinicalVisitClient({ visitId }: { visitId: string }) {
           </Card>
 
           {/* Prescriptions (Rx) Writer */}
-          <Card className="bg-[#1E1F1C] border-border">
+          <Card className="bg-card border-border shadow-xs">
             <CardHeader className="p-4 pb-2 border-b border-border flex flex-row items-center justify-between">
-              <CardTitle className="text-sm font-bold flex items-center gap-2">
-                <Activity className="w-4 h-4 text-[#FD971F]" /> Prescriptions (Rx) Writer
+              <CardTitle className="text-sm font-bold flex items-center gap-2 text-foreground">
+                <Activity className="w-4 h-4 text-primary" /> Prescriptions (Rx) Writer
               </CardTitle>
               <Button size="sm" variant="outline" onClick={handleAddPrescription} className="text-xs h-7">
                 <Plus className="w-3.5 h-3.5 mr-1" /> Add Medication
@@ -349,7 +347,7 @@ export function ClinicalVisitClient({ visitId }: { visitId: string }) {
             </CardHeader>
             <CardContent className="p-4 space-y-3 text-xs">
               {prescriptions.map((rx) => (
-                <div key={rx.id} className="p-3 rounded-lg bg-[#272822] border border-border space-y-2">
+                <div key={rx.id} className="p-3 rounded-xl bg-muted/30 border border-border space-y-2">
                   <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
                     <div className="sm:col-span-2">
                       <label className="text-muted-foreground block text-[10px]">Drug Name & Strength:</label>
@@ -358,7 +356,7 @@ export function ClinicalVisitClient({ visitId }: { visitId: string }) {
                         value={rx.drugName}
                         onChange={(e) => handleUpdatePrescription(rx.id, 'drugName', e.target.value)}
                         placeholder="e.g. Amoxicillin 500mg, Zerodol-SP..."
-                        className="w-full px-2 py-1 rounded bg-[#1E1F1C] border border-border text-foreground font-semibold"
+                        className="w-full px-2.5 py-1.5 rounded-lg bg-background border border-border text-foreground font-semibold"
                       />
                     </div>
                     <div>
@@ -368,7 +366,7 @@ export function ClinicalVisitClient({ visitId }: { visitId: string }) {
                         value={rx.dosage}
                         onChange={(e) => handleUpdatePrescription(rx.id, 'dosage', e.target.value)}
                         placeholder="1 Tab / 1 Cap"
-                        className="w-full px-2 py-1 rounded bg-[#1E1F1C] border border-border text-foreground"
+                        className="w-full px-2.5 py-1.5 rounded-lg bg-background border border-border text-foreground"
                       />
                     </div>
                     <div>
@@ -378,7 +376,7 @@ export function ClinicalVisitClient({ visitId }: { visitId: string }) {
                         value={rx.duration}
                         onChange={(e) => handleUpdatePrescription(rx.id, 'duration', e.target.value)}
                         placeholder="5 days"
-                        className="w-full px-2 py-1 rounded bg-[#1E1F1C] border border-border text-foreground"
+                        className="w-full px-2.5 py-1.5 rounded-lg bg-background border border-border text-foreground"
                       />
                     </div>
                   </div>
@@ -391,14 +389,14 @@ export function ClinicalVisitClient({ visitId }: { visitId: string }) {
                         value={rx.frequency}
                         onChange={(e) => handleUpdatePrescription(rx.id, 'frequency', e.target.value)}
                         placeholder="1-0-1 (Twice daily after meals)"
-                        className="w-full px-2 py-1 rounded bg-[#1E1F1C] border border-border text-foreground"
+                        className="w-full px-2.5 py-1.5 rounded-lg bg-background border border-border text-foreground"
                       />
                     </div>
                     <Button
                       size="icon"
                       variant="ghost"
                       onClick={() => handleRemovePrescription(rx.id)}
-                      className="text-muted-foreground hover:text-red-400 mt-3.5 h-7 w-7"
+                      className="text-muted-foreground hover:text-red-500 mt-3.5 h-7 w-7"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </Button>

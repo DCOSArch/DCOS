@@ -52,7 +52,7 @@ export default async function PatientsDirectory() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-border">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2.5">
-            <Users className="w-8 h-8 text-[#F92672]" />
+            <Users className="w-8 h-8 text-primary" />
             Patient Directory & Clinical Cockpit
           </h1>
           <p className="text-muted-foreground mt-0.5 text-xs sm:text-sm">
@@ -64,15 +64,15 @@ export default async function PatientsDirectory() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {patients.map((patient: any) => (
           <Link key={patient.id} href={`/patients/${patient.id}`}>
-            <Card className="h-full hover:border-[#66D9EF] hover:shadow-lg transition-all duration-300 group cursor-pointer bg-[#1E1F1C] border-border">
+            <Card className="h-full hover:border-primary/50 hover:shadow-md transition-all duration-200 group cursor-pointer bg-card border-border">
               <CardHeader className="pb-3 border-b border-border">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-[#F92672]/20 flex items-center justify-center text-[#F92672] font-extrabold group-hover:bg-[#F92672] group-hover:text-white transition-colors">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-extrabold group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
                       {patient.name.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <CardTitle className="text-base font-bold text-foreground group-hover:text-[#66D9EF] transition-colors">
+                      <CardTitle className="text-base font-bold text-foreground group-hover:text-primary transition-colors">
                         {patient.name}
                       </CardTitle>
                       <CardDescription className="text-xs text-muted-foreground">
@@ -81,14 +81,14 @@ export default async function PatientsDirectory() {
                       </CardDescription>
                     </div>
                   </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground opacity-60 group-hover:opacity-100 group-hover:translate-x-1 group-hover:text-[#66D9EF] transition-all" />
+                  <ChevronRight className="h-5 w-5 text-muted-foreground opacity-60 group-hover:opacity-100 group-hover:translate-x-1 group-hover:text-primary transition-all" />
                 </div>
               </CardHeader>
 
               <CardContent className="p-4 space-y-3 text-xs">
                 <div className="flex items-center justify-between text-muted-foreground">
                   <span className="flex items-center gap-1.5 font-medium">
-                    <Phone className="w-3.5 h-3.5 text-[#66D9EF]" />
+                    <Phone className="w-3.5 h-3.5 text-primary" />
                     {patient.contact_info || 'No Phone'}
                   </span>
                   <span className="font-mono text-[11px]">
@@ -97,7 +97,7 @@ export default async function PatientsDirectory() {
                 </div>
 
                 {patient.medicalAlerts && patient.medicalAlerts.length > 0 && (
-                  <Badge variant="destructive" className="bg-red-500/20 text-red-400 border border-red-500/40 text-[10px] flex items-center gap-1 w-fit">
+                  <Badge variant="destructive" className="bg-red-500/10 text-red-500 border border-red-500/30 text-[10px] flex items-center gap-1 w-fit">
                     <AlertTriangle className="w-3 h-3" />
                     {patient.medicalAlerts[0]}
                   </Badge>
@@ -106,8 +106,8 @@ export default async function PatientsDirectory() {
                 <div className="pt-2 border-t border-border flex items-center justify-between text-[11px]">
                   <span className="text-muted-foreground">Registered: {new Date(patient.created_at).toLocaleDateString()}</span>
                   {patient.outstandingBalance !== undefined && (
-                    <span className={`font-mono font-bold ${patient.outstandingBalance > 0 ? 'text-red-400' : 'text-[#A6E22E]'}`}>
-                      {patient.outstandingBalance > 0 ? `Due: ₹${patient.outstandingBalance.toLocaleString()}` : 'Cleared'}
+                    <span className={`font-mono font-bold ${patient.outstandingBalance > 0 ? 'text-red-500' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                      {patient.outstandingBalance > 0 ? `Due: ₹${patient.outstandingBalance.toLocaleString('en-IN')}` : 'Cleared'}
                     </span>
                   )}
                 </div>
