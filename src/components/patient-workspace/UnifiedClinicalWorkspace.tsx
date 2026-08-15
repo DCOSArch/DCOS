@@ -475,8 +475,23 @@ export function UnifiedClinicalWorkspace({
         {/* TAB 1: CLINICAL OVERVIEW & EXPANSIVE 32-TOOTH ODONTOGRAM                */}
         {/* ======================================================================= */}
         <TabsContent value="overview" className="space-y-6">
-          {/* Top 3 KPI Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Top Row: Patient Vitals, Alerts & Summary Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="bg-card border-border shadow-xs">
+              <CardHeader className="p-4 pb-2">
+                <CardDescription className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                  Patient Medical Alerts
+                </CardDescription>
+                <CardTitle className="text-base font-bold text-rose-400 mt-1">
+                  {patient.allergies?.join(', ') || 'No known allergies'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-0 text-xs text-muted-foreground flex items-center justify-between">
+                <span>{patient.medicalHistory || 'No systemic conditions'}</span>
+                <AlertTriangle className="w-4 h-4 text-rose-400" />
+              </CardContent>
+            </Card>
+
             <Card className="bg-card border-border shadow-xs">
               <CardHeader className="p-4 pb-2">
                 <CardDescription className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
@@ -502,7 +517,7 @@ export function UnifiedClinicalWorkspace({
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4 pt-0 text-xs text-muted-foreground flex items-center justify-between">
-                <span>{cases.filter((c) => c.status === 'IN_PROGRESS' || c.status === 'QUALITY_CHECK').length} currently in production</span>
+                <span>{cases.filter((c) => c.status === 'IN_PROGRESS' || c.status === 'QUALITY_CHECK').length} in fabrication</span>
                 <Box className="w-4 h-4 text-cyan-400" />
               </CardContent>
             </Card>
@@ -510,106 +525,28 @@ export function UnifiedClinicalWorkspace({
             <Card className="bg-card border-border shadow-xs">
               <CardHeader className="p-4 pb-2">
                 <CardDescription className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                  Total Visits Recorded
+                  Visits Recorded
                 </CardDescription>
                 <CardTitle className="text-2xl font-extrabold text-foreground">
-                  {visits.length} Recorded
+                  {visits.length} Visits
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4 pt-0 text-xs text-muted-foreground flex items-center justify-between">
-                <span>Last visit: {visits.length > 0 ? new Date(visits[0].visitDate).toLocaleDateString() : 'N/A'}</span>
+                <span>Last: {visits.length > 0 ? new Date(visits[0].visitDate).toLocaleDateString() : 'None'}</span>
                 <Activity className="w-4 h-4 text-primary" />
               </CardContent>
             </Card>
           </div>
 
-          {/* 2-Column Spacious Layout: Left Details + Right Wide Odontogram */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Left: Patient Details (4 Cols) */}
-            <div className="lg:col-span-4 space-y-4">
-              <Card className="bg-card border-border shadow-xs">
-                <CardHeader className="pb-3 border-b border-border">
-                  <CardTitle className="text-sm font-bold flex items-center gap-2 text-foreground">
-                    <UserIcon className="w-4 h-4 text-primary" /> Patient Details & History
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 space-y-3 text-xs">
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-muted-foreground block">Phone</span>
-                    <p className="font-medium text-foreground mt-0.5">{patient.phone || patient.contactInfo || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-muted-foreground block">Email</span>
-                    <p className="font-medium text-foreground mt-0.5">{patient.email || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-muted-foreground block">Allergies</span>
-                    <p className="font-semibold text-rose-400 mt-0.5">{patient.allergies?.join(', ') || 'None recorded'}</p>
-                  </div>
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-muted-foreground block">Medical History</span>
-                    <p className="font-medium text-foreground mt-0.5">{patient.medicalHistory || 'No major systemic issues.'}</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Linked Cases Quick Box */}
-              {cases.length > 0 && (
-                <Card className="bg-card border-border shadow-xs">
-                  <CardHeader className="pb-2 border-b border-border flex flex-row items-center justify-between">
-                    <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                      Linked Lab Cases ({cases.length})
-                    </CardTitle>
-                    <Button size="sm" variant="ghost" className="h-6 text-xs text-primary" onClick={() => setActiveTab('lab-cases')}>
-                      View All <ChevronRight className="w-3 h-3 ml-1" />
-                    </Button>
-                  </CardHeader>
-                  <CardContent className="p-3 space-y-2">
-                    {cases.map((c) => (
-                      <div
-                        key={c.id}
-                        onClick={() => {
-                          setSelectedCaseId(c.id);
-                          setActiveTab('lab-cases');
-                        }}
-                        className="p-2.5 rounded-lg bg-muted/40 border border-border hover:border-primary/50 cursor-pointer flex items-center justify-between text-xs transition-colors"
-                      >
-                        <div>
-                          <p className="font-bold text-foreground">{c.requestedTreatment}</p>
-                          <p className="text-[10px] text-muted-foreground font-mono">#{c.id.slice(-6).toUpperCase()} &bull; Due: {new Date(c.dueDate).toLocaleDateString()}</p>
-                        </div>
-                        <StatusBadge status={c.status} />
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-
-            {/* Right: Full-Size 32-Tooth FDI Odontogram (8 Cols) */}
-            <div className="lg:col-span-8">
-              <Card className="bg-card border-border shadow-xs overflow-hidden">
-                <CardHeader className="pb-3 border-b border-border flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle className="text-base font-bold flex items-center gap-2 text-foreground">
-                      <Layers className="w-4 h-4 text-primary" /> Current Dentition Overview
-                    </CardTitle>
-                    <CardDescription className="text-xs text-muted-foreground">
-                      Live interactive 32-tooth chart reflecting ongoing restorations, cavities, and planned crowns.
-                    </CardDescription>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-4 sm:p-6 flex flex-col items-center">
-                  <ToothChart
-                    initialData={toothChart}
-                    onChange={(updated) => {
-                      setToothChart(updated);
-                      if (patient?.id) savePatientToothChart(patient.id, updated);
-                    }}
-                  />
-                </CardContent>
-              </Card>
-            </div>
+          {/* Full-Width Hero 32-Tooth FDI Interactive Odontogram */}
+          <div className="w-full">
+            <ToothChart
+              initialData={toothChart}
+              onChange={(updated) => {
+                setToothChart(updated);
+                if (patient?.id) savePatientToothChart(patient.id, updated);
+              }}
+            />
           </div>
         </TabsContent>
 
