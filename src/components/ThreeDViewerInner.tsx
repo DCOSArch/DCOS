@@ -201,26 +201,37 @@ const SculptedAnatomicalCrown = React.memo(({
 });
 SculptedAnatomicalCrown.displayName = 'SculptedAnatomicalCrown';
 
-const STLModel = React.memo(({ url, onMeshClick }: { url: string; onMeshClick: (e: any) => void }) => {
+const STLModel = React.memo(({ 
+  url, 
+  activeViewportMode = 'ANATOMY',
+  onMeshClick 
+}: { 
+  url: string; 
+  activeViewportMode?: 'ANATOMY' | 'OCCLUSION_HEATMAP' | 'WIREFRAME';
+  onMeshClick: (e: any) => void;
+}) => {
   const geometry = useLoader(STLLoader, url);
 
   const optimizedGeometry = useMemo(() => {
     const geo = geometry.clone();
     geo.computeVertexNormals();
+    geo.center();
     return geo;
   }, [geometry]);
+
+  const isWireframe = activeViewportMode === 'WIREFRAME';
 
   return (
     <mesh
       geometry={optimizedGeometry}
       onClick={onMeshClick}
     >
-      <meshPhongMaterial
-        color="#e6e1d6"
-        shininess={30}
-        specular={new THREE.Color('#444444')}
+      <meshStandardMaterial
+        color={activeViewportMode === 'OCCLUSION_HEATMAP' ? '#22c55e' : '#f4eedb'}
+        roughness={0.25}
+        metalness={0.08}
+        wireframe={isWireframe}
         side={THREE.DoubleSide}
-        flatShading
       />
     </mesh>
   );
@@ -262,8 +273,7 @@ const AnnotationPin = React.memo(({ position, text, color }: {
           anchorY="middle"
           position={[0, 0, 0.15]}
         >
-          {text.substring(0, 4)}
-          <meshBasicMaterial depthTest={false} color="white" />
+          {text}
         </Text>
       </Billboard>
     </group>
@@ -287,7 +297,7 @@ export default function ThreeDViewerInner({
   const [tempPin, setTempPin] = useState<{ position: [number, number, number]; normal: [number, number, number] | null } | null>(null);
   const [pinText, setPinText] = useState('');
   const [activeUrl, setActiveUrl] = useState<string | undefined>(
-    stlUrl && (stlUrl.startsWith('http') || stlUrl.startsWith('blob:')) ? stlUrl : undefined
+    stlUrl && (stlUrl.startsWith('http') || stlUrl.startsWith('blob:') || stlUrl.startsWith('/')) ? stlUrl : undefined
   );
   const [selectedAnnoId, setSelectedAnnoId] = useState<string | null>(null);
 
@@ -296,7 +306,7 @@ export default function ThreeDViewerInner({
   }, [initialAnnotations]);
 
   useEffect(() => {
-    if (stlUrl && (stlUrl.startsWith('http') || stlUrl.startsWith('blob:'))) {
+    if (stlUrl && (stlUrl.startsWith('http') || stlUrl.startsWith('blob:') || stlUrl.startsWith('/'))) {
       setActiveUrl(stlUrl);
     } else {
       setActiveUrl(undefined);

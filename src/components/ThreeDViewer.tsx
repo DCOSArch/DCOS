@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { getR2PublicUrl } from '@/lib/r2';
 
 interface ThreeDViewerProps {
   stlUrl?: string;
@@ -27,6 +28,8 @@ export default function ThreeDViewer({
   const [mounted, setMounted] = useState(false);
   const [ViewerComponent, setViewerComponent] = useState<React.ComponentType<any> | null>(null);
 
+  const resolvedStlUrl = getR2PublicUrl(stlUrl);
+
   useEffect(() => {
     setMounted(true);
     import('./ThreeDViewerInner')
@@ -45,7 +48,7 @@ export default function ThreeDViewer({
 
   return (
     <ViewerComponent 
-      stlUrl={stlUrl} 
+      stlUrl={resolvedStlUrl} 
       selectedTeeth={selectedTeeth}
       material={material}
       shade={shade}

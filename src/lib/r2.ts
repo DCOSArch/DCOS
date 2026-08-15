@@ -14,12 +14,14 @@ const R2_PUBLIC_URL = process.env.NEXT_PUBLIC_R2_PUBLIC_URL || '';
  */
 export function getR2PublicUrl(key: string | null | undefined): string {
     if (!key) return '';
-    // Already a full URL (legacy Supabase Storage or other)
-    if (key.startsWith('http://') || key.startsWith('https://')) return key;
-    // Loud warning if R2 public URL is not configured
-    if (!R2_PUBLIC_URL) {
-        console.error('[R2] NEXT_PUBLIC_R2_PUBLIC_URL is not set. File URLs will be broken.');
+    // Already a full or blob URL
+    if (key.startsWith('http://') || key.startsWith('https://') || key.startsWith('blob:') || key.startsWith('data:')) {
+        return key;
     }
-    // R2 key → public URL
-    return `${R2_PUBLIC_URL}/${key}`;
+    // If public R2 CDN is configured
+    if (R2_PUBLIC_URL) {
+        return `${R2_PUBLIC_URL}/${key}`;
+    }
+    // Default safe internal streaming endpoint
+    return `/api/files/${encodeURI(key)}`;
 }
