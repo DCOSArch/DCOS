@@ -18,13 +18,37 @@
 
 **DentalConnect OS (DCOS 2.0)** is an enterprise-grade clinical operating system and restorative supply-chain network. Built to eliminate the unstructured communication gap between chairside dental operatories and prosthetic milling centers, DCOS replaces lost WhatsApp messages, uncalibrated soft-copies, and silent scan errors with a **mathematically verifiable, bi-temporal, local-first platform**.
 
-From **voice-dictated 6-point periodontal probing** to **autonomous AI insurance prior-authorization** and **progressive WebGL 3D STL/DICOM mesh inspection**, DCOS 2.0 digitizes the entire lifecycle of modern digital dentistry.
+From **voice-dictated 6-point periodontal probing** to **autonomous AI insurance prior-authorization**, **progressive WebGL 3D STL/DICOM mesh inspection**, and **declarative multi-tenant tier enforcement**, DCOS 2.0 digitizes the entire lifecycle of modern digital dentistry.
 
 ---
 
 ## ⚡ Core Capabilities & Platform Tour
 
-### 1. Unified Clinic Live Cockpit & Operatory Control
+### 1. Unified Clinical Cockpit & Full-Width 32-Tooth Odontogram
+The **Unified Clinical Workspace** consolidates patient demographic vitals, full 32-tooth FDI dental charting, clinical SOAP encounter notes, e-prescriptions, itemized ledger billing, and WhatsApp patient automations into an expansive, ergonomic stage.
+
+![Clinical Overview & Full-Width Odontogram](./docs/images/clinical_overview_odontogram.png)
+
+- **Full-Width Interactive Arch**: Massive 32-tooth elliptical stage with zoom, pan, and FDI $\leftrightarrow$ Universal toggling.
+- **6-Column Restorative Palette**: 1-click condition painting (`Carious Cavity`, `Restoration`, `RCT`, `Prosthetic Crown`, `Bridge Pontic`, `Watch/Monitor`, etc.).
+- **Live Bridge Connector Engine**: Drag between adjacent teeth to link multi-unit prosthetic bridges.
+- **SOAP Clinical Encounters**: Chronological records of chief complaints, vitals, and chairside procedure history.
+
+---
+
+### 2. Dedicated Digital Lab Orders & 3D CAD/CAM Workstation
+Provides clinicians and laboratory technicians with a shared, synchronous manufacturing environment.
+
+![Digital Lab Workstation & Order Room](./docs/images/digital_lab_workstation.png)
+
+- **6-Stage CAD/CAM Stepper**: Real-time manufacturing pipeline tracking (`Incoming ➔ Production ➔ QC ➔ Dispatched ➔ Delivered ➔ Completed`).
+- **Interactive 3D WebGL Mesh Viewer**: 360° orbit, zoom, slice cross-sections, spatial annotation pins, and STL download.
+- **Order-Scoped WebSocket Chat**: Direct doctor-to-technician messaging room with automatic lock/unlock lifecycle rules.
+- **Permanent Soft-Copy Archive**: Cloudflare R2-backed permanent storage of milled CAD meshes for lifetime remake warranty.
+
+---
+
+### 3. Unified Clinic Live Cockpit & Operatory Control
 The **Dentist Dashboard** consolidates chairside occupancy, live patient queues, consumable inventory levels, and lab production feeds into a single, high-density HUD.
 
 ![Dentist Live Cockpit](./docs/images/dentist_dashboard.png)
@@ -35,7 +59,7 @@ The **Dentist Dashboard** consolidates chairside occupancy, live patient queues,
 
 ---
 
-### 2. High-Throughput Laboratory Pipeline & Kanban
+### 4. High-Throughput Laboratory Pipeline & Kanban
 The **Laboratory Dashboard** provides prosthetic technicians with a drag-and-drop production pipeline synchronized via Supabase Realtime WebSockets with automatic material allocation.
 
 ![Laboratory Pipeline Dashboard](./docs/images/lab_dashboard.png)
@@ -46,7 +70,7 @@ The **Laboratory Dashboard** provides prosthetic technicians with a drag-and-dro
 
 ---
 
-### 3. Sirona-Style 5-Tab Prescription & Case Handoff
+### 5. Sirona-Style 5-Tab Prescription & Case Handoff
 DCOS enforces a strict 5-stage sequential clinical handoff pipeline modeled after premium CEREC closed-loop workflows.
 
 ![The 3-Step Case Handoff Protocol](./docs/images/scan_to_fit_solution.png)
@@ -60,7 +84,7 @@ DCOS enforces a strict 5-stage sequential clinical handoff pipeline modeled afte
 
 ---
 
-### 4. The Clinical Disconnect (Problem & Resolution Engine)
+### 6. The Clinical Disconnect (Problem & Resolution Engine)
 DCOS actively monitors and prevents the 4 primary friction vectors responsible for clinical remakes and scheduling bottlenecks.
 
 ![Clinical Disconnect Diagnostic Console](./docs/images/clinical_disconnect_problem.png)
@@ -74,7 +98,7 @@ DCOS actively monitors and prevents the 4 primary friction vectors responsible f
 
 ---
 
-### 5. Multi-Tier Commercial Model
+### 7. Multi-Tier Commercial Model & Feature Gating
 Tailored commercial tiers built for solo clinics, multi-operatory centers, high-volume dental milling centers, and multi-location hospital networks.
 
 ![Commercial Pricing Matrix](./docs/images/pricing_matrix.png)
@@ -90,12 +114,13 @@ flowchart TB
         Voice["Web Audio VAD & Voice Engine"]
         WS["WebSocket Hardware Bridge (ws://127.0.0.1:12345)"]
         Three["Three.js 3D LOD Mesh Viewer"]
+        Gate["Declarative <FeatureGate> Engine"]
     end
 
     subgraph EdgeServices["Edge & Security Layer"]
         R2["Cloudflare R2 (Presigned S3 API)"]
         Fidelius["ABDM Fidelius (ECDH Curve25519)"]
-        Auth["Supabase Auth & RLS"]
+        Auth["Supabase Auth, Multi-Tenant RLS & Subscriptions"]
     end
 
     subgraph CoreEngine["DCOS 2.0 Core Event Store"]
@@ -104,36 +129,49 @@ flowchart TB
         Merkle["SHA-256 Merkle Audit Chain"]
         PriorAuth["Autonomous Rules Engine (CDT / ADA)"]
         Scheduler["Dynamic Fatigue Reshaper"]
+        Tenancy["Organization & Membership Scoping"]
     end
 
     UI <--> WS
     UI --> Voice
     UI --> Three
+    UI --> Gate
     UI -->|Presigned Binary PUT| R2
     UI <-->|Realtime WebSocket| Postgres
     Postgres --> EventStore
+    Postgres --> Tenancy
     EventStore --> Merkle
     EventStore --> PriorAuth
     EventStore --> Scheduler
     UI --> Fidelius
 ```
 
-### 1. Bi-Temporal Event Sourcing & Merkle Ledger
+### 1. Multi-Tenancy & Organization Scoping
+- **Tenant Isolation**: Every patient, case, and inventory movement is scoped to an `organization_id` via Postgres Row-Level Security (RLS).
+- **Multi-Doctor Practice Support**: `organization_memberships` allows associate dentists, lab technicians, and clinic receptionists to collaborate securely within a single practice workspace.
+- **Fast Security Evaluation**: `get_auth_organization_ids()` SQL helper evaluates tenant boundaries with zero Cartesian product overhead.
+
+### 2. Tier Enforcement & FeatureGate System
+- **Tier Matrix**: Supports `STARTER` ($0/mo), `PRO_LAB` ($149/mo), and `ENTERPRISE` (Custom).
+- **Declarative Paywalls**: Sensitive tools (e.g. `CBCT DICOM MPR Viewer`, `Exocad CAD Soft-Copy Archiving`, `WhatsApp Automations`) are wrapped with `<FeatureGate feature="..." userTier={...}>`.
+- **Active Quota Tracking**: Dynamic monthly case consumption meters (`7/20 Cases Used`) with automated upgrade modals.
+
+### 3. Bi-Temporal Event Sourcing & Merkle Ledger
 - **Two Time Dimensions**: Tracks *Valid Time* (when the clinical observation occurred) and *Transaction Time* (when the system committed the record).
-- **Cryptographic Audit Chain**: Every aggregate event is linked via a SHA-256 Merkle hash chain anchored to `GENESIS_HASH`. Any historical tampering invalidates the mathematical proof.
+- **Cryptographic Audit Chain**: Every aggregate event is linked via a SHA-256 Merkle hash chain anchored to `GENESIS_HASH`.
 - **Time-Travel Odontogram**: Reconstruct past tooth chart states at any exact second in history for clinical and legal audits.
 
-### 2. ABDM Ecosystem & Fidelius Cryptographic Bridge
+### 4. ABDM Ecosystem & Fidelius Cryptographic Bridge
 - **Milestone 1**: ABHA Number format validation (`91-XXXX-XXXX-XXXX`) and ABHA Address (`name@abdm`) resolution.
 - **Milestone 2**: Automatic Care Context discovery (`ENC-XXXXXX`) mapped to FHIR R5 Patient resources.
 - **Milestone 3**: End-to-end data encryption using **Fidelius (ECDH Curve25519 key exchange + AES-GCM-256)** for sovereign health record transit.
 
-### 3. Ambient Voice & Hardware WebSocket Bridge
+### 5. Ambient Voice & Hardware WebSocket Bridge
 - **Speech VAD Engine**: Energy-based Voice Activity Detection filters out background suction and turbine drill noise.
 - **Grammar Intent Decoder**: Deterministically translates spoken phrases (*"Tooth 36 mesial occlusal composite, 4 millimeters distal probing"*) into structured FHIR observation events.
 - **Local Bridge (`ws://127.0.0.1:12345`)**: Zero-install hardware agent connects intraoral cameras, foot pedals, and DSLR tethering without browser permission barriers.
 
-### 4. CAD/CAM 3D LOD Mesh Engine & Exocad Parser
+### 6. CAD/CAM 3D LOD Mesh Engine & Exocad Parser
 - **4-Tier LOD Pyramid**: Generates coarse to full polygon resolution meshes, achieving **95% vertex reduction** for sub-80ms mobile viewport rendering.
 - **Subgingival Margin Geometry**: 3D Catmull-Rom closed splines analyze margin perimeter and occlusal clearance tolerances in real-time.
 - **Exocad `.constructionInfo` Parser**: Extracts restoration tooth mappings, cement gaps, margin points, and material parameters directly from CAD project XMLs.
@@ -141,8 +179,6 @@ flowchart TB
 ---
 
 ## 📅 Development Timeline & Engineering Journey
-
-The development of DentalConnect OS was executed as a rapid, rigorous sprint across five distinct engineering milestones:
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
@@ -154,37 +190,44 @@ The development of DentalConnect OS was executed as a rapid, rigorous sprint acr
 │ Milestone 2  │ Early July 2026 (July 4–7)    │ Full-Stack Supabase & 5-Tab Pipeline    │
 │ Milestone 3  │ Mid July 2026 (July 8–10)     │ VITA 16-Tile Shading & FDI DentalDB     │
 │ Milestone 4  │ Mid-Late July 2026 (July 13)  │ Cloudflare R2 & Capture Agent Bridge    │
-│ Milestone 5  │ August 2026 (DCOS 2.0)        │ Bi-Temporal Event Store & ABDM Suite    │
+│ Milestone 5  │ Early August 2026             │ Bi-Temporal Event Store & ABDM Suite    │
+│ Milestone 6  │ Mid August 2026 (DCOS 2.0)    │ Unified Workspace & Tier Gating Engine  │
 └──────────────┴───────────────────────────────┴─────────────────────────────────────────┘
 ```
 
 ### 🔹 Milestone 1: Initial Prototype & Concept Formation (Late June 2026)
-- **Concept Validation**: Formulated the initial operational model bridging dental clinics and milling centers based on direct operatory workflow studies.
-- **Frontend Prototype**: Built an interactive client-side application validating tooth selection grids and restorative status cycles.
+- Formulated the initial operational model bridging dental clinics and milling centers based on direct operatory workflow studies.
+- Built client-side application validating tooth selection grids and restorative status cycles.
 
 ### 🔹 Milestone 2: Next.js 16 & Full-Stack Supabase Architecture (July 4–7, 2026)
-- **Full-Stack Architecture**: Migrated to Next.js App Router with Supabase PostgreSQL backend, row-level security (RLS), and real-time WebSocket subscriptions.
-- **Sirona-Style 5-Tab Pipeline**: Replaced generic order forms with a 5-step structured pipeline (Administration ➔ Acquisition ➔ Model Mapping ➔ CAD ➔ CAM) enforcing mandatory "Not Specified" fallbacks.
-- **Real-Time Notification Center**: Embedded Web Audio synth alerts and live production stepper updates.
-- **UPI Intent Mobile Payments**: Implemented deep-linking (`upi://pay`) and dynamic QR invoicing for frictionless material pre-purchases.
+- Migrated to Next.js App Router with Supabase PostgreSQL backend, row-level security (RLS), and real-time WebSocket subscriptions.
+- Sirona-Style 5-Tab Pipeline (Administration ➔ Acquisition ➔ Model Mapping ➔ CAD ➔ CAM) enforcing mandatory "Not Specified" fallbacks.
+- Real-Time Notification Center with Web Audio synth alerts and live production stepper updates.
+- UPI Intent Mobile Payments deep-linking (`upi://pay`) and dynamic QR invoicing.
 
 ### 🔹 Milestone 3: VITA Shading Canvas & FDI DentalDB Odontogram (July 8–10, 2026)
-- **VITA 16-Tile Interactive Shading**: Created a 3-zone custom incisor canvas (Cervical, Body, Incisal) with characterizations and reference photo uploads.
-- **DentalDB Quadrant Matrix**: Built an interactive FDI chart with exocad color codes (Red, Blue, Zinc), implant screw chimney overlays, and bridge connector lines.
-- **Spatial 3D Pin System**: Built Three.js STL viewport with screen-space vector annotation pins.
+- 3-zone custom incisor canvas (Cervical, Body, Incisal) with characterizations and reference photo uploads.
+- Interactive FDI chart with exocad color codes (Red, Blue, Zinc), implant screw chimney overlays, and bridge connector lines.
+- Three.js STL viewport with screen-space vector annotation pins.
 
 ### 🔹 Milestone 4: Cloudflare R2 Migration & Hardware Capture Bridge (July 13, 2026)
-- **Cloudflare R2 Migration**: Migrated all heavy 3D scan and DICOM storage to Cloudflare R2 with presigned S3 PUT endpoints, eliminating data egress fees.
-- **Capture Agent Architecture**: Formulated the local WebSocket companion service (`ws://127.0.0.1:12345`) for zero-permission intraoral camera capture and QR mobile intake.
-- **Relational Schema Hierarchy**: Restructured database into an immutable entity model: `Patient ➔ Appointment ➔ Visit ➔ Treatment ➔ Case`.
+- Migrated all heavy 3D scan and DICOM storage to Cloudflare R2 with presigned S3 PUT endpoints, eliminating data egress fees.
+- Formulated local WebSocket companion service (`ws://127.0.0.1:12345`) for zero-permission intraoral camera capture and QR mobile intake.
+- Restructured database into an immutable entity model: `Patient ➔ Appointment ➔ Visit ➔ Treatment ➔ Case`.
 
-### 🔹 Milestone 5: DCOS 2.0 Quantum Leap (August 2026)
-- **Bi-Temporal Event Store**: Built domain event engine with valid-time/transaction-time dimensions and cryptographic SHA-256 Merkle chain verification.
-- **ABDM Sovereign Health Gateway**: Integrated ABDM Milestones 1, 2, and 3 with Fidelius ECDH Curve25519 + AES-GCM-256 encryption and FHIR R5 compliance.
-- **Ambient Voice Dictation**: Engineered speech VAD and grammar parser mapping spoken dictations directly into 6-point perio charting events.
-- **Progressive 3D LOD & Exocad Bridge**: Built 4-tier progressive LOD decimation and native `.constructionInfo` CAD XML parser.
-- **Autonomous Prior-Auth & Dynamic Scheduler**: Integrated CDT insurance rules adjudication and fatigue-aware queue duration calculation.
-- **Master Verification**: Achieved **100% test passage across 33/33 master backend checks**.
+### 🔹 Milestone 5: Bi-Temporal Event Store & ABDM Sovereign Suite (Early August 2026)
+- Bi-temporal domain event engine with valid-time/transaction-time dimensions and cryptographic SHA-256 Merkle chain verification.
+- Integrated ABDM Milestones 1, 2, and 3 with Fidelius ECDH Curve25519 + AES-GCM-256 encryption and FHIR R5 compliance.
+- Ambient voice dictation speech VAD and grammar parser mapping spoken dictations directly into 6-point perio charting events.
+- Progressive 3D LOD decimation and native `.constructionInfo` CAD XML parser.
+- Autonomous CDT prior-authorization rules engine and fatigue-aware queue duration calculation.
+
+### 🔹 Milestone 6: Unified Clinical Workspace, Multi-Tenancy & Tier Gating (Mid August 2026)
+- **Consolidated Workspace**: Merged `/patients/[id]` and `/cases/[id]` into a unified tabbed clinical workstation.
+- **Full-Width Odontogram**: Eliminated column cramping with an expansive 32-tooth FDI stage and horizontal 6-column diagnosis palette.
+- **Enterprise Multi-Tenancy**: Built `organizations` and `organization_memberships` tables with RLS tenant boundary scoping.
+- **Declarative Tier Gating**: Implemented `<FeatureGate>` and `<UpgradeModal>` protecting CBCT DICOM MPR slices and CAD remake archives.
+- **Master Verification**: Verified 100% test passage across **33/33 master backend checks** and **0 compilation errors across 21 routes**.
 
 ---
 
@@ -216,6 +259,8 @@ The development of DentalConnect OS was executed as a rapid, rigorous sprint acr
 │   │   ├── dental/                # 32-tooth FDI odontogram & 6-point perio matrix
 │   │   ├── inventory/             # Virtual credits & consumable stock manager
 │   │   ├── landing/               # Obsidian glassmorphic marketing portal
+│   │   ├── patient-workspace/     # Unified Clinical & Digital Lab Workstation
+│   │   ├── subscription/          # <FeatureGate> & <UpgradeModal> paywalling components
 │   │   └── viewer/                # Three.js 3D STL & 4-tier DICOM MPR slice viewer
 │   ├── lib/
 │   │   ├── abdm/                  # FHIR R5 schemas, ABHA verification & Fidelius crypto
@@ -227,11 +272,16 @@ The development of DentalConnect OS was executed as a rapid, rigorous sprint acr
 │   │   ├── lod/                   # Progressive 3D LOD pyramid & mesh decimation
 │   │   ├── r2.ts                  # Cloudflare R2 presigned URL helpers
 │   │   ├── scheduling/            # Dynamic fatigue-adjusted queue reshaper
+│   │   ├── subscriptions.ts       # Tier entitlements & quota verification engine
 │   │   ├── supabase/              # Supabase SSR client & middleware
 │   │   └── voice/                 # Speech VAD & clinical dental grammar decoder
 │   ├── mockData.ts                # Mock dataset & seed users
 │   └── types.ts                   # Universal TypeScript interface definitions
 ├── supabase/                      # Database migrations, seed data & SQL triggers
+│   └── migrations/
+│       ├── 20260618120808_init_schema.sql
+│       ├── 20260716000000_add_patients_table.sql
+│       └── 20260815000000_multi_tenancy_and_subscriptions.sql
 └── package.json                   # Dependencies, build scripts & metadata
 ```
 
@@ -243,12 +293,13 @@ The development of DentalConnect OS was executed as a rapid, rigorous sprint acr
 | :--- | :--- |
 | **Frontend Framework** | Next.js 16.2 (Turbopack, App Router, React 19 Server Components) |
 | **Design & Styling** | Tailwind CSS v4, Glassmorphism, CSS 3D Transforms, Monokai Dark HUD |
-| **Database & Auth** | Supabase (PostgreSQL 17), Row-Level Security (RLS), Realtime WebSockets |
+| **Database & Auth** | Supabase (PostgreSQL 17), Multi-Tenant Row-Level Security (RLS), Realtime WebSockets |
 | **Object Storage** | Cloudflare R2 (S3-Compatible, Presigned Uploads, Zero Egress) |
 | **3D Rendering** | Three.js, React Three Fiber (R3F), Drei, Progressive LOD Mesh Engine |
 | **Medical Standards** | HL7 FHIR R5, DICOM MPR (Multi-Planar Reconstruction), FDI 2-Digit Charting |
 | **Sovereign Health** | ABDM (Ayushman Bharat Digital Mission) M1, M2 & M3, Fidelius Encryption |
 | **Hardware & Ambient** | WebSockets (`ws://127.0.0.1:12345`), Web Audio API VAD, Grammar Decoders |
+| **Tier Enforcement** | Declarative `<FeatureGate>`, Quota Metering, Entitlements Matrix |
 | **Testing & Audit** | TypeScript Strict (`npx tsx`), SHA-256 Merkle Ledger, Node Native Crypto |
 
 ---
@@ -284,7 +335,7 @@ npm run dev
 Open [http://localhost:3000](http://localhost:3000) to view the live platform. Quick demo credentials are built into the login portal at [http://localhost:3000/login](http://localhost:3000/login).
 
 ### 5. Execute Backend Master Verification Suite
-Run the 33-step master test harness validating all 4 architectural tiers:
+Run the 33-step master test harness validating all architectural tiers:
 ```bash
 npm run test:backend
 # or
@@ -306,7 +357,7 @@ Output:
 ---
 
 ## 🔒 Security, Compliance & Data Isolation
-- **Row-Level Security (RLS)**: Strict database tenant isolation prevents cross-clinic or cross-lab visibility.
+- **Multi-Tenant Row-Level Security (RLS)**: Strict database tenant isolation prevents cross-clinic or cross-lab visibility.
 - **HIPAA-Compliant Patient Hashing**: Patient identifiers are cryptographically hashed for public 3D previews.
 - **ABDM Fidelius Security**: Encrypted with Curve25519 key pairs and ephemeral AES-GCM session keys.
 - **Ephemeral Transient Tokens**: Intraoral hardware capture and mobile uploads use single-use tokens that expire within minutes.
