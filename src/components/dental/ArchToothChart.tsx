@@ -401,52 +401,13 @@ export function ArchToothChart({
         .arch-ripple { animation: archRipple 0.5s cubic-bezier(0.1,0.8,0.3,1) forwards; }
       `}} />
 
-      {/* Top-left legend */}
-      {!compact && (
-        <div className="absolute top-3 left-3 z-10 bg-slate-900/90 backdrop-blur border border-slate-800 rounded-lg p-2 text-[10px] text-slate-300 space-y-1.5 select-none max-w-[180px] pointer-events-none">
-          <p className="font-bold text-[8px] uppercase tracking-wider text-slate-400 mb-1">Bridge controls</p>
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded bg-[#1e1f1c] border border-slate-500 shrink-0" />
-            <span>Click + to add bridge</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-1.5 bg-[#a6e22e] rounded-full shrink-0" />
-            <span>Active connection</span>
-          </div>
-        </div>
-      )}
-
-      {/* Top-right controls */}
-      <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-slate-900/80 backdrop-blur border border-slate-800 rounded-lg p-1">
-        <button type="button" onClick={() => setZoom(z => Math.min(z + 0.2, 3))} title="Zoom in"
-          className="p-1.5 hover:bg-slate-800 text-slate-300 hover:text-white rounded transition-colors"><Plus className="w-3.5 h-3.5" /></button>
-        <button type="button" onClick={() => setZoom(z => Math.max(z - 0.2, 0.8))} title="Zoom out"
-          className="p-1.5 hover:bg-slate-800 text-slate-300 hover:text-white rounded transition-colors"><Minus className="w-3.5 h-3.5" /></button>
-        <button type="button" onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); panRef.current = { x: 0, y: 0 }; }} title="Reset view"
-          className="p-1.5 hover:bg-slate-800 text-slate-300 hover:text-white rounded transition-colors"><RotateCcw className="w-3.5 h-3.5" /></button>
-        <div className="w-px h-4 bg-slate-800 mx-1" />
-        <button type="button" onClick={() => setIsPanMode(v => !v)} title={isPanMode ? 'Switch to paint mode' : 'Switch to pan mode'}
-          className={`p-1.5 rounded transition-colors ${isPanMode ? 'bg-blue-600 text-white' : 'hover:bg-slate-800 text-slate-300 hover:text-white'}`}><Hand className="w-3.5 h-3.5" /></button>
-        <button type="button" onClick={toggleFullscreen} title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-          className="p-1.5 hover:bg-slate-800 text-slate-300 hover:text-white rounded transition-colors">{isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}</button>
-      </div>
-
-      {/* Bottom-left undo/redo/clear */}
-      {!readOnly && (
-        <div className="absolute bottom-3 left-3 z-10 flex items-center gap-1 bg-slate-900/80 backdrop-blur border border-slate-800 rounded-lg p-1">
-          <button type="button" disabled={historyIndex <= 0} onClick={handleUndo} title="Undo (Ctrl+Z)"
-            className="p-1.5 hover:bg-slate-800 text-slate-300 hover:text-white rounded transition-colors disabled:opacity-40 disabled:hover:bg-transparent"><Undo className="w-3.5 h-3.5" /></button>
-          <button type="button" disabled={historyIndex >= history.length - 1} onClick={handleRedo} title="Redo"
-            className="p-1.5 hover:bg-slate-800 text-slate-300 hover:text-white rounded transition-colors disabled:opacity-40 disabled:hover:bg-transparent"><Redo className="w-3.5 h-3.5" /></button>
-          <div className="w-px h-4 bg-slate-800 mx-1" />
-          <button type="button" onClick={handleClearAll} title="Clear all"
-            className="p-1.5 hover:bg-red-950 hover:text-red-400 text-slate-400 rounded transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
-        </div>
-      )}
-
-      {/* Mode indicator */}
-      <div className="absolute bottom-3 right-3 z-10 text-[10px] text-slate-400 bg-slate-900/70 backdrop-blur px-2.5 py-1 rounded border border-slate-800/60 font-medium">
-        {isPanMode ? 'Pan mode' : isPaintDragging ? `Painting (${paintMode})` : readOnly ? 'Read-only' : `Paint: ${CLINICAL_CONDITIONS[activeIndication].label}`}
+      {/* Active Paint Mode Badge */}
+      <div className="absolute bottom-3 right-3 z-10 text-[10px] text-slate-400 bg-slate-900/80 backdrop-blur px-2.5 py-1 rounded-xl border border-slate-800/80 font-medium flex items-center gap-1.5 shadow-xs">
+        <span
+          className="w-2 h-2 rounded-full shadow-xs"
+          style={{ backgroundColor: isPanMode ? '#3b82f6' : CLINICAL_CONDITIONS[activeIndication].hex }}
+        />
+        <span>{isPanMode ? 'Pan mode' : isPaintDragging ? `Painting (${paintMode})` : readOnly ? 'Read-only' : `Paint: ${CLINICAL_CONDITIONS[activeIndication].label}`}</span>
       </div>
 
       {/* SVG Workspace */}
@@ -603,25 +564,19 @@ export function ArchToothChart({
     </div>
   );
 
-  const paletteSidebar = readOnly ? null : (
-    <div className="space-y-3 pt-3 border-t border-border">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <p className="text-[11px] uppercase font-bold text-muted-foreground tracking-wider flex items-center gap-1.5">
-          <Edit3 className="w-3.5 h-3.5 text-primary" /> Diagnosis & Restorative Condition Palette:
-        </p>
-        {configuredTeeth.length > 0 && (
-          <div className="text-xs text-muted-foreground flex items-center gap-1.5 flex-wrap">
-            <span>Configured teeth ({configuredTeeth.length}):</span>
-            <div className="flex flex-wrap gap-1">
-              {configuredTeeth.map(t => (
-                <span key={t} className="px-1.5 py-0.5 rounded bg-primary/10 border border-primary/20 text-primary font-bold text-[10px]">#{displayNum(t)}</span>
-              ))}
-            </div>
-          </div>
-        )}
+  // Left vertical diagnosis palette
+  const leftPalette = readOnly ? null : (
+    <div className="w-full lg:w-60 shrink-0 flex flex-col gap-2 p-3 bg-slate-900/60 backdrop-blur-md rounded-2xl border border-slate-800/80 shadow-xs">
+      <div className="flex items-center justify-between px-1 pb-1.5 border-b border-slate-800/60">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+          Diagnosis Palette
+        </span>
+        <span className="text-[10px] text-slate-400">
+          {CLINICAL_CONDITIONS[activeIndication].label}
+        </span>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+      <div className="flex flex-col gap-1.5 max-h-[640px] overflow-y-auto pr-0.5 custom-scrollbar">
         {(Object.keys(CLINICAL_CONDITIONS) as ToothCondition[])
           .filter(k => k !== 'healthy')
           .map(key => {
@@ -632,30 +587,177 @@ export function ArchToothChart({
                 key={key}
                 type="button"
                 onClick={() => setActiveIndication(key)}
-                className={`text-left px-2.5 py-2 rounded-xl border text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+                className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-between transition-all cursor-pointer border ${
                   isSelected
-                    ? 'border-primary bg-primary/15 text-foreground shadow-xs ring-1 ring-primary'
-                    : 'border-border bg-muted/40 hover:bg-muted text-foreground'
+                    ? 'border-primary bg-primary/20 text-white shadow-[0_0_12px_rgba(var(--primary-rgb),0.2)] ring-1 ring-primary'
+                    : 'border-slate-800/60 bg-slate-950/40 hover:bg-slate-800/60 text-slate-300 hover:text-white'
                 }`}
                 title={info.description}
               >
-                <span className="w-3 h-3 rounded-full border border-black/20 shrink-0 shadow-xs" style={{ backgroundColor: info.hex }} />
-                <span className="truncate">{info.label}</span>
+                <div className="flex items-center gap-2.5 truncate min-w-0">
+                  <span
+                    className="w-3 h-3 rounded-full border border-black/30 shrink-0 shadow-xs"
+                    style={{ backgroundColor: info.hex }}
+                  />
+                  <span className="truncate">{info.label}</span>
+                </div>
+                {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0 animate-pulse" />}
               </button>
             );
           })}
       </div>
+    </div>
+  );
 
-      <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1">
-        <span className="flex items-center gap-1.5">
-          💡 <strong>Pro Tips:</strong> Click any tooth to paint &bull; Double-click for SOAP clinical notes &bull; Drag between teeth for bridges
-        </span>
+  // Right vertical action and operatory controls rail
+  const rightControls = (
+    <div className="w-full lg:w-56 shrink-0 flex flex-col gap-3 p-3 bg-slate-900/60 backdrop-blur-md rounded-2xl border border-slate-800/80 shadow-xs text-xs">
+      {/* Notation System Switch */}
+      <div className="space-y-1.5">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-1">Notation System</span>
+        <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-950/60 p-1 border border-slate-800/60">
+          <button
+            type="button"
+            onClick={() => setSystem('FDI')}
+            className={`py-1.5 rounded-lg text-xs font-bold transition-all ${
+              system === 'FDI' ? 'bg-primary text-primary-foreground shadow-xs' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            FDI
+          </button>
+          <button
+            type="button"
+            onClick={() => setSystem('UNIVERSAL')}
+            className={`py-1.5 rounded-lg text-xs font-bold transition-all ${
+              system === 'UNIVERSAL' ? 'bg-primary text-primary-foreground shadow-xs' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Universal
+          </button>
+        </div>
+      </div>
+
+      {/* Viewport Controls */}
+      <div className="space-y-1.5">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-1">Canvas & Pan</span>
+        <div className="grid grid-cols-4 gap-1">
+          <button
+            type="button"
+            onClick={() => setZoom(z => Math.min(z + 0.2, 3))}
+            title="Zoom in"
+            className="p-2 rounded-xl bg-slate-950/60 hover:bg-slate-800 border border-slate-800/60 text-slate-300 hover:text-white flex items-center justify-center transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setZoom(z => Math.max(z - 0.2, 0.8))}
+            title="Zoom out"
+            className="p-2 rounded-xl bg-slate-950/60 hover:bg-slate-800 border border-slate-800/60 text-slate-300 hover:text-white flex items-center justify-center transition-colors"
+          >
+            <Minus className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); panRef.current = { x: 0, y: 0 }; }}
+            title="Reset view (1:1)"
+            className="p-2 rounded-xl bg-slate-950/60 hover:bg-slate-800 border border-slate-800/60 text-slate-300 hover:text-white flex items-center justify-center transition-colors"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsPanMode(v => !v)}
+            title={isPanMode ? 'Switch to paint mode' : 'Switch to pan mode'}
+            className={`p-2 rounded-xl border flex items-center justify-center transition-colors ${
+              isPanMode
+                ? 'bg-blue-600 border-blue-500 text-white shadow-[0_0_8px_rgba(59,130,246,0.5)]'
+                : 'bg-slate-950/60 hover:bg-slate-800 border-slate-800/60 text-slate-300 hover:text-white'
+            }`}
+          >
+            <Hand className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+
+      {/* History & Edit Actions */}
+      {!readOnly && (
+        <div className="space-y-1.5">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-1">History & Reset</span>
+          <div className="grid grid-cols-3 gap-1">
+            <button
+              type="button"
+              disabled={historyIndex <= 0}
+              onClick={handleUndo}
+              title="Undo (Ctrl+Z)"
+              className="p-2 rounded-xl bg-slate-950/60 hover:bg-slate-800 border border-slate-800/60 text-slate-300 hover:text-white flex items-center justify-center transition-colors disabled:opacity-30 disabled:hover:bg-slate-950/60"
+            >
+              <Undo className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              disabled={historyIndex >= history.length - 1}
+              onClick={handleRedo}
+              title="Redo"
+              className="p-2 rounded-xl bg-slate-950/60 hover:bg-slate-800 border border-slate-800/60 text-slate-300 hover:text-white flex items-center justify-center transition-colors disabled:opacity-30 disabled:hover:bg-slate-950/60"
+            >
+              <Redo className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={handleClearAll}
+              title="Clear entire chart"
+              className="p-2 rounded-xl bg-slate-950/60 hover:bg-red-950/80 border border-slate-800/60 text-slate-400 hover:text-red-400 flex items-center justify-center transition-colors"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Fullscreen Button */}
+      <button
+        type="button"
+        onClick={toggleFullscreen}
+        className="w-full py-2 px-3 rounded-xl bg-slate-950/60 hover:bg-slate-800 border border-slate-800/60 text-slate-300 hover:text-white font-semibold flex items-center justify-center gap-2 transition-colors"
+      >
+        {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+        <span>{isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}</span>
+      </button>
+
+      {/* Configured Teeth Summary */}
+      {configuredTeeth.length > 0 && (
+        <div className="space-y-1.5 pt-1 border-t border-slate-800/60">
+          <div className="flex items-center justify-between px-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Diagnosed</span>
+            <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-primary/40 text-primary">
+              {configuredTeeth.length}
+            </Badge>
+          </div>
+          <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto pr-0.5 custom-scrollbar">
+            {configuredTeeth.map(t => (
+              <span
+                key={t}
+                onClick={() => onToothSelect?.(t)}
+                className="px-1.5 py-0.5 rounded-md bg-primary/10 border border-primary/25 text-primary font-mono font-bold text-[10px] cursor-pointer hover:bg-primary/25 transition-colors"
+              >
+                #{displayNum(t)}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Bridge Helper */}
+      <div className="p-2 rounded-xl bg-slate-950/40 border border-slate-800/40 text-[10px] text-slate-400 space-y-1">
+        <p className="font-bold text-[9px] uppercase tracking-wider text-slate-400">Bridge Tool</p>
+        <p className="leading-tight text-slate-400">Click &apos;+&apos; between teeth to create bridge pontic.</p>
       </div>
     </div>
   );
 
   return (
-    <Card ref={cardRef} className={`w-full border-border bg-card text-card-foreground shadow-xs overflow-hidden ${isFullscreen ? 'rounded-none' : ''}`}>
+    <Card ref={cardRef} className={`w-full border-border bg-card text-card-foreground shadow-xs overflow-hidden ${isFullscreen ? 'rounded-none h-screen flex flex-col' : ''}`}>
       <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-border gap-3 bg-muted/20">
         <div className="min-w-0">
           <CardTitle className="text-base sm:text-lg font-bold flex items-center gap-2 text-foreground">
@@ -664,22 +766,22 @@ export function ArchToothChart({
           </CardTitle>
           <CardDescription className="text-xs text-muted-foreground mt-0.5">{description}</CardDescription>
         </div>
-
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="flex rounded-lg border border-border bg-muted/60 p-0.5 text-xs">
-            <button type="button" onClick={() => setSystem('FDI')}
-              className={`px-3 py-1 rounded-md font-semibold transition-all ${system === 'FDI' ? 'bg-primary text-primary-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground'}`}>FDI</button>
-            <button type="button" onClick={() => setSystem('UNIVERSAL')}
-              className={`px-3 py-1 rounded-md font-semibold transition-all ${system === 'UNIVERSAL' ? 'bg-primary text-primary-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground'}`}>Universal</button>
-          </div>
-        </div>
       </CardHeader>
 
-      <CardContent className="p-4 sm:p-6 space-y-4">
-        <div className="w-full flex justify-center">
-          {chart}
+      <CardContent className={`p-4 sm:p-5 ${isFullscreen ? 'flex-1 overflow-hidden' : ''}`}>
+        {/* Modern 3-Column Vertical Flanking Layout */}
+        <div className="flex flex-col lg:flex-row items-start justify-center gap-4 w-full">
+          {/* Left: Vertical Diagnosis Palette */}
+          {leftPalette}
+
+          {/* Center: Expansive Dental Arch Canvas */}
+          <div className="flex-1 w-full min-w-0 flex items-center justify-center">
+            {chart}
+          </div>
+
+          {/* Right: Vertical Controls, Tools & History */}
+          {rightControls}
         </div>
-        {paletteSidebar}
       </CardContent>
 
       {/* Tooth details modal */}
