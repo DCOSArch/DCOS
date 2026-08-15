@@ -7,6 +7,7 @@ import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import * as THREE from 'three';
 import { CheckCircle2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 class ErrorBoundary extends React.Component<{ fallback: React.ReactNode; children: React.ReactNode }, { hasError: boolean }> {
   constructor(props: { fallback: React.ReactNode; children: React.ReactNode }) {
@@ -59,37 +60,16 @@ const offsetPosition = (
 };
 
 /**
- * ProceduralDentalArchModel — Anatomical 3D Maxillary Dental Arch
- * Configures 16 distinct tooth models with FDI numbering, restorative materials,
- * subgingival margins, and occlusal clearance heatmaps.
+ * SculptedAnatomicalCrown — High-fidelity procedural 3D crown restoration
+ * sculpted with anatomical cusps, developmental grooves, subgingival chamfer margin,
+ * and preparation die core.
  */
-const ARCH_TEETH = [
-  { fdi: 18, type: 'molar', x: -24, z: -16, rotY: 0.35, scale: [3.8, 4.2, 3.8] },
-  { fdi: 17, type: 'molar', x: -21, z: -7, rotY: 0.25, scale: [4.0, 4.4, 4.0] },
-  { fdi: 16, type: 'molar', x: -18, z: 2, rotY: 0.15, scale: [4.2, 4.6, 4.2] },
-  { fdi: 15, type: 'premolar', x: -14.5, z: 10, rotY: 0.05, scale: [3.2, 4.0, 3.2] },
-  { fdi: 14, type: 'premolar', x: -11, z: 17, rotY: -0.1, scale: [3.2, 4.0, 3.2] },
-  { fdi: 13, type: 'canine', x: -7, z: 22.5, rotY: -0.3, scale: [3.0, 4.8, 3.0] },
-  { fdi: 12, type: 'incisor', x: -3.2, z: 25.5, rotY: -0.45, scale: [2.8, 4.5, 2.2] },
-  { fdi: 11, type: 'incisor', x: 0, z: 26.5, rotY: 0, scale: [3.4, 5.0, 2.4] },
-  { fdi: 21, type: 'incisor', x: 3.2, z: 25.5, rotY: 0.45, scale: [3.4, 5.0, 2.4] },
-  { fdi: 22, type: 'incisor', x: 7, z: 22.5, rotY: 0.3, scale: [2.8, 4.5, 2.2] },
-  { fdi: 23, type: 'canine', x: 11, z: 17, rotY: 0.1, scale: [3.0, 4.8, 3.0] },
-  { fdi: 24, type: 'premolar', x: 14.5, z: 10, rotY: -0.05, scale: [3.2, 4.0, 3.2] },
-  { fdi: 25, type: 'premolar', x: 18, z: 2, rotY: -0.15, scale: [3.2, 4.0, 3.2] },
-  { fdi: 26, type: 'molar', x: 21, z: -7, rotY: -0.25, scale: [4.2, 4.6, 4.2] },
-  { fdi: 27, type: 'molar', x: 24, z: -16, rotY: -0.35, scale: [4.0, 4.4, 4.0] },
-  { fdi: 28, type: 'molar', x: 26.5, z: -25, rotY: -0.45, scale: [3.8, 4.2, 3.8] },
-];
-
-export const ProceduralDentalArchModel = React.memo(({ 
-  selectedTeeth = [], 
-  material = 'Zirconia HT', 
+const SculptedAnatomicalCrown = React.memo(({
+  material = 'Titanium Abutment',
   activeViewportMode = 'ANATOMY',
-  onMeshClick 
-}: { 
-  selectedTeeth?: number[]; 
-  material?: string; 
+  onMeshClick
+}: {
+  material?: string;
   activeViewportMode?: 'ANATOMY' | 'OCCLUSION_HEATMAP' | 'WIREFRAME';
   onMeshClick?: (e: any) => void;
 }) => {
@@ -97,97 +77,129 @@ export const ProceduralDentalArchModel = React.memo(({
   const isWireframe = activeViewportMode === 'WIREFRAME';
   const isHeatmap = activeViewportMode === 'OCCLUSION_HEATMAP';
 
-  return (
-    <group position={[0, -2, 0]} rotation={[-0.4, 0, 0]}>
-      {/* 1. Realistic Gingival Base Arch Tissue */}
-      <mesh position={[0, -3.5, 5]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[14, 32, 48, 8, 0, Math.PI]} />
-        <meshStandardMaterial
-          color="#c2636f"
-          roughness={0.65}
-          metalness={0.05}
-          side={THREE.DoubleSide}
-          wireframe={isWireframe}
-        />
-      </mesh>
+  // 1. Generate smooth anatomical crown geometry with sculpted cusps & grooves
+  const crownGeometry = useMemo(() => {
+    const geo = new THREE.CylinderGeometry(13.5, 12.0, 16.0, 48, 32, false);
+    const pos = geo.attributes.position;
+    const colors: number[] = [];
 
-      {/* 2. 16 Anatomical Dental Units */}
-      {ARCH_TEETH.map((tooth) => {
-        // Check if this tooth is part of the case prescription
-        const isSelected = selectedTeeth.includes(tooth.fdi) || selectedTeeth.includes(tooth.fdi + 20);
+    for (let i = 0; i < pos.count; i++) {
+      let x = pos.getX(i);
+      let y = pos.getY(i);
+      let z = pos.getZ(i);
 
-        // Restoration vs Natural Shade Colors
-        let toothColor = '#fcf8ee'; // Natural ivory enamel
-        let metalness = 0.08;
-        let roughness = 0.22;
+      // Anatomical occlusal surface sculpting (top cap & upper crown)
+      if (y > 2.0) {
+        const radius = Math.sqrt(x * x + z * z);
+        const angle = Math.atan2(z, x);
 
-        if (isSelected) {
-          if (isHeatmap) {
-            toothColor = tooth.type === 'molar' ? '#eab308' : tooth.type === 'canine' ? '#ef4444' : '#22c55e';
-          } else if (isTitanium) {
-            toothColor = '#cbd5e1'; // Titanium gray
-            metalness = 0.85;
-            roughness = 0.18;
+        // 4 Anatomical cusps: MB, DB, ML, DL
+        const cuspWave = Math.sin(angle * 2.0) * 2.8 + Math.cos(angle * 4.0) * 0.8;
+        // Central fossa depression
+        const fossaDepth = radius < 6.5 ? -2.2 * (1.0 - radius / 6.5) : 0;
+        // Marginal ridge crest
+        const ridgeElevation = (radius > 7.0 && radius < 11.5) ? 1.2 : 0;
+
+        const deltaY = (cuspWave + fossaDepth + ridgeElevation) * ((y - 2.0) / 6.0);
+        y += deltaY;
+        pos.setY(i, y);
+
+        // Heatmap vertex coloring
+        if (isHeatmap) {
+          if (deltaY > 1.2) {
+            colors.push(0.95, 0.2, 0.2); // Red: High occlusal contact / <0.5mm clearance
+          } else if (deltaY > 0.3) {
+            colors.push(0.95, 0.7, 0.1); // Amber: 1.0mm clearance
           } else {
-            toothColor = '#fef3c7'; // Translucent Zirconia
-            metalness = 0.12;
-            roughness = 0.15;
+            colors.push(0.15, 0.8, 0.35); // Green: >1.5mm safe clearance
           }
-        } else if (isHeatmap) {
-          toothColor = '#22c55e'; // Safe green clearance
+        }
+      } else {
+        // Lateral axial walls with natural buccal/lingual contour belly
+        const bellyFactor = Math.sin(((y + 8.0) / 10.0) * Math.PI) * 1.2;
+        const norm = Math.sqrt(x * x + z * z);
+        if (norm > 0.001) {
+          x += (x / norm) * bellyFactor;
+          z += (z / norm) * bellyFactor;
+          pos.setX(i, x);
+          pos.setZ(i, z);
         }
 
-        return (
-          <group key={tooth.fdi} position={[tooth.x, 0, tooth.z]} rotation={[0, tooth.rotY, 0]}>
-            {/* Tooth Crown Geometry */}
-            <mesh onClick={onMeshClick}>
-              {tooth.type === 'molar' ? (
-                <cylinderGeometry args={[tooth.scale[0] * 1.1, tooth.scale[0] * 0.9, tooth.scale[1], 24]} />
-              ) : tooth.type === 'premolar' ? (
-                <cylinderGeometry args={[tooth.scale[0], tooth.scale[0] * 0.85, tooth.scale[1], 20]} />
-              ) : tooth.type === 'canine' ? (
-                <coneGeometry args={[tooth.scale[0] * 1.05, tooth.scale[1] * 1.2, 20]} />
-              ) : (
-                <boxGeometry args={[tooth.scale[0] * 1.2, tooth.scale[1] * 1.1, tooth.scale[2] * 0.7]} />
-              )}
+        if (isHeatmap) {
+          colors.push(0.15, 0.8, 0.35); // Green on axial walls
+        }
+      }
+    }
 
-              <meshStandardMaterial
-                color={toothColor}
-                metalness={metalness}
-                roughness={roughness}
-                wireframe={isWireframe}
-                side={THREE.DoubleSide}
-              />
-            </mesh>
+    geo.computeVertexNormals();
 
-            {/* If Selected: Render Subgingival Finish Line Ring / Scanbody */}
-            {isSelected && (
-              <>
-                <mesh position={[0, -tooth.scale[1] / 2 - 0.2, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-                  <torusGeometry args={[tooth.scale[0] * 1.05, 0.2, 16, 32]} />
-                  <meshStandardMaterial color="#38bdf8" roughness={0.2} metalness={0.9} />
-                </mesh>
+    if (isHeatmap && colors.length === pos.count * 3) {
+      geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    }
 
-                {/* Floating 3D FDI Badge */}
-                <Billboard position={[0, tooth.scale[1] / 2 + 3.5, 0]}>
-                  <Text
-                    fontSize={1.8}
-                    color="#38bdf8"
-                    anchorX="center"
-                    anchorY="middle"
-                  >
-                    #{tooth.fdi}
-                  </Text>
-                </Billboard>
-              </>
-            )}
-          </group>
-        );
-      })}
+    return geo;
+  }, [isHeatmap]);
+
+  // 2. Anatomical Subgingival Chamfer Margin Curve
+  const marginRingGeo = useMemo(() => {
+    return new THREE.TorusGeometry(12.3, 0.35, 16, 64);
+  }, []);
+
+  // 3. Internal Preparation Die Stump
+  const dieGeo = useMemo(() => {
+    return new THREE.CylinderGeometry(8.5, 11.2, 12.0, 32, 16);
+  }, []);
+
+  return (
+    <group position={[0, -1, 0]} rotation={[0.25, 0.4, 0]}>
+      {/* Primary Restorative Crown Body */}
+      <mesh geometry={crownGeometry} onClick={onMeshClick}>
+        {isHeatmap ? (
+          <meshStandardMaterial
+            vertexColors
+            roughness={0.3}
+            metalness={0.1}
+            wireframe={isWireframe}
+            side={THREE.DoubleSide}
+          />
+        ) : isTitanium ? (
+          <meshStandardMaterial
+            color="#cbd5e1"
+            roughness={0.18}
+            metalness={0.88}
+            wireframe={isWireframe}
+            side={THREE.DoubleSide}
+          />
+        ) : (
+          <meshStandardMaterial
+            color="#faf5ea"
+            roughness={0.15}
+            metalness={0.06}
+            wireframe={isWireframe}
+            side={THREE.DoubleSide}
+          />
+        )}
+      </mesh>
+
+      {/* Blue Subgingival Chamfer Finish Line Margin Ring */}
+      <mesh position={[0, -8.0, 0]} rotation={[-Math.PI / 2, 0, 0]} geometry={marginRingGeo}>
+        <meshStandardMaterial color="#0284c7" roughness={0.2} metalness={0.9} />
+      </mesh>
+
+      {/* Titanium Abutment Collar / Implant Interface */}
+      <mesh position={[0, -11.0, 0]}>
+        <cylinderGeometry args={[7.2, 7.2, 5.0, 6]} />
+        <meshStandardMaterial color="#94a3b8" roughness={0.15} metalness={0.92} />
+      </mesh>
+
+      {/* Internal Preparation Stump Core */}
+      <mesh position={[0, -5.0, 0]} geometry={dieGeo}>
+        <meshStandardMaterial color="#e2e8f0" roughness={0.4} metalness={0.1} transparent opacity={0.35} />
+      </mesh>
     </group>
   );
 });
-ProceduralDentalArchModel.displayName = 'ProceduralDentalArchModel';
+SculptedAnatomicalCrown.displayName = 'SculptedAnatomicalCrown';
 
 const STLModel = React.memo(({ url, onMeshClick }: { url: string; onMeshClick: (e: any) => void }) => {
   const geometry = useLoader(STLLoader, url);
@@ -355,35 +367,46 @@ export default function ThreeDViewerInner({
   const activeAnnotations = useMemo(() => annotations.filter((a) => !a.isResolved), [annotations]);
 
   return (
-    <div className="w-full h-full relative bg-slate-950 select-none">
-      {/* Upload STL & Add pin buttons */}
+    <div 
+      className="w-full h-full relative bg-slate-950 select-none"
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={(e) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files?.[0];
+        if (file && (file.name.endsWith('.stl') || file.name.endsWith('.ply'))) {
+          setActiveUrl(URL.createObjectURL(file));
+          toast.success(`Loaded scan: ${file.name}`);
+        }
+      }}
+    >
+      {/* Sleek Floating Action Tools (Bottom-Right to avoid header HUD collision) */}
       {!isReadOnly && (
-        <div className="absolute top-4 left-4 z-10 flex gap-2">
-          <label className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900/90 hover:bg-slate-800 text-slate-200 border border-slate-700 rounded-md cursor-pointer text-xs font-semibold shadow-md transition-colors">
-            <Upload className="w-4 h-4" />
-            <span className="hidden sm:inline">Load STL</span>
-            <input type="file" accept=".stl" className="hidden" onChange={handleFileUpload} />
+        <div className="absolute bottom-4 right-4 z-10 flex items-center gap-2">
+          <label className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900/90 hover:bg-slate-800 text-slate-200 border border-slate-700/80 rounded-xl cursor-pointer text-xs font-semibold shadow-lg backdrop-blur-md transition-all hover:scale-[1.02]">
+            <Upload className="w-3.5 h-3.5 text-primary" />
+            <span>Load STL / PLY</span>
+            <input type="file" accept=".stl,.ply" className="hidden" onChange={handleFileUpload} />
           </label>
           <Button
             variant={isAddingMode ? 'destructive' : 'secondary'}
             size="sm"
             onClick={() => { setIsAddingMode(!isAddingMode); setTempPin(null); }}
-            className="shadow-md transition-colors text-xs h-8"
+            className="shadow-lg backdrop-blur-md transition-all hover:scale-[1.02] text-xs h-8 rounded-xl px-3 font-semibold"
           >
-            {isAddingMode ? 'Cancel Pin' : 'Drop Annotation Pin'}
+            {isAddingMode ? 'Cancel Pin' : 'Drop Pin'}
           </Button>
         </div>
       )}
 
       {/* Annotation list overlay */}
       {activeAnnotations.length > 0 && (
-        <div className="absolute bottom-4 left-4 z-10 max-h-[200px] overflow-y-auto">
-          <div className="bg-slate-900/90 backdrop-blur border border-slate-800 rounded-lg p-2 space-y-1 min-w-[180px]">
+        <div className="absolute bottom-16 left-4 z-10 max-h-[200px] overflow-y-auto">
+          <div className="bg-slate-900/90 backdrop-blur border border-slate-800 rounded-xl p-2 space-y-1 min-w-[180px] shadow-xl">
             <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider px-1">Annotations</p>
             {activeAnnotations.map(anno => (
               <div
                 key={anno.id}
-                className={`flex items-center gap-2 px-2 py-1.5 rounded text-xs cursor-pointer transition-colors ${
+                className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs cursor-pointer transition-colors ${
                   selectedAnnoId === anno.id
                     ? 'bg-blue-600/20 text-blue-300'
                     : 'text-slate-300 hover:bg-slate-800'
@@ -409,13 +432,12 @@ export default function ThreeDViewerInner({
       {activeUrl ? (
         <>
           <ErrorBoundary fallback={
-            <Canvas camera={{ position: [0, 18, 55], fov: 45 }}>
-              <ambientLight intensity={0.85} />
-              <directionalLight position={[15, 25, 15]} intensity={1.1} />
-              <directionalLight position={[-15, -10, -15]} intensity={0.4} />
+            <Canvas camera={{ position: [0, 8, 38], fov: 42 }}>
+              <ambientLight intensity={0.9} />
+              <directionalLight position={[15, 25, 15]} intensity={1.2} />
+              <directionalLight position={[-15, -10, -15]} intensity={0.5} />
               <Center>
-                <ProceduralDentalArchModel
-                  selectedTeeth={selectedTeeth}
+                <SculptedAnatomicalCrown
                   material={material}
                   activeViewportMode={activeViewportMode}
                 />
@@ -503,13 +525,12 @@ export default function ThreeDViewerInner({
           <Loader />
         </>
       ) : (
-        <Canvas camera={{ position: [0, 20, 60], fov: 45 }}>
-          <ambientLight intensity={0.85} />
-          <directionalLight position={[15, 25, 15]} intensity={1.1} />
-          <directionalLight position={[-15, -10, -15]} intensity={0.4} />
+        <Canvas camera={{ position: [0, 8, 38], fov: 42 }}>
+          <ambientLight intensity={0.9} />
+          <directionalLight position={[15, 25, 15]} intensity={1.2} />
+          <directionalLight position={[-15, -10, -15]} intensity={0.5} />
           <Center>
-            <ProceduralDentalArchModel
-              selectedTeeth={selectedTeeth}
+            <SculptedAnatomicalCrown
               material={material}
               activeViewportMode={activeViewportMode}
             />
@@ -519,8 +540,8 @@ export default function ThreeDViewerInner({
             enableDamping 
             dampingFactor={0.08} 
             rotateSpeed={0.8}
-            minDistance={20}
-            maxDistance={120}
+            minDistance={15}
+            maxDistance={80}
           />
         </Canvas>
       )}
