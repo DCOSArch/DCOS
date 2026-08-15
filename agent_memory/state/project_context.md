@@ -1,3 +1,7 @@
+---
+tags: [dcos, memory, state]
+---
+
 # Global Project Context
 
 ## User Profile System

@@ -1,8 +1,11 @@
+---
+tags: [dcos, product, docs]
+---
 # DentalConnect OS — Complete Product Analysis
 
-> **Document generated:** July 4, 2026
-> **Codebase name:** `DCOSArch/DCOS`
-> **Repository root:** `c:\Users\bentn\OneDrive\Desktop\DEs`
+> Related: [[CLAUDE]] · [[design]] · [[codebase_audit]]
+
+**Document generated:** July 4, 2026 **Codebase name:** `DCOSArch/DCOS`**Repository root:** `c:\Users\bentn\OneDrive\Desktop\DEs`
 
 ---
 
@@ -19,6 +22,7 @@ The product is built with **Next.js 16** (App Router), **Supabase** (Postgres + 
 ### 2.1 The Problem
 
 The dental laboratory workflow is still largely manual and fragmented:
+
 - Dentists ship physical impressions or email STL files to labs with no structured tracking.
 - Labs manage production on whiteboards or spreadsheets with no visibility for the prescribing dentist.
 - Communication happens over untracked WhatsApp/email threads.
@@ -30,10 +34,10 @@ The dental laboratory workflow is still largely manual and fragmented:
 DentalConnect OS acts as a **shared digital workspace** between dental clinics and laboratories:
 
 | Stakeholder | Value Proposition |
-|---|---|
+| --- | --- |
 | **Dentists** | Submit digital prescriptions (Rx), upload 3D scans, track case status in real-time, manage pre-purchased material inventory, share design previews with patients. |
 | **Laboratories** | Receive structured digital orders, manage production via a Kanban board, auto-sync inventory with case production, communicate with dentists via contextual per-order chat. |
-| **Patients** | View a HIPAA-compliant, read-only 3D preview of their proposed smile design via a shareable link (B2B2C). |
+| **Patients** | View a GPDP-compliant, read-only 3D preview of their proposed smile design via a shareable link (B2B2C). |
 
 ### 2.3 Core Differentiators
 
@@ -48,7 +52,7 @@ DentalConnect OS acts as a **shared digital workspace** between dental clinics a
 ## 3. Technology Stack
 
 | Layer | Technology | Notes |
-|---|---|---|
+| --- | --- | --- |
 | **Framework** | Next.js 16.2.9 (App Router) | Server Components, Server Actions, React 19 |
 | **Language** | TypeScript 5 | Strict typing via `src/types.ts` |
 | **Styling** | Tailwind CSS v4 | `@tailwindcss/postcss`, `@theme inline` tokens |
@@ -329,7 +333,7 @@ erDiagram
 The system uses **three key Postgres triggers** for automation:
 
 | Trigger | Event | Action |
-|---|---|---|
+| --- | --- | --- |
 | `on_auth_user_created` | `AFTER INSERT ON auth.users` | Auto-creates a `public.users` profile from signup metadata. If `LAB_ADMIN`, also creates a `lab_profiles` row. |
 | `on_case_created_create_chat` | `AFTER INSERT ON public.cases` | Auto-creates an `order_chats` row for every new case, enabling the per-order chat channel. |
 | `trigger_deduct_inventory` | `AFTER INSERT ON public.cases` | Auto-deducts 1 unit from `doctor_inventory` matching `dentist_id`, `lab_id`, and `material`. |
@@ -349,6 +353,7 @@ RLS is enabled on **all tables**. Key policies:
 ### 5.4 Realtime Subscriptions
 
 Tables published via `supabase_realtime`:
+
 - `chat_messages` — live message delivery
 - `timeline_events` — live timeline updates
 - `cases` — live Kanban card movement (subscribed per-dashboard)
@@ -371,9 +376,10 @@ Tables published via `supabase_realtime`:
 
 ### 6.2 Role-Based Dashboard Routing
 
-**File:** [page.tsx (dashboard root)](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/app/(dashboard)/page.tsx)
+**File:** [page.tsx (dashboard root)](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/app/\(dashboard\)/page.tsx)
 
 The dashboard root is a **server component** that:
+
 1. Fetches the authenticated user's profile.
 2. Checks `userProfile.role`.
 3. Renders `<DentistDashboard>` or `<LabDashboard>` accordingly.
@@ -386,22 +392,26 @@ The dashboard root is a **server component** that:
 **File:** [DentistDashboard.tsx](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/components/dashboards/DentistDashboard.tsx) (509 lines)
 
 #### Summary Cards
+
 - **Cases Breakdown** — Recharts donut chart showing Pending / Active / Completed distribution.
 - **Active Cases** — Count of non-delivered cases.
 - **Completed** — Count of delivered cases this month.
 - **Action Required** — Notification card for cases needing dentist attention.
 
 #### Virtual Inventory Panel
+
 - Displays `doctor_inventory` items (bulk-purchased materials from labs).
 - Each card shows material name, partner lab, locked price per unit, and a progress bar of remaining vs. total units.
-- Color-coded: green > 50%, amber 20-50%, red < 20%.
+- Color-coded: green &gt; 50%, amber 20-50%, red &lt; 20%.
 
 #### Cases Table
+
 - Filterable by status (`ALL`, `PENDING`, `IN_PROGRESS`, `QUALITY_CHECK`, `DISPATCHED`, `DELIVERED`).
 - Each row shows Case ID (mono), Patient, Treatment, Due Date, Status badge, Urgency indicator.
 - "View" button navigates to `/cases/[id]`.
 
 #### Create New Case (FAB + Dialog)
+
 - Floating Action Button (bottom-right) opens a modal.
 - Fields: Patient Name, Assign to Laboratory (dropdown from `lab_profiles`), Treatment Type, Urgency, STL/PLY file upload.
 - File upload flow:
@@ -413,6 +423,7 @@ The dashboard root is a **server component** that:
 - Pre-flight warning state available for scan validation results.
 
 #### Realtime
+
 - Subscribes to `postgres_changes` on `cases` table filtered by `dentist_id`.
 - Calls `router.refresh()` on any change to trigger server-side re-fetch.
 
@@ -423,10 +434,11 @@ The dashboard root is a **server component** that:
 **File:** [LabDashboard.tsx](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/components/dashboards/LabDashboard.tsx) (305 lines)
 
 #### Kanban Board
+
 Four columns representing the production pipeline:
 
 | Column | Status | Description |
-|---|---|---|
+| --- | --- | --- |
 | **Incoming** | `PENDING` | Newly received case prescriptions |
 | **In Production** | `IN_PROGRESS` | Cases being fabricated |
 | **QC & Finishing** | `QUALITY_CHECK` | Quality control inspection |
@@ -437,17 +449,21 @@ Four columns representing the production pipeline:
 - Clicking a card navigates to `/cases/[id]`.
 
 #### Material Sync on Drag
+
 When a card is dragged from `PENDING` → `IN_PROGRESS`:
+
 - The system matches `caseItem.material` against `inventory` items.
 - If a match is found with `quantity > 0`, it deducts 1 unit optimistically.
-- A green toast notification appears: "Deducted 1 [unit] of [material]".
+- A green toast notification appears: "Deducted 1 \[unit\] of \[material\]".
 - The status is persisted to Supabase via `cases.update()`.
 
 #### Summary Cards
+
 - Same donut chart + Active/Completed counters as Dentist view.
 - System Notification card (e.g., "New batch of STL files processed").
 
 #### Urgency Filter
+
 - Filter the Kanban by urgency level (ALL / LOW / NORMAL / HIGH / URGENT).
 
 ---
@@ -459,11 +475,13 @@ When a card is dragged from `PENDING` → `IN_PROGRESS`:
 A rich, two-column detail view:
 
 #### Left Column (2/3 width)
+
 1. **Prescription Details Card** — Treatment, Due Date, Prescribing Dentist, Destination Lab.
 2. **3D Design Viewer** — Full Three.js STL renderer with annotation system (see §6.7).
 3. "Download STL" button (UI placeholder).
 
 #### Right Column (1/3 width)
+
 1. **Case Timeline** — Chronological event feed with:
    - Role-based filtering: Dentists see `EXTERNAL` + `BOTH`; Labs see `INTERNAL` + `BOTH`.
    - Internal events are tagged with an amber "Internal" badge.
@@ -471,6 +489,7 @@ A rich, two-column detail view:
 2. **Order Chat** (see §6.6).
 
 #### Header Actions
+
 - **Dentist:** "Generate Patient Link" button → opens modal with a shareable URL (`https://dentalconnect.os/preview/hash-CASEID`), copy-to-clipboard, 72-hour expiry notice.
 - **Lab Admin:** "Update Status" dropdown → changes case status + pushes a timeline event + persists to Supabase.
 
@@ -513,7 +532,7 @@ Built on React Three Fiber + Drei:
 
 ### 6.8 Lab Directory
 
-**File:** [lab-directory/page.tsx](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/app/(dashboard)/lab-directory/page.tsx) (259 lines)
+**File:** [lab-directory/page.tsx](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/app/\(dashboard\)/lab-directory/page.tsx) (259 lines)
 
 Available to **Dentists** (nav link: "Lab Directory"):
 
@@ -528,7 +547,7 @@ Available to **Dentists** (nav link: "Lab Directory"):
 
 ### 6.9 Inventory Management
 
-**File:** [inventory/page.tsx](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/app/(dashboard)/inventory/page.tsx) (189 lines)
+**File:** [inventory/page.tsx](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/app/\(dashboard\)/inventory/page.tsx) (189 lines)
 
 Available to **Lab Admins** (nav link: "Inventory"):
 
@@ -542,7 +561,7 @@ Available to **Lab Admins** (nav link: "Inventory"):
 
 ### 6.10 B2B2C Patient Preview
 
-**File:** [preview/[hash]/page.tsx](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/app/preview/[hash]/page.tsx) (65 lines)
+**File:** [preview/\[hash\]/page.tsx](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/app/preview/%5Bhash%5D/page.tsx) (65 lines)
 
 - **Public route** — Excluded from auth middleware.
 - URL format: `/preview/hash-{CASE_UUID}`
@@ -562,13 +581,12 @@ Client-side STL geometry validation using Three.js:
 - Parses the STL `ArrayBuffer` using `STLLoader`.
 - Computes `boundingBox` dimensions (X, Y, Z).
 - Applies heuristic checks:
-  - **Too small:** All dimensions < 1mm → "Did you export with incorrect units?"
-  - **Too large:** Any dimension > 200mm → "Please verify scale."
-  - **Thin geometry:** Min dimension < 1mm → "May result in fragile restoration or milling failure."
+  - **Too small:** All dimensions &lt; 1mm → "Did you export with incorrect units?"
+  - **Too large:** Any dimension &gt; 200mm → "Please verify scale."
+  - **Thin geometry:** Min dimension &lt; 1mm → "May result in fragile restoration or milling failure."
 - Returns `{ isValid, warnings[], dimensions }`.
 
-> [!NOTE]
-> This validator is implemented but **not yet wired** into the "Create Case" upload flow. The `DentistDashboard` has an `uploadState: 'warning'` state with a hardcoded occlusal clearance warning, suggesting planned integration.
+\[!NOTE\] This validator is implemented but **not yet wired** into the "Create Case" upload flow. The `DentistDashboard` has an `uploadState: 'warning'` state with a hardcoded occlusal clearance warning, suggesting planned integration.
 
 ---
 
@@ -583,8 +601,7 @@ Zero-click scanner integration using the browser **File System Access API**:
 - When a new `.stl` or `.ply` file appears (not in the `knownFiles` set), fires `onNewFileCallback(file)`.
 - Intended use: Automatically open the "Create Case" modal when the scanner exports a new file.
 
-> [!NOTE]
-> This utility is **implemented but not integrated** into any UI component. It's ready for a "Watch Scanner Folder" button in the Dentist Dashboard.
+\[!NOTE\] This utility is **implemented but not integrated** into any UI component. It's ready for a "Watch Scanner Folder" button in the Dentist Dashboard.
 
 ---
 
@@ -600,8 +617,7 @@ Server-side API route for generating **presigned PUT URLs** to Cloudflare R2:
 - Returns a presigned URL valid for 1 hour.
 - Requires env vars: `CLOUDFLARE_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`.
 
-> [!IMPORTANT]
-> The current `DentistDashboard` uploads directly to **Supabase Storage** (`scans` bucket), not R2. This API route is built but represents a **planned migration** to Cloudflare R2 for production-scale scan hosting.
+\[!IMPORTANT\] The current `DentistDashboard` uploads directly to **Supabase Storage** (`scans` bucket), not R2. This API route is built but represents a **planned migration** to Cloudflare R2 for production-scale scan hosting.
 
 ---
 
@@ -628,10 +644,10 @@ Server-side API route for generating **presigned PUT URLs** to Cloudflare R2:
 Eight core types define the domain model:
 
 | Type | Purpose | Key Fields |
-|---|---|---|
-| `Role` | Union type | `'DENTIST' \| 'LAB_ADMIN' \| 'LAB_STAFF'` |
-| `CaseStatus` | Case lifecycle states | `'PENDING' \| 'IN_PROGRESS' \| 'QUALITY_CHECK' \| 'DISPATCHED' \| 'DELIVERED'` |
-| `Urgency` | Priority levels | `'LOW' \| 'NORMAL' \| 'HIGH' \| 'URGENT'` |
+| --- | --- | --- |
+| `Role` | Union type | \`'DENTIST' |
+| `CaseStatus` | Case lifecycle states | \`'PENDING' |
+| `Urgency` | Priority levels | \`'LOW' |
 | `User` | User profile | `id, name, role, labId?, avatarUrl?` |
 | `Case` | Lab case | `id, patientName, dentistId, labId, status, urgency, requestedTreatment, material?, dueDate, createdAt` |
 | `TimelineEvent` | Case activity log | `id, caseId, statusUpdate, notes, timestamp, visibility` |
@@ -646,24 +662,28 @@ Eight core types define the domain model:
 ## 8. Security & Compliance Design
 
 ### 8.1 Authentication Layer
+
 - Cookie-based JWT sessions via `@supabase/ssr`.
 - Middleware intercepts every request to validate session.
 - Unauthenticated users are redirected to `/login`.
 - Public exceptions: `/login`, `/auth`, `/preview/*`.
 
 ### 8.2 Row-Level Security
+
 - **Every table** has RLS enabled.
 - Dentists can only access their own cases, inventory allocations, and PHI.
 - Labs can only access cases assigned to them and their own inventory.
 - Patient PHI is **strictly isolated** — only the prescribing dentist can read/write.
 
 ### 8.3 HIPAA Design Considerations
+
 - **Patient Name Isolation:** The `patient_phi` table separates real names from case data visible to labs. Labs receive a `patient_hash` (planned).
 - **Preview Privacy:** The B2B2C preview route exposes `scan_url` and `lab_name` only — no patient name.
 - **Chat Gating:** Chat is locked until the lab accepts the order, preventing unsolicited communication.
 - **Link Expiry:** Patient preview links are labeled as expiring in 72 hours (policy-level).
 
 ### 8.4 Storage Security
+
 - Supabase Storage uses bucket-level policies.
 - Cloudflare R2 uses presigned URLs (1-hour expiry) generated server-side after auth validation.
 
@@ -674,7 +694,7 @@ Eight core types define the domain model:
 The app makes extensive use of Supabase Realtime via `postgres_changes`:
 
 | Subscriber | Table | Filter | Action |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `DentistDashboard` | `cases` | `dentist_id=eq.{userId}` | `router.refresh()` on any change |
 | `LabDashboard` | `cases` | (all rows) | `router.refresh()` on any change |
 | `CaseDetailsClient` (Chat) | `chat_messages` | `chat_id=eq.{chatId}` | Append new message to state |
@@ -689,7 +709,7 @@ All subscriptions are properly cleaned up in `useEffect` return callbacks via `s
 The project uses **13 shadcn/ui components** built on Radix UI primitives, located in [src/components/ui/](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/components/ui):
 
 | Component | File | Base |
-|---|---|---|
+| --- | --- | --- |
 | Avatar | `avatar.tsx` | `@radix-ui/react-avatar` |
 | Badge | `badge.tsx` | CVA variants |
 | Button | `button.tsx` | `@radix-ui/react-slot` + CVA |
@@ -713,7 +733,7 @@ The project uses **13 shadcn/ui components** built on Radix UI primitives, locat
 From [.env.example](file:///c:/Users/bentn/OneDrive/Desktop/DEs/.env.example) and `.env.local`:
 
 | Variable | Purpose |
-|---|---|
+| --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous key |
 | `CLOUDFLARE_ACCOUNT_ID` | R2 account |
@@ -744,7 +764,7 @@ npm run lint   # ESLint
 ### 12.1 What's Working (Production-Ready)
 
 | Feature | Status |
-|---|---|
+| --- | --- |
 | Authentication (Sign In/Up/Out) | ✅ Fully functional |
 | Role-based routing (Dentist vs Lab) | ✅ Fully functional |
 | Dentist case table + filtering | ✅ Fully functional |
@@ -769,7 +789,7 @@ npm run lint   # ESLint
 ### 12.2 Built but Not Yet Integrated
 
 | Feature | Status | Notes |
-|---|---|---|
+| --- | --- | --- |
 | 3D STL Viewer + Annotations | ⚠️ Component built, loads with no `stlUrl` | Needs wiring to `case.scan_url` with presigned URL |
 | STL Validator | ⚠️ Utility built | Not called from upload flow |
 | Scanner Folder Watcher | ⚠️ Utility built | No UI trigger implemented |
@@ -781,7 +801,7 @@ npm run lint   # ESLint
 ### 12.3 Gaps & Future Work
 
 | Area | Gap |
-|---|---|
+| --- | --- |
 | **STL Viewer ↔ Scan URL** | The 3D viewer renders without an STL URL. Need to generate a presigned R2/Storage URL from `case.scan_url` and pass it to `<ThreeDViewer stlUrl={signedUrl}>`. |
 | **Pre-flight validation** | Wire `validateSTLFile()` into the upload flow before `handleSubmitCase()`. |
 | **Scanner watcher UI** | Add a "Watch Folder" button to `DentistDashboard` that calls `ScannerFolderWatcher.requestDirectoryAccess()`. |
@@ -799,11 +819,12 @@ npm run lint   # ESLint
 
 The project maintains two parallel data sources:
 
-1. **[mockData.ts](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/mockData.ts)** — Client-side mock data used for development before Supabase was integrated. Still referenced by `CaseDetailsClient` for timeline events and user lookups.
+1. [**mockData.ts**](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/mockData.ts) — Client-side mock data used for development before Supabase was integrated. Still referenced by `CaseDetailsClient` for timeline events and user lookups.
 
-2. **[seed.sql](file:///c:/Users/bentn/OneDrive/Desktop/DEs/supabase/seed.sql)** — SQL seed data for Supabase local development. Uses hardcoded UUIDs for deterministic testing.
+2. [**seed.sql**](file:///c:/Users/bentn/OneDrive/Desktop/DEs/supabase/seed.sql) — SQL seed data for Supabase local development. Uses hardcoded UUIDs for deterministic testing.
 
 **Seed Users:**
+
 - `Dr. Aryan Sharma` (DENTIST, ID: `11111111-...`)
 - `Advance Dental Export` (LAB_ADMIN, ID: `22222222-...`, lab_id: `33333333-...`)
 

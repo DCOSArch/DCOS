@@ -19,16 +19,22 @@ created: 2026-08-12
 - **Claude Code** cannot query those indexes — it reads the same source files via
   full-text search (Grep), filename match (Glob), and Read. This map is its shortcut.
 
-## 🧠 Knowledge / strategic notes
+## 🧠 Knowledge / strategic notes (`agent_memory/`, renamed from `.agent_memory/` so Obsidian can index it)
 Read these for project context (start with the first):
 - [[Master_Context]] — largest, most complete context doc (**read first**)
-- [[Dental_ConnectOS_Strategic_Architecture_Blueprint]] — architecture
-- [[Master_Vision_and_Feasibility_Study]] · [[master_vision_and_production_roadmap]] — vision + roadmap
-- [[codebase_audit]] · [[feasibility_study_and_sprint_plan]] · [[implementation_plan]] — status + plans
-- [[session_handoff]] · [[changelog]] · [[task]] — running state between sessions
+- **architecture/** — [[Dental_ConnectOS_Strategic_Architecture_Blueprint]] · [[Local-First PMS Technical Specification]] · [[Next-Gen Reactive PMS Technical Blueprint & DCOS Audit]]
+- **vision/** — [[Master_Vision_and_Feasibility_Study]] · [[master_vision_and_production_roadmap]]
+- **status/** — [[codebase_audit_2026-07-11]] *(superseded by `docs/codebase_audit.md`)* · [[feasibility_study_and_sprint_plan]] · [[implementation_plan]] · [[implementation_planv2]]
+- **state/** — [[session_handoff]] · [[changelog]] · [[task]] · [[project_context]] · [[cline_inbox]] · [[cline_delegation_sprint]] — running state between sessions, read/written by Cline per `.clinerules`
+- **raw/** — source transcripts and reference images (not notes; not linked, just archival)
 
 ## 🗂️ Orchestration memory
 - `.autoclaw/orchestrator/` — multi-agent board + sprints (`board.md`, `sprints/*.context.md`)
+
+## 📄 Root docs
+- `docs/design.md` (design system) · `docs/product_analysis.md` · `docs/codebase_audit.md`
+- `docs/DCOS - Clinical Operating System Product Requirements Document.pdf` (PRD source PDF)
+- `archive/` — retired scratch/debug files (old build logs, one-off `find-*.cjs` scripts); not active work
 
 ## 💻 Code (do not treat as notes)
 - `src/app/` — Next.js App Router: `(dashboard)`, `api/`, `labs/`, `landing/`, `login/`, `preview/`
@@ -37,8 +43,8 @@ Read these for project context (start with the first):
 - `src_vite/`, `vite_backup/`, `dist/` — **legacy Vite build; avoid editing**
 
 ## 📊 Data
-- `DCOS_Buyer_Playbook_v3.xlsx` · `DCOS_India_Leads_v2.xlsx` · `DCOS_India_Leads_verified.xlsx`
-- `test_sales_data.csv`
+- `docs/data/DCOS_Buyer_Playbook_v3.xlsx` · `docs/data/DCOS_India_Leads_v2.xlsx` · `docs/data/DCOS_India_Leads_verified.xlsx`
+- `docs/data/test_sales_data.csv`
 
 ## ⚙️ Conventions
 - Use consistent terminology + frontmatter `tags:`/`aliases:` so full-text search stays effective.

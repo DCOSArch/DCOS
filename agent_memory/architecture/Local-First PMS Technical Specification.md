@@ -1,3 +1,7 @@
+---
+tags: [dcos, memory, architecture, spec]
+---
+
 # **Architectural Blueprint and Technical Specification for a Local-First Event-Sourced Patient Management System**
 
 ## **Domain Event Model and Bi-Temporal Schema Architecture**

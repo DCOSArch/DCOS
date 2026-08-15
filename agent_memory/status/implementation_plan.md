@@ -1,3 +1,7 @@
+---
+tags: [dcos, memory, status]
+---
+
 # Antigravity Implementation Plan: DCOS Backend & Logistics (Phases 1 & 4)
 
 > **Sprint Status:** Awaiting User Approval  

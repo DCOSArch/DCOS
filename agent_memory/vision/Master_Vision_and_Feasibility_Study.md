@@ -1,9 +1,13 @@
+---
+tags: [dcos, memory, vision]
+---
+
 # DentalConnect OS (DCOS) — Master Vision & Feasibility Study
 
 > **Document Status:** Reference Document (Source of Truth)  
 > **Date of Formulation:** July 7, 2026  
-> **Target Audience:** Dr. Maneesh Vishnoi, Baleegh, and the Core Engineering Team  
-> **Os / Repository Reference:** `DCOSArch/DCOS` (.agent_memory)
+> **Target Audience:** Dr. Aryan Sharma (Clinical Lead), Baleegh, and the Core Engineering Team  
+> **Os / Repository Reference:** `DCOSArch/DCOS` (agent_memory/vision)
 
 ---
 
@@ -12,20 +16,20 @@
 ### 1.1 The Opportunity
 **DentalConnect OS (DCOS)** is a specialized B2B enterprise healthcare SaaS platform designed to bridge the operational gap between dental clinics and prosthetic/restorative laboratories. The platform digitizes the entire lifecycle of custom dental restorations—from the capture and ingestion of 3D intraoral scans to CAD/CAM design, material inventory tracking, automated billing, and patient delivery.
 
-DCOS is being incubated as a pilot project in Kanpur, India, with **Dr. Maneesh Vishnoi** as the anchor client and strategic partner. The blueprint is designed to build a robust, single-tenant proof of concept (POC) for Dr. Vishnoi's clinic and lab network, which will then scale into a multi-tenant, white-labeled marketplace serving the broader Indian digital dentistry market.
+DCOS is being incubated as a pilot project with **Dr. Aryan Sharma (Clinical Lead)** as the anchor client and strategic partner. The blueprint is designed to build a robust, single-tenant proof of concept (POC) for the anchor clinic and lab network, which will then scale into a multi-tenant, white-labeled marketplace serving the broader Indian digital dentistry market.
 
 ### 1.2 Partner Profiles & Client Digital Footprint
-*   **Dr. Maneesh Vishnoi (Kanpur, India):** 
+*   **Dr. Aryan Sharma (Clinical Lead):** 
     *   **Clinical & Financial Profile:** Over 23–25 years of active clinical practice; 2,000 to 6,000 high-ticket implant procedures completed. Highly capitalized partner accustomed to substantial CapEx on medical hardware.
-    *   **Technological Sophistication:** *CEREC Certified Digital Dentist*. Facility (Vishnoi Hospital, Azad Nagar/Vishnu Puri) houses a Rainbow All-in-One CBCT machine (₹30L–₹50L) and CEREC milling systems (₹50L–₹1Cr).
-    *   **Strategic Leverage:** Dr. Vishnoi represents the ideal early adopter who demands hardware-level reliability and acts as a primary gatekeeper to North Indian clinical networks, Germany/South Korea clinical partnerships, and national dentist circles.
+    *   **Technological Sophistication:** *CEREC Certified Digital Dentist*. Facility (Apex Multispecialty Dental Hospital) houses a Rainbow All-in-One CBCT machine (₹30L–₹50L) and CEREC milling systems (₹50L–₹1Cr).
+    *   **Strategic Leverage:** Represents the ideal early adopter who demands hardware-level reliability and acts as a primary gatekeeper to clinical networks and digital dentist circles.
 *   **The Development Team (Me & Baleegh):** Technology partners executing the software development, architecture setup, and scaling roadmap, in exchange for development funding and a long-term commercial stake (equity percentage or gross merchandise value transaction cut).
 
 ---
 
 ## 2. The Core Vision: Five Pillars of Frictionless Integration
 
-As documented in Dr. Vishnoi’s diary notes (Meeting dated **06/07/26**), the clinical and administrative operations are consolidated into five central pillars:
+As documented in clinical roadmap notes, the clinical and administrative operations are consolidated into five central pillars:
 
 ```
 +------------------------------------------------------------------------------------------------------+
@@ -74,7 +78,7 @@ As documented in Dr. Vishnoi’s diary notes (Meeting dated **06/07/26**), the c
 
 ## 3. Clinical Workflow & Pipeline Architecture
 
-To prevent data omissions and intake failures, DCOS enforces a rigid sequential clinical path. This is modeled after premium closed-loop workflows (such as Sirona CEREC), as recorded in Dr. Vishnoi's diary under **03/07/26** ("Face set up final layout").
+To prevent data omissions and intake failures, DCOS enforces a rigid sequential clinical path. This is modeled after premium closed-loop workflows (such as Sirona CEREC), as recorded in clinical layout designs ("Face set up final layout").
 
 ### 3.1 The 5-Tab Structured Pipeline
 Progress through the order creation screen is strictly partitioned into five distinct stages:
@@ -133,10 +137,10 @@ An assessment of the proposed features against the current codebase architecture
 
 ## 5. Commercial Roadmap & Joint Venture Partnership Model
 
-Based on the actual agreement detailed in the meeting transcript, the project operates as a **co-founding partnership and joint venture** rather than a client-vendor agency relationship:
+Based on the actual agreement detailed in the strategic vision, the project operates as a **co-founding partnership and joint venture** rather than a client-vendor agency relationship:
 
 ### 5.1 Funding and CapEx Coverage
-*   **Zero Out-of-Pocket for Developers:** Dr. Vishnoi provides 100% of the capital required to cover development costs, setup charges, and server/infrastructure fees (*"tumhari jeb se kuch bhi na lage... jo bhi initial funding ki jarurat padegi... vo to mai kara denge"*).
+*   **Zero Out-of-Pocket for Developers:** Clinical partners provide 100% of the capital required to cover development costs, setup charges, and server/infrastructure fees (*"tumhari jeb se kuch bhi na lage... jo bhi initial funding ki jarurat padegi... vo to mai kara denge"*).
 *   **Operational Runway:** Immediate financial backing is provided to ensure continuous development through the trial and pilot stages.
 
 ### 5.2 Developer Equity & Royalty Structure
@@ -146,7 +150,7 @@ Rather than a one-time project fee, the development partners (Me & Baleegh) are 
 
 ### 5.3 Onboarding & Commercialization Strategy
 *   **Free Dentist Onboarding:** The dentist interface and accounts are provided entirely free of charge. No subscriptions are levied on clinical users, making onboarding frictionless to maximize user acquisition and network effects (*"dentist se bhi ham log subscription lenge? nahi kuch nahi... unki onboarding hi hamara point hai"*).
-*   **1-Year Pilot Phase (August/September 2026 Launch):** The first year is structured as a closed-loop pilot. Real case data will be processed daily through Dr. Vishnoi's self-owned lab and clinic network to identify and resolve software bugs in active clinical operations.
+*   **1-Year Pilot Phase (August/September 2026 Launch):** The first year is structured as a closed-loop pilot. Real case data will be processed daily through the self-owned lab and clinic network to identify and resolve software bugs in active clinical operations.
 *   **White-Label Scaling:** Post-pilot, DCOS will be offered as a white-labeled software subscription model to external laboratories, charging a monthly SaaS fee (leveraging comparative pricing: US/Europe equivalents cost labs $2,000–$3,000/month, allowing DCOS to enter at a highly competitive, disruptive price point in India).
 
 ---

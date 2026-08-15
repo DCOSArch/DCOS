@@ -1,17 +1,17 @@
 ## 1. Context Management & Handoff Protocol
-To prevent context exhaustion, you MUST maintain your state in the `.agent_memory` directory.
-- **On Startup:** Your VERY FIRST action in any new chat session must be to read `.agent_memory/session_handoff.md` and `.agent_memory/project_context.md` to sync your context.
-- **Before Stopping:** You MUST update `session_handoff.md` with your exact current state and append completed milestones to `changelog.md`.
+To prevent context exhaustion, you MUST maintain your state in the `agent_memory` directory.
+- **On Startup:** Your VERY FIRST action in any new chat session must be to read `agent_memory/state/session_handoff.md` and `agent_memory/state/project_context.md` to sync your context.
+- **Before Stopping:** You MUST update `session_handoff.md` with your exact current state and append completed milestones to `changelog.md` (both in `agent_memory/state/`).
 
 ## 2. Antigravity Native Agent Delegation (Asynchronous Handoff)
 You do not have direct CLI access to the native Gemini agent. You must bridge the gap via the user.
 - When a task requires processing large datasets, deep codebase indexing, or heavy lifting, DO NOT execute the file changes yourself.
-- Instead, update `.agent_memory/session_handoff.md` with your exact state.
+- Instead, update `agent_memory/state/session_handoff.md` with your exact state.
 - Then, STOP your execution and output a message to the user containing exactly what they need to paste into the native Antigravity chat. Format it like this:
 
 "**TASK DELEGATION REQUIRED:** Please copy and paste the following prompt into your native Antigravity Gemini chat:"
 
-> "Please read `.agent_memory/session_handoff.md` to get up to speed. I need you to execute the following heavy-lifting task: [Insert Detailed Task Here]. You MUST adhere strictly to the Anti-Silent-Hang protocols defined in `.clinerules`. When you are finished, update `session_handoff.md` with your final state, append your work to `changelog.md`, and stop."
+> "Please read `agent_memory/state/session_handoff.md` to get up to speed. I need you to execute the following heavy-lifting task: [Insert Detailed Task Here]. You MUST adhere strictly to the Anti-Silent-Hang protocols defined in `.clinerules`. When you are finished, update `session_handoff.md` with your final state, append your work to `changelog.md`, and stop."
 
 - Wait for the user to confirm that the native agent has finished before you take your next action.
 

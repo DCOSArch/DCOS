@@ -1,12 +1,16 @@
-# DCOS 2.0: Comprehensive Feasibility Study & Cline Sprint Plan
+---
+tags: [dcos, memory, status]
+---
 
-This document maps the **DCOS 2.0 Product Requirements Document** to the existing **DentalConnect OS (DCOS)** implementation state, provides a robust technical feasibility analysis, and details an actionable sprint plan for **Cline** (our developer agent) to execute.
+# VishnoiOS: Comprehensive Feasibility Study & Cline Sprint Plan
+
+This document maps the **VishnoiOS Version 1 Product Requirements Document** to the existing **DentalConnect OS (DCOS)** implementation state, provides a robust technical feasibility analysis, and details an actionable sprint plan for **Cline** (our developer agent) to execute.
 
 ---
 
 ## 1. Comparative Analysis: Current vs. Required State
 
-Below is a direct comparison of the requirements in the DCOS 2.0 PRD against what is already built in the DCOS codebase.
+Below is a direct comparison of the requirements in the VishnoiOS PRD against what is already built in the DCOS codebase.
 
 | Section | Feature / Requirement | Current DCOS Implementation State | Feasibility & Technical Gap |
 | :--- | :--- | :--- | :--- |

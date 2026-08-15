@@ -1,3 +1,7 @@
+---
+tags: [dcos, memory, state]
+---
+
 # DCOS Backend & Logistics Checklist
 
 - `[ ]` **Phase 1: Clinical Ingestion & Demographic Guardrails**

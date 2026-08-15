@@ -1,4 +1,9 @@
+---
+tags: [dcos, design-system, docs]
+---
 # DentalConnect — Dentist-first product design brief for Google Stitch
+
+> Related: [[CLAUDE]] · [[product_analysis]] · [[codebase_audit]]
 
 > **Purpose:** Use this document as the visual and interaction source of truth when generating the DentalConnect marketing site, authentication experience, and dentist-facing application in Google Stitch. It describes a high-fidelity responsive web product, not a generic dashboard or a code implementation.
 >
@@ -287,12 +292,12 @@ Avoid all-caps except compact table/group labels. Avoid tiny text below 12 px fo
 
 ### Buttons
 
-| Type | Visual | Examples |
-| --- | --- | --- |
-| Primary | Solid deep teal / cyan in dark theme, white label | `New case`, `Submit case`, `Approve date` |
-| Secondary | White/surface with hairline border | `Save draft`, `View details`, `Download file` |
-| Tertiary | Text with leading or trailing icon | `See all cases`, `Change lab` |
-| Destructive | Text/border until final confirmation | `Reject proposed date`, `Delete draft` |
+| Type        | Visual                                            | Examples                                      |
+| ----------- | ------------------------------------------------- | --------------------------------------------- |
+| Primary     | Solid deep teal / cyan in dark theme, white label | `New case`, `Submit case`, `Approve date`     |
+| Secondary   | White/surface with hairline border                | `Save draft`, `View details`, `Download file` |
+| Tertiary    | Text with leading or trailing icon                | `See all cases`, `Change lab`                 |
+| Destructive | Text/border until final confirmation              | `Reject proposed date`, `Delete draft`        |
 
 One dominant primary action per panel. A dialog should not contain two equally loud solid buttons. Buttons must use outcome-based labels: `Submit to Apex Dental Lab`, not `Continue`; `Review case`, not `View` when more useful.
 

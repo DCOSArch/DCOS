@@ -1,3 +1,7 @@
+---
+tags: [dcos, memory, status]
+---
+
 # Dental Lab Functional Refactor Plan
 
 This plan outlines the steps to clean up the dummy data and implement functional global state so cases and chats actually persist and sync across views.

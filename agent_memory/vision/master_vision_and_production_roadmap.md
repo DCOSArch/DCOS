@@ -1,8 +1,12 @@
+---
+tags: [dcos, memory, vision, roadmap]
+---
+
 # DentalConnect OS (DCOS) — Master Vision & Production Roadmap (Phase 2 & 3 Expansion)
 
 > **Document Status:** Reference Specification & Active Baseline  
-> **Target Audience:** Dr. Maneesh Vishnoi, Baleegh, and Core Engineering Partners  
-> **Source Directory:** `.agent_memory/master_vision_and_production_roadmap.md`
+> **Target Audience:** Dr. Aryan Sharma (Clinical Lead), Baleegh, and Core Engineering Partners  
+> **Source Directory:** `agent_memory/vision/master_vision_and_production_roadmap.md`
 
 ---
 
@@ -138,4 +142,4 @@ For complex full-arch zirconia implant bridges, DCOS generates trackable interme
 Raw 3D files (.STL/.PLY) are deleted 30 days after the case reaches `DELIVERED` status to avoid cloud storage bloat. Doctors are prompted to download a compressed case ZIP via an `[Export Patient Case History]` button before the automatic purge date.
 
 ### 9.2 Business Model
-Dr. Vishnoi covers 100% of Capex/infrastructure costs (zero out-of-pocket for development partners). Developers are co-founders with a defined equity stake in DCOS plus a recurring royalty fee per milled crown unit.
+Clinical Anchor Partners cover 100% of Capex/infrastructure costs (zero out-of-pocket for development partners). Developers are co-founders with a defined equity stake in DCOS plus a recurring royalty fee per milled crown unit.

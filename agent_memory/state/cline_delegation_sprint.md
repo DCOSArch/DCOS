@@ -1,3 +1,7 @@
+---
+tags: [dcos, memory, state, cline]
+---
+
 # Cline Sprint Delegation: DCOS Frontend Overhaul (Phases 2 & 3)
 
 > **Sprint Status:** Ready for Frontend Developer (Cline)  

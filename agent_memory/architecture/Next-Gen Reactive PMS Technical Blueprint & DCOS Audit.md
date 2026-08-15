@@ -1,3 +1,7 @@
+---
+tags: [dcos, memory, architecture, audit]
+---
+
 # **Executive Architectural Spec & Strategic Blueprint**
 
 **System Target:** DentalConnect OS (DCOS) & Next-Generation Reactive PMS Engine  

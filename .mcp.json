@@ -2,7 +2,10 @@
   "mcpServers": {
     "obsidian": {
       "type": "http",
-      "url": "http://127.0.0.1:27123/mcp/"
+      "url": "http://127.0.0.1:27123/mcp/",
+      "headers": {
+        "Authorization": "Bearer 9ad6e54a884a92f8f405809d91b73c75b0424993586e0e98f3e2da87901dc027"
+      }
     }
   }
 }

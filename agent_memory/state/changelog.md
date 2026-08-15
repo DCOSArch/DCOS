@@ -1,3 +1,7 @@
+---
+tags: [dcos, memory, state]
+---
+
 # Agent Changelog
 * 2026-07-13 - PLAN: DCOS 2.0 Feasibility Study & Sprint Handoff — Analyzed the clinical PRD, completed a technical feasibility study comparing the current DCOS codebase to target requirements, designed the database hierarchy, local Capture Agent WebSocket link, and mobile QR intake flows, and dropped a 4-phase sprint plan in the Cline inbox.
 * 2026-07-13 - FEATURE: R2 Migration Completion — Finished migrating all Supabase Storage references to Cloudflare R2. Created `src/lib/r2.ts` URL helper with backwards-compatible `getR2PublicUrl()`. Migrated DentistDashboard (scan/DICOM/shade), LabDashboard (scan), and CaseDetailsClient (design file) uploads to R2 presigned PUT. Replaced all Supabase Storage URL construction in `cases/[id]/page.tsx`, `preview/[hash]/page.tsx`, and `CaseDetailsClient.tsx` with R2 public URL resolution. Resolved stuck git rebase caused by locked `.autoclaw/` DB files.

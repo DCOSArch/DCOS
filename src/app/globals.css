@@ -21,7 +21,7 @@
   --destructive: #B24743;
   --destructive-foreground: #FFFFFF;
 
-  /* Custom palette matching design.md */
+  /* Custom palette matching docs/design.md */
   --primary-hover: #0F5755;
   --primary-soft: #DCEDEA;
   --clinical-blue: #366C9B;
@@ -65,7 +65,7 @@
   --destructive: #FF6B6B; /* Monokai red */
   --destructive-foreground: #272822;
 
-  /* Custom palette matching design.md for dark mode */
+  /* Custom palette matching docs/design.md for dark mode */
   --primary-hover: #8BE4F4;
   --primary-soft: rgba(102, 217, 239, 0.15);
   --clinical-blue: #66D9EF;
