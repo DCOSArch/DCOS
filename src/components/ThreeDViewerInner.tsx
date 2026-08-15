@@ -34,6 +34,10 @@ interface Annotation {
 
 interface ThreeDViewerInnerProps {
   stlUrl: string;
+  selectedTeeth?: number[];
+  material?: string;
+  shade?: string;
+  activeViewportMode?: 'ANATOMY' | 'OCCLUSION_HEATMAP' | 'WIREFRAME';
   initialAnnotations?: Annotation[];
   onAddAnnotation?: (anno: Omit<Annotation, 'id'>) => Promise<Annotation>;
   onResolveAnnotation?: (id: string) => Promise<void>;
@@ -55,51 +59,135 @@ const offsetPosition = (
 };
 
 /**
- * ProceduralCrownMesh — procedural 4-cusp molar crown fallback geometry.
+ * ProceduralDentalArchModel — Anatomical 3D Maxillary Dental Arch
+ * Configures 16 distinct tooth models with FDI numbering, restorative materials,
+ * subgingival margins, and occlusal clearance heatmaps.
  */
-const ProceduralCrownMesh = React.memo(({ onMeshClick }: { onMeshClick?: (e: any) => void }) => {
-  // Procedural 4-cusp molar crown geometry using custom vertices / lathe & cylinders
-  const crownGeo = useMemo(() => {
-    const geo = new THREE.CylinderGeometry(14, 12, 18, 32, 16);
-    const pos = geo.attributes.position;
-    // Displace vertices to form realistic anatomical occlusal cusps and central groove
-    for (let i = 0; i < pos.count; i++) {
-      const x = pos.getX(i);
-      const y = pos.getY(i);
-      const z = pos.getZ(i);
-      if (y > 4) {
-        // Cusp formation (Mesio-buccal, Disto-buccal, Mesio-lingual, Disto-lingual)
-        const angle = Math.atan2(z, x);
-        const cuspHeight = Math.sin(angle * 2) * 3.5;
-        const centralFossa = (x * x + z * z) < 36 ? -2.5 : 0;
-        pos.setY(i, y + cuspHeight + centralFossa);
-      }
-    }
-    geo.computeVertexNormals();
-    return geo;
-  }, []);
+const ARCH_TEETH = [
+  { fdi: 18, type: 'molar', x: -24, z: -16, rotY: 0.35, scale: [3.8, 4.2, 3.8] },
+  { fdi: 17, type: 'molar', x: -21, z: -7, rotY: 0.25, scale: [4.0, 4.4, 4.0] },
+  { fdi: 16, type: 'molar', x: -18, z: 2, rotY: 0.15, scale: [4.2, 4.6, 4.2] },
+  { fdi: 15, type: 'premolar', x: -14.5, z: 10, rotY: 0.05, scale: [3.2, 4.0, 3.2] },
+  { fdi: 14, type: 'premolar', x: -11, z: 17, rotY: -0.1, scale: [3.2, 4.0, 3.2] },
+  { fdi: 13, type: 'canine', x: -7, z: 22.5, rotY: -0.3, scale: [3.0, 4.8, 3.0] },
+  { fdi: 12, type: 'incisor', x: -3.2, z: 25.5, rotY: -0.45, scale: [2.8, 4.5, 2.2] },
+  { fdi: 11, type: 'incisor', x: 0, z: 26.5, rotY: 0, scale: [3.4, 5.0, 2.4] },
+  { fdi: 21, type: 'incisor', x: 3.2, z: 25.5, rotY: 0.45, scale: [3.4, 5.0, 2.4] },
+  { fdi: 22, type: 'incisor', x: 7, z: 22.5, rotY: 0.3, scale: [2.8, 4.5, 2.2] },
+  { fdi: 23, type: 'canine', x: 11, z: 17, rotY: 0.1, scale: [3.0, 4.8, 3.0] },
+  { fdi: 24, type: 'premolar', x: 14.5, z: 10, rotY: -0.05, scale: [3.2, 4.0, 3.2] },
+  { fdi: 25, type: 'premolar', x: 18, z: 2, rotY: -0.15, scale: [3.2, 4.0, 3.2] },
+  { fdi: 26, type: 'molar', x: 21, z: -7, rotY: -0.25, scale: [4.2, 4.6, 4.2] },
+  { fdi: 27, type: 'molar', x: 24, z: -16, rotY: -0.35, scale: [4.0, 4.4, 4.0] },
+  { fdi: 28, type: 'molar', x: 26.5, z: -25, rotY: -0.45, scale: [3.8, 4.2, 3.8] },
+];
+
+export const ProceduralDentalArchModel = React.memo(({ 
+  selectedTeeth = [], 
+  material = 'Zirconia HT', 
+  activeViewportMode = 'ANATOMY',
+  onMeshClick 
+}: { 
+  selectedTeeth?: number[]; 
+  material?: string; 
+  activeViewportMode?: 'ANATOMY' | 'OCCLUSION_HEATMAP' | 'WIREFRAME';
+  onMeshClick?: (e: any) => void;
+}) => {
+  const isTitanium = material.toLowerCase().includes('titanium') || material.toLowerCase().includes('abutment');
+  const isWireframe = activeViewportMode === 'WIREFRAME';
+  const isHeatmap = activeViewportMode === 'OCCLUSION_HEATMAP';
 
   return (
-    <group>
-      {/* Dental Crown Restoration Body */}
-      <mesh geometry={crownGeo} onClick={onMeshClick}>
+    <group position={[0, -2, 0]} rotation={[-0.4, 0, 0]}>
+      {/* 1. Realistic Gingival Base Arch Tissue */}
+      <mesh position={[0, -3.5, 5]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[14, 32, 48, 8, 0, Math.PI]} />
         <meshStandardMaterial
-          color="#f4eedb"
-          roughness={0.25}
-          metalness={0.08}
-          envMapIntensity={1.2}
+          color="#c2636f"
+          roughness={0.65}
+          metalness={0.05}
           side={THREE.DoubleSide}
+          wireframe={isWireframe}
         />
       </mesh>
-      {/* Subgingival Finish Line / Margin Ring */}
-      <mesh position={[0, -9, 0]}>
-        <torusGeometry args={[12.2, 0.4, 16, 64]} />
-        <meshStandardMaterial color="#38bdf8" roughness={0.3} metalness={0.8} />
-      </mesh>
+
+      {/* 2. 16 Anatomical Dental Units */}
+      {ARCH_TEETH.map((tooth) => {
+        // Check if this tooth is part of the case prescription
+        const isSelected = selectedTeeth.includes(tooth.fdi) || selectedTeeth.includes(tooth.fdi + 20);
+
+        // Restoration vs Natural Shade Colors
+        let toothColor = '#fcf8ee'; // Natural ivory enamel
+        let metalness = 0.08;
+        let roughness = 0.22;
+
+        if (isSelected) {
+          if (isHeatmap) {
+            toothColor = tooth.type === 'molar' ? '#eab308' : tooth.type === 'canine' ? '#ef4444' : '#22c55e';
+          } else if (isTitanium) {
+            toothColor = '#cbd5e1'; // Titanium gray
+            metalness = 0.85;
+            roughness = 0.18;
+          } else {
+            toothColor = '#fef3c7'; // Translucent Zirconia
+            metalness = 0.12;
+            roughness = 0.15;
+          }
+        } else if (isHeatmap) {
+          toothColor = '#22c55e'; // Safe green clearance
+        }
+
+        return (
+          <group key={tooth.fdi} position={[tooth.x, 0, tooth.z]} rotation={[0, tooth.rotY, 0]}>
+            {/* Tooth Crown Geometry */}
+            <mesh onClick={onMeshClick}>
+              {tooth.type === 'molar' ? (
+                <cylinderGeometry args={[tooth.scale[0] * 1.1, tooth.scale[0] * 0.9, tooth.scale[1], 24]} />
+              ) : tooth.type === 'premolar' ? (
+                <cylinderGeometry args={[tooth.scale[0], tooth.scale[0] * 0.85, tooth.scale[1], 20]} />
+              ) : tooth.type === 'canine' ? (
+                <coneGeometry args={[tooth.scale[0] * 1.05, tooth.scale[1] * 1.2, 20]} />
+              ) : (
+                <boxGeometry args={[tooth.scale[0] * 1.2, tooth.scale[1] * 1.1, tooth.scale[2] * 0.7]} />
+              )}
+
+              <meshStandardMaterial
+                color={toothColor}
+                metalness={metalness}
+                roughness={roughness}
+                wireframe={isWireframe}
+                side={THREE.DoubleSide}
+              />
+            </mesh>
+
+            {/* If Selected: Render Subgingival Finish Line Ring / Scanbody */}
+            {isSelected && (
+              <>
+                <mesh position={[0, -tooth.scale[1] / 2 - 0.2, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                  <torusGeometry args={[tooth.scale[0] * 1.05, 0.2, 16, 32]} />
+                  <meshStandardMaterial color="#38bdf8" roughness={0.2} metalness={0.9} />
+                </mesh>
+
+                {/* Floating 3D FDI Badge */}
+                <Billboard position={[0, tooth.scale[1] / 2 + 3.5, 0]}>
+                  <Text
+                    fontSize={1.8}
+                    color="#38bdf8"
+                    anchorX="center"
+                    anchorY="middle"
+                  >
+                    #{tooth.fdi}
+                  </Text>
+                </Billboard>
+              </>
+            )}
+          </group>
+        );
+      })}
     </group>
   );
 });
-ProceduralCrownMesh.displayName = 'ProceduralCrownMesh';
+ProceduralDentalArchModel.displayName = 'ProceduralDentalArchModel';
 
 const STLModel = React.memo(({ url, onMeshClick }: { url: string; onMeshClick: (e: any) => void }) => {
   const geometry = useLoader(STLLoader, url);
@@ -173,6 +261,10 @@ AnnotationPin.displayName = 'AnnotationPin';
 
 export default function ThreeDViewerInner({
   stlUrl,
+  selectedTeeth = [],
+  material = 'Zirconia HT',
+  shade = 'A2',
+  activeViewportMode = 'ANATOMY',
   initialAnnotations = [],
   onAddAnnotation,
   onResolveAnnotation,
@@ -182,7 +274,9 @@ export default function ThreeDViewerInner({
   const [isAddingMode, setIsAddingMode] = useState(false);
   const [tempPin, setTempPin] = useState<{ position: [number, number, number]; normal: [number, number, number] | null } | null>(null);
   const [pinText, setPinText] = useState('');
-  const [activeUrl, setActiveUrl] = useState<string | undefined>(stlUrl);
+  const [activeUrl, setActiveUrl] = useState<string | undefined>(
+    stlUrl && (stlUrl.startsWith('http') || stlUrl.startsWith('blob:')) ? stlUrl : undefined
+  );
   const [selectedAnnoId, setSelectedAnnoId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -190,7 +284,11 @@ export default function ThreeDViewerInner({
   }, [initialAnnotations]);
 
   useEffect(() => {
-    setActiveUrl(stlUrl);
+    if (stlUrl && (stlUrl.startsWith('http') || stlUrl.startsWith('blob:'))) {
+      setActiveUrl(stlUrl);
+    } else {
+      setActiveUrl(undefined);
+    }
   }, [stlUrl]);
 
   const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -201,54 +299,67 @@ export default function ThreeDViewerInner({
   }, []);
 
   const handlePointerDown = useCallback((e: any) => {
-    if (!isAddingMode || isReadOnly) return;
+    if (!isAddingMode) return;
     e.stopPropagation();
-    const { point, face } = e;
-    setTempPin({
-      position: [point.x, point.y, point.z],
-      normal: face ? [face.normal.x, face.normal.y, face.normal.z] : null
-    });
-  }, [isAddingMode, isReadOnly]);
-
-  const submitAnnotation = useCallback(async () => {
-    if (!tempPin || !pinText.trim() || !onAddAnnotation) return;
-    try {
-      const newAnno = await onAddAnnotation({
-        position: tempPin.position,
-        normal: tempPin.normal,
-        text: pinText,
-        isResolved: false
-      });
-      setAnnotations(prev => [...prev, newAnno]);
-      setTempPin(null);
-      setPinText('');
-      setIsAddingMode(false);
-    } catch (error) {
-      console.error('Failed to add annotation', error);
+    if (e.point) {
+      const pos: [number, number, number] = [e.point.x, e.point.y, e.point.z];
+      const norm: [number, number, number] | null = e.face?.normal
+        ? [e.face.normal.x, e.face.normal.y, e.face.normal.z]
+        : null;
+      setTempPin({ position: pos, normal: norm });
     }
-  }, [tempPin, pinText, onAddAnnotation]);
+  }, [isAddingMode]);
 
-  const resolveAnnotation = useCallback(async (id: string) => {
-    if (!onResolveAnnotation || isReadOnly) return;
-    try {
-      await onResolveAnnotation(id);
-      setAnnotations(prev => prev.map(a => a.id === id ? { ...a, isResolved: true } : a));
-      setSelectedAnnoId(null);
-    } catch (error) {
-      console.error('Failed to resolve annotation', error);
+  const submitAnnotation = async () => {
+    if (!tempPin || !pinText.trim()) return;
+    const newAnno: Annotation = {
+      id: Date.now().toString(),
+      position: tempPin.position,
+      normal: tempPin.normal,
+      text: pinText.trim(),
+      isResolved: false,
+    };
+    if (onAddAnnotation) {
+      try {
+        const saved = await onAddAnnotation({
+          position: newAnno.position,
+          normal: newAnno.normal,
+          text: newAnno.text,
+          isResolved: false,
+        });
+        setAnnotations((prev) => [...prev, saved]);
+      } catch (err) {
+        console.error('Failed to save annotation:', err);
+        setAnnotations((prev) => [...prev, newAnno]);
+      }
+    } else {
+      setAnnotations((prev) => [...prev, newAnno]);
     }
-  }, [onResolveAnnotation, isReadOnly]);
+    setTempPin(null);
+    setPinText('');
+    setIsAddingMode(false);
+  };
 
-  const activeAnnotations = useMemo(
-    () => annotations.filter(a => !a.isResolved),
-    [annotations]
-  );
+  const resolveAnnotation = async (id: string) => {
+    if (onResolveAnnotation) {
+      try {
+        await onResolveAnnotation(id);
+      } catch (err) {
+        console.error('Failed to resolve annotation:', err);
+      }
+    }
+    setAnnotations((prev) => prev.filter((a) => a.id !== id));
+    if (selectedAnnoId === id) setSelectedAnnoId(null);
+  };
+
+  const activeAnnotations = useMemo(() => annotations.filter((a) => !a.isResolved), [annotations]);
 
   return (
-    <div className="relative w-full h-full bg-slate-900 rounded-lg overflow-hidden group">
+    <div className="w-full h-full relative bg-slate-950 select-none">
+      {/* Upload STL & Add pin buttons */}
       {!isReadOnly && (
-        <div className="absolute top-4 right-4 z-10 flex gap-2">
-          <label className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800/90 hover:bg-zinc-700/90 text-zinc-100 text-sm font-medium rounded-md cursor-pointer transition-colors border border-zinc-700 shadow-sm backdrop-blur-sm">
+        <div className="absolute top-4 left-4 z-10 flex gap-2">
+          <label className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900/90 hover:bg-slate-800 text-slate-200 border border-slate-700 rounded-md cursor-pointer text-xs font-semibold shadow-md transition-colors">
             <Upload className="w-4 h-4" />
             <span className="hidden sm:inline">Load STL</span>
             <input type="file" accept=".stl" className="hidden" onChange={handleFileUpload} />
@@ -257,14 +368,14 @@ export default function ThreeDViewerInner({
             variant={isAddingMode ? 'destructive' : 'secondary'}
             size="sm"
             onClick={() => { setIsAddingMode(!isAddingMode); setTempPin(null); }}
-            className="shadow-md transition-colors"
+            className="shadow-md transition-colors text-xs h-8"
           >
             {isAddingMode ? 'Cancel Pin' : 'Drop Annotation Pin'}
           </Button>
         </div>
       )}
 
-      {/* Annotation list overlay — shows clickable list to select/resolve annotations without hovering 3D objects */}
+      {/* Annotation list overlay */}
       {activeAnnotations.length > 0 && (
         <div className="absolute bottom-4 left-4 z-10 max-h-[200px] overflow-y-auto">
           <div className="bg-slate-900/90 backdrop-blur border border-slate-800 rounded-lg p-2 space-y-1 min-w-[180px]">
@@ -297,111 +408,120 @@ export default function ThreeDViewerInner({
 
       {activeUrl ? (
         <>
-      <ErrorBoundary fallback={
-        <Canvas camera={{ position: [0, 0, 80], fov: 50 }}>
-          <ambientLight intensity={0.8} />
-          <directionalLight position={[10, 15, 10]} intensity={1.0} />
-          <Center>
-            <ProceduralCrownMesh />
-          </Center>
-          <OrbitControls makeDefault enableDamping dampingFactor={0.08} />
-        </Canvas>
-      }>
-        <Canvas
-          camera={{ position: [0, 0, 100], fov: 50 }}
-          frameloop="demand"
-          dpr={[1, 1.5]}
-          performance={{ min: 0.3 }}
-          gl={{
-            antialias: true,
-            powerPreference: 'high-performance',
-            alpha: false,
-          }}
-          // CRITICAL: Disable R3F's built-in raycaster pointer events on the canvas.
-          // This prevents R3F from raycasting against the mesh on every single mouse move,
-          // which is the #1 cause of lag on high-poly STL meshes.
-          events={undefined as any}
-        >
-          <AdaptiveDpr pixelated />
+          <ErrorBoundary fallback={
+            <Canvas camera={{ position: [0, 18, 55], fov: 45 }}>
+              <ambientLight intensity={0.85} />
+              <directionalLight position={[15, 25, 15]} intensity={1.1} />
+              <directionalLight position={[-15, -10, -15]} intensity={0.4} />
+              <Center>
+                <ProceduralDentalArchModel
+                  selectedTeeth={selectedTeeth}
+                  material={material}
+                  activeViewportMode={activeViewportMode}
+                />
+              </Center>
+              <OrbitControls makeDefault enableDamping dampingFactor={0.08} />
+            </Canvas>
+          }>
+            <Canvas
+              camera={{ position: [0, 0, 100], fov: 50 }}
+              frameloop="demand"
+              dpr={[1, 1.5]}
+              performance={{ min: 0.3 }}
+              gl={{
+                antialias: true,
+                powerPreference: 'high-performance',
+                alpha: false,
+              }}
+              events={undefined as any}
+            >
+              <AdaptiveDpr pixelated />
+              <SceneInvalidator />
+              <ambientLight intensity={0.65} />
+              <directionalLight position={[10, 15, 10]} intensity={0.8} />
+              <directionalLight position={[-10, -15, -10]} intensity={0.4} />
 
-          <SceneInvalidator />
+              <Center>
+                <STLModel url={activeUrl} onMeshClick={handlePointerDown} />
+              </Center>
 
-          <ambientLight intensity={0.65} />
-          <directionalLight position={[10, 15, 10]} intensity={0.8} />
-          <directionalLight position={[-10, -15, -10]} intensity={0.4} />
-
-          <Center>
-            <STLModel url={activeUrl} onMeshClick={handlePointerDown} />
-          </Center>
-
-          <OrbitControls
-            makeDefault
-            enableDamping
-            dampingFactor={0.08}
-            rotateSpeed={0.8}
-            panSpeed={0.8}
-            zoomSpeed={1.0}
-            enabled={!isAddingMode || tempPin !== null}
-            onChange={() => invalidate()}
-          />
-
-          {/* Pure 3D annotation pins — no Html, no pointer events, zero per-frame cost */}
-          {activeAnnotations.map((anno) => (
-            <AnnotationPin
-              key={anno.id}
-              position={offsetPosition(anno.position, anno.normal, 2.5)}
-              text={anno.text}
-              color={selectedAnnoId === anno.id ? '#3b82f6' : '#ef4444'}
-            />
-          ))}
-
-          {/* Temp pin for new annotation */}
-          {tempPin && (
-            <>
-              <AnnotationPin
-                position={offsetPosition(tempPin.position, tempPin.normal, 2.5)}
-                text="New"
-                color="#3b82f6"
+              <OrbitControls
+                makeDefault
+                enableDamping
+                dampingFactor={0.08}
+                rotateSpeed={0.8}
+                panSpeed={0.8}
+                zoomSpeed={1.0}
+                enabled={!isAddingMode || tempPin !== null}
+                onChange={() => invalidate()}
               />
-              <group position={offsetPosition(tempPin.position, tempPin.normal, 2.5)}>
-                <Html center distanceFactor={18} style={{ pointerEvents: 'auto' }}>
-                  <div className="bg-white dark:bg-slate-800 p-3 rounded-lg shadow-xl w-64 border border-slate-200 dark:border-slate-700 pointer-events-auto">
-                    <p className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">New Label / Pin</p>
-                    <textarea
-                      autoFocus
-                      className="w-full text-sm p-2 border rounded resize-none focus:ring-2 focus:ring-blue-500 outline-none dark:bg-slate-900 dark:border-slate-700 dark:text-white"
-                      placeholder="E.g., Tooth 14 margin correction..."
-                      rows={3}
-                      value={pinText}
-                      onChange={(e) => setPinText(e.target.value)}
-                      onKeyDown={(e) => {
-                        e.stopPropagation();
-                        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitAnnotation(); }
-                      }}
-                      onPointerDown={(e) => e.stopPropagation()}
-                    />
-                    <div className="flex justify-end gap-2 mt-2">
-                      <Button variant="ghost" size="sm" onClick={() => setTempPin(null)} className="h-7 text-xs">Cancel</Button>
-                      <Button size="sm" onClick={submitAnnotation} disabled={!pinText.trim()} className="h-7 text-xs">Save Pin</Button>
-                    </div>
-                  </div>
-                </Html>
-              </group>
-            </>
-          )}
-        </Canvas>
-      </ErrorBoundary>
-      <Loader />
+
+              {activeAnnotations.map((anno) => (
+                <AnnotationPin
+                  key={anno.id}
+                  position={offsetPosition(anno.position, anno.normal, 2.5)}
+                  text={anno.text}
+                  color={selectedAnnoId === anno.id ? '#3b82f6' : '#ef4444'}
+                />
+              ))}
+
+              {tempPin && (
+                <>
+                  <AnnotationPin
+                    position={offsetPosition(tempPin.position, tempPin.normal, 2.5)}
+                    text="New"
+                    color="#3b82f6"
+                  />
+                  <group position={offsetPosition(tempPin.position, tempPin.normal, 2.5)}>
+                    <Html center distanceFactor={18} style={{ pointerEvents: 'auto' }}>
+                      <div className="bg-white dark:bg-slate-800 p-3 rounded-lg shadow-xl w-64 border border-slate-200 dark:border-slate-700 pointer-events-auto">
+                        <p className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">New Label / Pin</p>
+                        <textarea
+                          autoFocus
+                          className="w-full text-sm p-2 border rounded resize-none focus:ring-2 focus:ring-blue-500 outline-none dark:bg-slate-900 dark:border-slate-700 dark:text-white"
+                          placeholder="E.g., Tooth 14 margin correction..."
+                          rows={3}
+                          value={pinText}
+                          onChange={(e) => setPinText(e.target.value)}
+                          onKeyDown={(e) => {
+                            e.stopPropagation();
+                            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitAnnotation(); }
+                          }}
+                          onPointerDown={(e) => e.stopPropagation()}
+                        />
+                        <div className="flex justify-end gap-2 mt-2">
+                          <Button variant="ghost" size="sm" onClick={() => setTempPin(null)} className="h-7 text-xs">Cancel</Button>
+                          <Button size="sm" onClick={submitAnnotation} disabled={!pinText.trim()} className="h-7 text-xs">Save Pin</Button>
+                        </div>
+                      </div>
+                    </Html>
+                  </group>
+                </>
+              )}
+            </Canvas>
+          </ErrorBoundary>
+          <Loader />
         </>
       ) : (
-        <Canvas camera={{ position: [0, 0, 75], fov: 45 }}>
+        <Canvas camera={{ position: [0, 20, 60], fov: 45 }}>
           <ambientLight intensity={0.85} />
-          <directionalLight position={[12, 18, 12]} intensity={1.1} />
-          <directionalLight position={[-12, -10, -12]} intensity={0.5} />
+          <directionalLight position={[15, 25, 15]} intensity={1.1} />
+          <directionalLight position={[-15, -10, -15]} intensity={0.4} />
           <Center>
-            <ProceduralCrownMesh />
+            <ProceduralDentalArchModel
+              selectedTeeth={selectedTeeth}
+              material={material}
+              activeViewportMode={activeViewportMode}
+            />
           </Center>
-          <OrbitControls makeDefault enableDamping dampingFactor={0.08} rotateSpeed={0.8} />
+          <OrbitControls 
+            makeDefault 
+            enableDamping 
+            dampingFactor={0.08} 
+            rotateSpeed={0.8}
+            minDistance={20}
+            maxDistance={120}
+          />
         </Canvas>
       )}
     </div>

@@ -439,6 +439,10 @@ export function LabWorkstationStudio({
           <div className="flex-1 w-full h-full relative">
             <ThreeDViewer
               stlUrl={caseData.scanUrl || ''}
+              selectedTeeth={selectedTeeth}
+              material={caseData.material || 'Titanium Abutment'}
+              shade={caseData.shade || 'D4'}
+              activeViewportMode={activeViewportMode}
               isReadOnly={false}
             />
 

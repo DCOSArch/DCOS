@@ -109,23 +109,23 @@ export function LabQCChecklist({
   };
 
   return (
-    <div className="p-4 rounded-2xl bg-card border border-border shadow-xs space-y-4">
+    <div className="p-3.5 rounded-2xl bg-card border border-border/80 shadow-xs space-y-3 w-full overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-primary/10 border border-primary/25 flex items-center justify-center text-primary">
-            <Microscope className="w-4 h-4" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2 border-b border-border/50">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-7 h-7 rounded-lg bg-primary/10 border border-primary/25 flex items-center justify-center text-primary shrink-0">
+            <Microscope className="w-3.5 h-3.5" />
           </div>
-          <div>
-            <h4 className="text-xs font-extrabold uppercase tracking-wider text-foreground flex items-center gap-2">
-              Microscope QC & Fit Verification
+          <div className="min-w-0">
+            <h4 className="text-xs font-bold text-foreground truncate flex items-center gap-1.5">
+              Microscope QC Verification
               {allPassed && (
-                <Badge variant="outline" className="text-[9px] border-emerald-500/40 text-emerald-400 bg-emerald-950/20 font-bold">
-                  All 5 Passed
+                <Badge variant="outline" className="text-[9px] border-emerald-500/40 text-emerald-400 bg-emerald-950/20 px-1 py-0 font-bold">
+                  5/5 Pass
                 </Badge>
               )}
             </h4>
-            <p className="text-[11px] text-muted-foreground">Digital inspection protocol before clinic dispatch</p>
+            <p className="text-[10px] text-muted-foreground truncate">10x stereo inspection protocol</p>
           </div>
         </div>
 
@@ -134,56 +134,65 @@ export function LabQCChecklist({
           variant={allPassed ? 'default' : 'secondary'}
           disabled={failedCount > 0 || isCertified}
           onClick={handleCertify}
-          className="h-8 px-3 rounded-xl text-xs font-bold"
+          className="h-7 px-2.5 rounded-lg text-xs font-bold shrink-0 self-start sm:self-auto"
         >
-          <ShieldCheck className="w-3.5 h-3.5 mr-1.5" />
-          {isCertified ? 'QC Certified' : 'Certify Inspection'}
+          <ShieldCheck className="w-3.5 h-3.5 mr-1" />
+          {isCertified ? 'Certified' : 'Certify QC'}
         </Button>
       </div>
 
       {/* QC Criteria List */}
-      <div className="grid gap-2">
+      <div className="space-y-2">
         {items.map(item => {
           return (
             <div
               key={item.id}
               onClick={() => toggleItemStatus(item.id)}
-              className="p-2.5 rounded-xl bg-muted/20 hover:bg-muted/40 border border-border/60 flex items-start justify-between gap-3 cursor-pointer transition-all hover:scale-[1.005]"
+              className="p-2.5 rounded-xl bg-muted/20 hover:bg-muted/35 border border-border/60 space-y-1.5 cursor-pointer transition-all hover:border-primary/40"
             >
-              <div className="space-y-0.5 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-foreground truncate">{item.title}</span>
-                  {item.measuredValue && (
-                    <Badge variant="outline" className="text-[9px] font-mono border-border px-1.5 py-0">
-                      {item.measuredValue}
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-bold text-foreground truncate">{item.title}</span>
+                
+                <div className="shrink-0">
+                  {item.status === 'PASSED' && (
+                    <Badge className="bg-emerald-500/15 border-emerald-500/40 text-emerald-400 font-bold text-[10px] px-2 py-0.5 gap-1">
+                      <CheckCircle2 className="w-3 h-3" /> Pass
+                    </Badge>
+                  )}
+                  {item.status === 'WARNING' && (
+                    <Badge className="bg-amber-500/15 border-amber-500/40 text-amber-400 font-bold text-[10px] px-2 py-0.5 gap-1">
+                      <AlertTriangle className="w-3 h-3" /> Review
+                    </Badge>
+                  )}
+                  {item.status === 'FAILED' && (
+                    <Badge className="bg-red-500/15 border-red-500/40 text-red-400 font-bold text-[10px] px-2 py-0.5 gap-1">
+                      <XCircle className="w-3 h-3" /> Remake
+                    </Badge>
+                  )}
+                  {item.status === 'PENDING' && (
+                    <Badge variant="outline" className="text-[10px] text-muted-foreground px-2 py-0.5">
+                      Pending
                     </Badge>
                   )}
                 </div>
-                <p className="text-[10px] text-muted-foreground line-clamp-1">{item.description}</p>
               </div>
 
-              <div className="shrink-0 flex items-center gap-1.5">
-                {item.status === 'PASSED' && (
-                  <Badge className="bg-emerald-500/15 border-emerald-500/40 text-emerald-400 font-bold text-[10px] gap-1">
-                    <CheckCircle2 className="w-3 h-3" /> Pass
-                  </Badge>
-                )}
-                {item.status === 'WARNING' && (
-                  <Badge className="bg-amber-500/15 border-amber-500/40 text-amber-400 font-bold text-[10px] gap-1">
-                    <AlertTriangle className="w-3 h-3" /> Review
-                  </Badge>
-                )}
-                {item.status === 'FAILED' && (
-                  <Badge className="bg-red-500/15 border-red-500/40 text-red-400 font-bold text-[10px] gap-1">
-                    <XCircle className="w-3 h-3" /> Remake
-                  </Badge>
-                )}
-                {item.status === 'PENDING' && (
-                  <Badge variant="outline" className="text-[10px] text-muted-foreground">
-                    Pending
-                  </Badge>
-                )}
-              </div>
+              {item.measuredValue && (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] font-mono text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.5 rounded-md font-semibold">
+                    {item.measuredValue}
+                  </span>
+                  {item.tolerance && (
+                    <span className="text-[9px] text-muted-foreground font-mono">
+                      (Tol: {item.tolerance})
+                    </span>
+                  )}
+                </div>
+              )}
+
+              <p className="text-[10px] text-muted-foreground leading-snug">
+                {item.description}
+              </p>
             </div>
           );
         })}
