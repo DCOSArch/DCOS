@@ -1,6 +1,7 @@
 'use client';
 
-import React, { memo, useState } from 'react';
+import React, { memo, useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
 import { TRAVEL_SPRING, TACTILE_SPRING, EASE_OUT } from './workspace-motion';
@@ -32,14 +33,88 @@ interface WorkspaceNavRailProps {
   onValueChange: (value: string) => void;
 }
 
+/** Where the flyout should be painted, in viewport coordinates. */
+type Reveal = {
+  value: string;
+  label: string;
+  count?: number;
+  top: number;
+  left: number;
+  flipped: boolean;
+};
+
+/** Approximate flyout width, used only to decide which side it opens on. */
+const FLYOUT_ESTIMATED_WIDTH = 190;
+
 export const WorkspaceNavRail = memo(function WorkspaceNavRail({
   sections,
   value,
   onValueChange,
 }: WorkspaceNavRailProps) {
   const reduceMotion = useReducedMotion() ?? false;
+  const [revealed, setRevealed] = useState<Reveal | null>(null);
+  /** The element the flyout is anchored to, so it can be re-measured. */
+  const triggerRef = useRef<HTMLElement | null>(null);
+
+  // Portal target only exists on the client.
+  const [isPortalReady, setIsPortalReady] = useState(false);
+  useEffect(() => setIsPortalReady(true), []);
+
+  const measure = useCallback((section: NavSection, el: HTMLElement): Reveal => {
+    const r = el.getBoundingClientRect();
+    // Open to the left instead if there isn't room on the right.
+    const flipped = r.right + FLYOUT_ESTIMATED_WIDTH > window.innerWidth;
+    return {
+      value: section.value,
+      label: section.label,
+      count: section.count,
+      top: r.top + r.height / 2,
+      left: flipped ? r.left - 10 : r.right + 10,
+      flipped,
+    };
+  }, []);
+
   // Tracks hover *and* focus so the label is reachable by keyboard, not just mouse.
-  const [revealed, setRevealed] = useState<string | null>(null);
+  const reveal = useCallback(
+    (section: NavSection, el: HTMLElement) => {
+      triggerRef.current = el;
+      setRevealed(measure(section, el));
+    },
+    [measure],
+  );
+
+  const clear = useCallback((sectionValue: string) => {
+    setRevealed((cur) => {
+      if (cur?.value !== sectionValue) return cur;
+      triggerRef.current = null;
+      return null;
+    });
+  }, []);
+
+  // Keep the flyout glued to its trigger rather than dismissing it. Dismissing
+  // on scroll looked reasonable but broke keyboard use outright: focusing a
+  // button can scroll it into view, and that scroll fired immediately —
+  // clearing the label before it was ever readable.
+  useEffect(() => {
+    if (!revealed) return;
+    const sync = () => {
+      const el = triggerRef.current;
+      if (!el || !el.isConnected) return setRevealed(null);
+      const r = el.getBoundingClientRect();
+      const flipped = r.right + FLYOUT_ESTIMATED_WIDTH > window.innerWidth;
+      setRevealed((cur) =>
+        cur
+          ? { ...cur, top: r.top + r.height / 2, left: flipped ? r.left - 10 : r.right + 10, flipped }
+          : cur,
+      );
+    };
+    window.addEventListener('scroll', sync, true);
+    window.addEventListener('resize', sync);
+    return () => {
+      window.removeEventListener('scroll', sync, true);
+      window.removeEventListener('resize', sync);
+    };
+  }, [revealed?.value]);
 
   return (
     <nav
@@ -54,7 +129,6 @@ export const WorkspaceNavRail = memo(function WorkspaceNavRail({
         {sections.map((section) => {
           const Icon = section.icon;
           const isActive = section.value === value;
-          const isRevealed = revealed === section.value;
 
           return (
             <li key={section.value} className="relative shrink-0">
@@ -64,10 +138,10 @@ export const WorkspaceNavRail = memo(function WorkspaceNavRail({
                 aria-selected={isActive}
                 aria-label={section.label}
                 onClick={() => onValueChange(section.value)}
-                onMouseEnter={() => setRevealed(section.value)}
-                onMouseLeave={() => setRevealed((v) => (v === section.value ? null : v))}
-                onFocus={() => setRevealed(section.value)}
-                onBlur={() => setRevealed((v) => (v === section.value ? null : v))}
+                onMouseEnter={(e) => reveal(section, e.currentTarget)}
+                onMouseLeave={() => clear(section.value)}
+                onFocus={(e) => reveal(section, e.currentTarget)}
+                onBlur={() => clear(section.value)}
                 whileTap={reduceMotion ? undefined : { scale: 0.94 }}
                 transition={TACTILE_SPRING}
                 className="relative flex items-center gap-2 lg:justify-center w-full lg:w-12 h-11 lg:h-12 px-3 lg:px-0 rounded-xl cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
@@ -104,13 +178,9 @@ export const WorkspaceNavRail = memo(function WorkspaceNavRail({
                   </span>
                 </span>
 
-                {/* Desktop count badge.
-                    Previously anchored to the icon at -top-1.5 -right-2, which
-                    put it straddling the active indicator's 1px border and the
-                    rail edge — it read as a clipped, broken chip. It is now
-                    anchored inside the button and punched out with a ring in
-                    the rail's own background colour, so it reads as a distinct
-                    chip regardless of what sits behind it. */}
+                {/* Desktop count badge. Anchored inside the button and punched
+                    out with a ring in the rail's own background colour so it
+                    never merges with the active indicator's border. */}
                 {section.count !== undefined && section.count > 0 && (
                   <span
                     className={`hidden lg:flex absolute top-1 right-1 z-20 min-w-[15px] h-[15px] px-[3px] items-center justify-center rounded-full font-mono text-[9px] font-bold leading-none tabular-nums ring-2 ring-card ${
@@ -123,34 +193,44 @@ export const WorkspaceNavRail = memo(function WorkspaceNavRail({
                   </span>
                 )}
               </motion.button>
-
-              {/* Desktop flyout label. pointer-events-none so it can never
-                  swallow a click aimed at the next rail item. */}
-              <AnimatePresence>
-                {isRevealed && (
-                  <motion.span
-                    initial={reduceMotion ? { opacity: 0 } : { opacity: 0, x: -6, scale: 0.96 }}
-                    animate={{ opacity: 1, x: 0, scale: 1 }}
-                    exit={reduceMotion ? { opacity: 0 } : { opacity: 0, x: -4, scale: 0.98 }}
-                    transition={{ duration: 0.16, ease: EASE_OUT }}
-                    role="presentation"
-                    className="hidden lg:flex items-center gap-2 absolute left-full top-1/2 -translate-y-1/2 ml-2.5 z-50 px-2.5 py-1.5 rounded-lg bg-popover border border-border shadow-md whitespace-nowrap pointer-events-none"
-                  >
-                    <span className="text-xs font-semibold text-foreground">
-                      {section.label}
-                    </span>
-                    {section.count !== undefined && (
-                      <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
-                        {section.count}
-                      </span>
-                    )}
-                  </motion.span>
-                )}
-              </AnimatePresence>
             </li>
           );
         })}
       </ul>
+
+      {/* Flyout is portaled to <body> and positioned in viewport coordinates.
+          Rendering it inside the rail put it at the mercy of every ancestor
+          stacking context on the page — the odontogram card painted straight
+          over it regardless of z-index. Nothing in the document can occlude it
+          from here. */}
+      {isPortalReady &&
+        createPortal(
+          <AnimatePresence>
+            {revealed && (
+              <motion.div
+                key={revealed.value}
+                initial={reduceMotion ? { opacity: 0 } : { opacity: 0, x: revealed.flipped ? 6 : -6, scale: 0.96 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.16, ease: EASE_OUT }}
+                style={{
+                  top: revealed.top,
+                  left: revealed.left,
+                  transform: `translateY(-50%)${revealed.flipped ? ' translateX(-100%)' : ''}`,
+                }}
+                className="hidden lg:flex items-center gap-2 fixed z-[200] px-2.5 py-1.5 rounded-lg bg-popover border border-border shadow-lg whitespace-nowrap pointer-events-none"
+              >
+                <span className="text-xs font-semibold text-foreground">{revealed.label}</span>
+                {revealed.count !== undefined && (
+                  <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
+                    {revealed.count}
+                  </span>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body,
+        )}
     </nav>
   );
 });

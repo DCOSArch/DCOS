@@ -41,10 +41,10 @@ export default async function DashboardLayout({
   return (
     <>
       <Navbar currentUser={userProfile} cases={mappedCases} />
-      {/* 1600px rather than max-w-7xl (1280px): this is a data-dense clinical
-          cockpit and 1280 left ~300px of dead gutter per side on wide
-          displays. */}
-      <main className="flex-1 w-full p-4 md:p-6 lg:px-8 lg:py-6 max-w-[1600px] mx-auto">
+      {/* Full-bleed. Any max-width here centres the app and leaves dead gutters
+          on wide displays — wrong for a clinical cockpit, where horizontal
+          space is the scarce resource. Padding scales instead of clamping. */}
+      <main className="flex-1 w-full px-4 py-4 md:px-6 md:py-5 xl:px-8 2xl:px-10">
         {children}
       </main>
     </>

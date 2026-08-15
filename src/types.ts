@@ -57,6 +57,7 @@ export interface Case {
   analogLogistics?: string;
   proposedDueDate?: string;
   dueDateProposalsCount?: number;
+  deliveryTrackingId?: string;
 }
 
 export interface TimelineEvent {

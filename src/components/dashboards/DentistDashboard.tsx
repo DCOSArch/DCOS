@@ -1635,14 +1635,8 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
             <CardDescription>View and track your patients' restorations.</CardDescription>
           </div>
           <div className="flex items-center gap-3">
-            <Button
-              onClick={() => setIsCreateModalOpen(true)}
-              size="sm"
-              className="h-8 px-3 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>New Case</span>
-            </Button>
+            {/* "New Case" removed — it opened the same modal as the page
+                header's "New Case Prescription". One primary CTA per action. */}
             <div className="flex items-center gap-2">
               <Filter className="w-4 h-4 text-muted-foreground" />
               <Select value={filterStatus} onValueChange={(val) => setFilterStatus(val || 'ALL')}>

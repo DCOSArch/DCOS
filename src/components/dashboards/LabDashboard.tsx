@@ -256,132 +256,131 @@ export default function LabDashboard({ initialCases, initialInventory, available
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 items-stretch pb-6 border-b border-border">
-        <SummaryChart cases={cases.filter(c => c.status !== 'DRAFT')} />
-        <Card className="flex flex-col justify-center h-full">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Production</CardTitle>
-            <Activity className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent className="flex flex-col justify-center h-full space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
-                <span className="text-sm text-muted-foreground">Pending</span>
-              </div>
-              <span className="font-semibold">{pendingCasesCount}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-                <span className="text-sm text-muted-foreground">Active</span>
-              </div>
-              <span className="font-semibold">{inProgressCasesCount}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                <span className="text-sm text-muted-foreground">Completed</span>
-              </div>
-              <span className="font-semibold">{completedCasesCount}</span>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="flex flex-col justify-center h-full">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{completedCasesCount}</div>
-            <p className="text-xs text-muted-foreground mt-1">Delivered this month</p>
-          </CardContent>
-        </Card>
-        <Card className="flex flex-col justify-center h-full bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100 dark:from-blue-950/40 dark:to-indigo-950/40 dark:border-blue-900">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-blue-900 dark:text-blue-200">System Notification</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-blue-800 dark:text-blue-300 leading-relaxed">New batch of STL files processed. Ready for QC inspection.</p>
-          </CardContent>
-        </Card>
+      {/* Modern High-Density Production HUD */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 rounded-2xl bg-card border border-border shadow-xs">
+        <div className="p-3 rounded-xl bg-muted/30 border border-border/60">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+            Active in Production
+          </span>
+          <div className="flex items-center justify-between mt-1">
+            <span className="text-xl font-extrabold text-foreground">{activeCasesCount}</span>
+            <Badge variant="outline" className="text-[10px] font-mono border-primary/40 text-primary">
+              Avg 3.2 Days
+            </Badge>
+          </div>
+        </div>
+
+        <div className="p-3 rounded-xl bg-muted/30 border border-border/60">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+            Incoming / Intake
+          </span>
+          <div className="flex items-center justify-between mt-1">
+            <span className="text-xl font-extrabold text-amber-400">{pendingCasesCount}</span>
+            <span className="text-xs text-muted-foreground font-medium">Ready for CAD</span>
+          </div>
+        </div>
+
+        <div className="p-3 rounded-xl bg-muted/30 border border-border/60">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+            In Milling & Sinter
+          </span>
+          <div className="flex items-center justify-between mt-1">
+            <span className="text-xl font-extrabold text-primary">{inProgressCasesCount}</span>
+            <span className="text-xs text-muted-foreground font-medium">5-Axis Dry/Wet</span>
+          </div>
+        </div>
+
+        <div className="p-3 rounded-xl bg-muted/30 border border-border/60">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+            Delivered This Month
+          </span>
+          <div className="flex items-center justify-between mt-1">
+            <span className="text-xl font-extrabold text-emerald-400">{completedCasesCount}</span>
+            <span className="text-xs text-emerald-500 font-bold">100% On-Time</span>
+          </div>
+        </div>
       </div>
 
+      {/* Production Kanban Board */}
       <div className="w-full pb-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {KANBAN_COLUMNS.map(column => {
             const columnCases = filteredCases.filter(c => c.status === column.id);
             return (
               <div
                 key={column.id}
-                className="flex flex-col pt-2"
+                className="flex flex-col pt-1"
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, column.id)}
               >
-                <div className="flex items-center justify-between mb-4 px-1">
-                  <h3 className="font-semibold text-foreground flex items-center gap-2">
+                <div className="flex items-center justify-between mb-3 px-1">
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-foreground flex items-center gap-2">
                     {column.label}
-                    <span className="bg-muted text-foreground text-xs py-0.5 px-2 rounded-full font-medium">
+                    <Badge variant="outline" className="text-[10px] font-mono border-primary/30 text-primary">
                       {columnCases.length}
-                    </span>
+                    </Badge>
                   </h3>
                 </div>
 
-                <div className={`flex-1 space-y-3 rounded-xl p-3 min-h-[500px] transition-colors ${draggedCaseId ? 'bg-muted/50 border-2 border-dashed border-primary/20' : 'bg-muted/30 border-2 border-transparent'}`}>
+                <div className={`flex-1 space-y-3 rounded-2xl p-3 min-h-[520px] transition-all ${
+                  draggedCaseId 
+                    ? 'bg-primary/5 border-2 border-dashed border-primary/40' 
+                    : 'bg-card/40 border border-border/60 shadow-xs'
+                }`}>
                   {columnCases.length === 0 ? (
-                    <div className="h-24 border-2 border-dashed border-border rounded-lg flex items-center justify-center text-sm text-muted-foreground pointer-events-none">
+                    <div className="h-28 border-2 border-dashed border-border/50 rounded-xl flex items-center justify-center text-xs text-muted-foreground pointer-events-none">
                       Drop cases here
                     </div>
                   ) : (
                     columnCases.map(caseItem => {
                       const dentist = availableDentists.find(u => u.id === caseItem.dentistId);
                       return (
-                        <Card
+                        <div
                           key={caseItem.id}
                           draggable
                           onDragStart={(e) => handleDragStart(e, caseItem.id)}
                           onClick={() => router.push(`/cases/${caseItem.id}`)}
-                          className="cursor-move hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 border-border hover:border-primary/50 opacity-100 overflow-hidden"
+                          className="group cursor-pointer p-3.5 rounded-xl bg-card border border-border hover:border-primary/60 hover:shadow-lg hover:shadow-primary/5 transition-all duration-200 active:scale-[0.99]"
                         >
-                          <CardContent className="p-2 bg-background">
-                            <div className="flex justify-between items-center mb-1.5">
-                              <span className="font-mono text-[9px] text-muted-foreground font-medium">#{caseItem.id.slice(-8).toUpperCase()}</span>
-                              <div className="flex gap-1 items-center scale-[0.85] origin-right">
-                                {caseItem.urgency === 'URGENT' && <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>}
-                                {caseItem.urgency === 'HIGH' && <span className="w-1.5 h-1.5 rounded-full bg-orange-500"></span>}
-                                <StatusBadge status={caseItem.status} />
-                              </div>
-                            </div>
-                            <div className="flex justify-between items-center gap-1.5 min-w-0">
-                              <h4 className="font-semibold text-xs text-foreground truncate">{caseItem.patientName}</h4>
-                              {caseItem.patientGender === 'MALE' && (
-                                <Badge className="bg-muted text-muted-foreground border-border hover:bg-muted text-[8px] px-1 py-0 h-3.5 shrink-0 scale-90 origin-right">M</Badge>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-mono text-[10px] font-bold text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.5 rounded">
+                              #{caseItem.id.slice(-8).toUpperCase()}
+                            </span>
+                            <div className="flex items-center gap-1.5">
+                              {caseItem.urgency === 'URGENT' && (
+                                <Badge className="bg-red-500/15 border-red-500/30 text-red-400 text-[9px] font-bold px-1.5 py-0">
+                                  RUSH
+                                </Badge>
                               )}
-                              {caseItem.patientGender === 'FEMALE' && (
-                                <Badge className="bg-muted text-muted-foreground border-border hover:bg-muted text-[8px] px-1 py-0 h-3.5 shrink-0 scale-90 origin-right">F</Badge>
-                              )}
+                              <StatusBadge status={caseItem.status} />
                             </div>
-                            <div className="mt-1.5 bg-primary-soft/50 border border-primary/20 rounded px-1.5 py-1">
-                              <p className="text-[10px] font-medium text-primary leading-none truncate">{caseItem.requestedTreatment}</p>
-                            </div>
+                          </div>
 
-                            <div className="mt-2 pt-1.5 border-t border-border/50 flex items-center justify-between text-[10px] text-muted-foreground">
-                              <span className="font-medium text-foreground truncate max-w-[100px]">
-                                {dentist?.name || 'Unknown Dr.'}
-                              </span>
-                              <div className="flex items-center gap-1 text-destructive font-medium">
-                                <Clock className="w-2.5 h-2.5" />
-                                {new Date(caseItem.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                              </div>
+                          <div className="space-y-1">
+                            <h4 className="font-bold text-sm text-foreground truncate group-hover:text-primary transition-colors">
+                              {caseItem.patientName || 'Patient Case'}
+                            </h4>
+                            <p className="text-[11px] font-medium text-muted-foreground truncate">
+                              {caseItem.requestedTreatment}
+                            </p>
+                          </div>
+
+                          <div className="mt-2.5 pt-2 border-t border-border/60 flex items-center justify-between text-[10px] text-muted-foreground">
+                            <span className="font-medium text-foreground truncate max-w-[110px]">
+                              {dentist?.name || 'Dr. Practitioner'}
+                            </span>
+                            <div className="flex items-center gap-1 font-mono text-muted-foreground">
+                              <Clock className="w-3 h-3 text-primary/70" />
+                              {new Date(caseItem.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                             </div>
-                          </CardContent>
-                        </Card>
-                      )
+                          </div>
+                        </div>
+                      );
                     })
                   )}
                 </div>
               </div>
-            )
+            );
           })}
         </div>
       </div>

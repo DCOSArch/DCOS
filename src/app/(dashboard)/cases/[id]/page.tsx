@@ -3,6 +3,7 @@ import { getCachedSession, getCachedUserProfile } from '@/lib/data';
 import { createClient } from '@/lib/supabase/server';
 import { mockPatients, mockCases } from '@/mockData';
 import { UnifiedClinicalWorkspace } from '@/components/patient-workspace/UnifiedClinicalWorkspace';
+import { LabWorkstationStudio } from '@/components/lab/LabWorkstationStudio';
 import { Patient, Case } from '@/types';
 
 export default async function CaseDetailsPage(props: { params: Promise<{ id: string }> }) {
@@ -42,8 +43,8 @@ export default async function CaseDetailsPage(props: { params: Promise<{ id: str
   const { data: timelineData } = timelineResult;
   const { data: chatData } = chatResult;
 
-  // If case is linked to a patient, redirect to unified workspace with that case active
-  if (caseData?.patient_id) {
+  // If dentist viewing case linked to a patient, redirect to unified clinical workspace
+  if (caseData?.patient_id && currentUser.role === 'DENTIST') {
     redirect(`/patients/${caseData.patient_id}?caseId=${caseData.id}`);
   }
 
@@ -112,6 +113,18 @@ export default async function CaseDetailsPage(props: { params: Promise<{ id: str
     content: m.content,
     timestamp: m.created_at,
   })) || [];
+
+  if (currentUser.role === 'LAB_ADMIN') {
+    return (
+      <LabWorkstationStudio
+        caseData={mappedCase}
+        currentUser={currentUser}
+        dentistName={caseData?.dentist?.name || 'Dr. Lead Practitioner'}
+        initialTimeline={timelineData || []}
+        initialMessages={initialMessages}
+      />
+    );
+  }
 
   return (
     <UnifiedClinicalWorkspace
