@@ -55,9 +55,52 @@ const offsetPosition = (
 };
 
 /**
- * STLModel — memoized to prevent re-renders.
- * Uses meshPhongMaterial (cheaper than meshStandard) with flatShading.
+ * ProceduralCrownMesh — procedural 4-cusp molar crown fallback geometry.
  */
+const ProceduralCrownMesh = React.memo(({ onMeshClick }: { onMeshClick?: (e: any) => void }) => {
+  // Procedural 4-cusp molar crown geometry using custom vertices / lathe & cylinders
+  const crownGeo = useMemo(() => {
+    const geo = new THREE.CylinderGeometry(14, 12, 18, 32, 16);
+    const pos = geo.attributes.position;
+    // Displace vertices to form realistic anatomical occlusal cusps and central groove
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const y = pos.getY(i);
+      const z = pos.getZ(i);
+      if (y > 4) {
+        // Cusp formation (Mesio-buccal, Disto-buccal, Mesio-lingual, Disto-lingual)
+        const angle = Math.atan2(z, x);
+        const cuspHeight = Math.sin(angle * 2) * 3.5;
+        const centralFossa = (x * x + z * z) < 36 ? -2.5 : 0;
+        pos.setY(i, y + cuspHeight + centralFossa);
+      }
+    }
+    geo.computeVertexNormals();
+    return geo;
+  }, []);
+
+  return (
+    <group>
+      {/* Dental Crown Restoration Body */}
+      <mesh geometry={crownGeo} onClick={onMeshClick}>
+        <meshStandardMaterial
+          color="#f4eedb"
+          roughness={0.25}
+          metalness={0.08}
+          envMapIntensity={1.2}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+      {/* Subgingival Finish Line / Margin Ring */}
+      <mesh position={[0, -9, 0]}>
+        <torusGeometry args={[12.2, 0.4, 16, 64]} />
+        <meshStandardMaterial color="#38bdf8" roughness={0.3} metalness={0.8} />
+      </mesh>
+    </group>
+  );
+});
+ProceduralCrownMesh.displayName = 'ProceduralCrownMesh';
+
 const STLModel = React.memo(({ url, onMeshClick }: { url: string; onMeshClick: (e: any) => void }) => {
   const geometry = useLoader(STLLoader, url);
 
@@ -71,8 +114,6 @@ const STLModel = React.memo(({ url, onMeshClick }: { url: string; onMeshClick: (
     <mesh
       geometry={optimizedGeometry}
       onClick={onMeshClick}
-      // CRITICAL: No onPointerMove, onPointerOver, onPointerOut on the mesh.
-      // These cause R3F to raycast against every triangle on every mouse move.
     >
       <meshPhongMaterial
         color="#e6e1d6"
@@ -257,15 +298,14 @@ export default function ThreeDViewerInner({
       {activeUrl ? (
         <>
       <ErrorBoundary fallback={
-        <div className="w-full h-full flex flex-col items-center justify-center text-slate-500 gap-3">
-          <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center">
-            <svg className="w-8 h-8 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-          </div>
-          <p className="text-sm font-medium text-slate-400">Failed to load 3D scan</p>
-          <p className="text-xs text-slate-600">The scan file is missing or invalid. Use the Load STL button to preview a local file.</p>
-        </div>
+        <Canvas camera={{ position: [0, 0, 80], fov: 50 }}>
+          <ambientLight intensity={0.8} />
+          <directionalLight position={[10, 15, 10]} intensity={1.0} />
+          <Center>
+            <ProceduralCrownMesh />
+          </Center>
+          <OrbitControls makeDefault enableDamping dampingFactor={0.08} />
+        </Canvas>
       }>
         <Canvas
           camera={{ position: [0, 0, 100], fov: 50 }}
@@ -354,15 +394,15 @@ export default function ThreeDViewerInner({
       <Loader />
         </>
       ) : (
-        <div className="w-full h-full flex flex-col items-center justify-center text-slate-500 gap-3">
-          <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center">
-            <svg className="w-8 h-8 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
-            </svg>
-          </div>
-          <p className="text-sm font-medium text-slate-400">No 3D scan uploaded</p>
-          <p className="text-xs text-slate-600">Upload an STL file to preview the scan locally.</p>
-        </div>
+        <Canvas camera={{ position: [0, 0, 75], fov: 45 }}>
+          <ambientLight intensity={0.85} />
+          <directionalLight position={[12, 18, 12]} intensity={1.1} />
+          <directionalLight position={[-12, -10, -12]} intensity={0.5} />
+          <Center>
+            <ProceduralCrownMesh />
+          </Center>
+          <OrbitControls makeDefault enableDamping dampingFactor={0.08} rotateSpeed={0.8} />
+        </Canvas>
       )}
     </div>
   );

@@ -58,10 +58,48 @@ interface LabWorkstationStudioProps {
   initialMessages?: any[];
 }
 
+// Helper to extract JSON design parameters if present
+interface ParsedDesignParams {
+  cleanNote: string;
+  occlusalClearance?: string;
+  contactDesign?: string;
+  connectorDesign?: string;
+  ponticDesign?: string;
+  toothConfigs?: Record<string, string>;
+  customShade?: { cervical?: string; body?: string; incisal?: string; enabled?: boolean };
+  characterizations?: string[];
+}
+
+function parseDoctorInstructions(rawText?: string): ParsedDesignParams {
+  if (!rawText) return { cleanNote: 'Standard clinical preparation.' };
+
+  try {
+    const jsonMatch = rawText.match(/\[Design Parameters\]:\s*(\{[\s\S]*\})/) || rawText.match(/(\{[\s\S]*\})/);
+    if (jsonMatch && jsonMatch[1]) {
+      const parsed = JSON.parse(jsonMatch[1]);
+      const cleanNote = rawText.replace(jsonMatch[0], '').trim() || 'Custom CAD design parameters provided.';
+      return {
+        cleanNote,
+        occlusalClearance: parsed.occlusalClearance,
+        contactDesign: parsed.contactDesign,
+        connectorDesign: parsed.connectorDesign,
+        ponticDesign: parsed.ponticDesign,
+        toothConfigs: parsed.toothConfigs,
+        customShade: parsed.customShade,
+        characterizations: parsed.characterizations,
+      };
+    }
+  } catch (e) {
+    // fallback
+  }
+
+  return { cleanNote: rawText };
+}
+
 export function LabWorkstationStudio({
   caseData,
   currentUser,
-  dentistName = 'Dr. Lead Practitioner',
+  dentistName = 'Dr. Aryan Sharma',
   dentistPhone = '+91 98765 43210',
   initialTimeline = [],
   initialMessages = [],
@@ -71,10 +109,10 @@ export function LabWorkstationStudio({
   const [messages, setMessages] = useState<any[]>(initialMessages);
   const [newMessage, setNewMessage] = useState('');
   const [activeViewportMode, setActiveViewportMode] = useState<'ANATOMY' | 'OCCLUSION_HEATMAP' | 'WIREFRAME' | 'MARGIN_LINE'>('ANATOMY');
-  const [isViewportFullscreen, setIsViewportFullscreen] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   const supabase = createClient();
+  const parsedParams = parseDoctorInstructions(caseData.instructions);
 
   const handleAdvanceStage = async (nextStatus: CaseStatus) => {
     setIsUpdatingStatus(true);
@@ -118,7 +156,7 @@ export function LabWorkstationStudio({
     toast.success('Message sent to dentist operatory');
   };
 
-  const selectedTeeth = caseData.selectedTeeth || [16];
+  const selectedTeeth = caseData.selectedTeeth || [11, 12, 14, 15, 16, 21, 22];
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6 max-w-7xl mx-auto w-full animate-fade-in text-foreground">
@@ -201,17 +239,17 @@ export function LabWorkstationStudio({
       {/* 2. 3-COLUMN HIGH-PRECISION PRODUCTION STUDIO                              */}
       {/* ========================================================================= */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start w-full">
-        {/* LEFT FLANK (Specs & Exocad Metadata, 3.5 cols) */}
+        {/* LEFT FLANK (Specs & Exocad Metadata, 4 cols) */}
         <div className="lg:col-span-4 space-y-4">
           {/* Restoration Card */}
           <div className="p-4 rounded-2xl bg-card border border-border shadow-xs space-y-3">
             <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
               Restoration Specifications
             </span>
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">Teeth (FDI)</span>
-                <div className="flex gap-1">
+                <div className="flex gap-1 flex-wrap justify-end max-w-[200px]">
                   {selectedTeeth.map(t => (
                     <Badge key={t} className="bg-primary/10 border-primary/30 text-primary font-mono font-bold text-xs px-2 py-0.5">
                       #{t}
@@ -222,20 +260,20 @@ export function LabWorkstationStudio({
 
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">Material</span>
-                <span className="text-xs font-bold text-foreground">{caseData.material || 'Multi-Layered Zirconia 5Y'}</span>
+                <span className="text-xs font-bold text-foreground">{caseData.material || 'Zirconia HT (Multi-Layer)'}</span>
               </div>
 
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">Shade Match</span>
                 <Badge variant="outline" className="text-xs font-bold border-amber-500/40 text-amber-400 bg-amber-950/20">
-                  {caseData.shade || 'VITA Classical A2'}
+                  {caseData.shade || 'D4'}
                 </Badge>
               </div>
 
               {caseData.implantBrand && (
                 <div className="flex items-center justify-between pt-1 border-t border-border">
                   <span className="text-xs text-muted-foreground">Implant Brand</span>
-                  <span className="text-xs font-bold text-foreground">{caseData.implantBrand} ({caseData.scanBodyModel || 'Standard'})</span>
+                  <span className="text-xs font-bold text-foreground">{caseData.implantBrand}</span>
                 </div>
               )}
             </div>
@@ -275,18 +313,83 @@ export function LabWorkstationStudio({
             </div>
           </div>
 
-          {/* Clinical Doctor Notes */}
+          {/* Parsed CAD Design Specifications & Characterizations */}
+          {(parsedParams.occlusalClearance || parsedParams.customShade || parsedParams.characterizations) && (
+            <div className="p-4 rounded-2xl bg-card border border-border shadow-xs space-y-3">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+                CAD Morphology & Shade Matrix
+              </span>
+
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                {parsedParams.occlusalClearance && (
+                  <div className="p-2 rounded-xl bg-muted/30 border border-border/60">
+                    <span className="text-[9px] text-muted-foreground block uppercase font-bold">Occlusion</span>
+                    <span className="font-bold text-foreground">{parsedParams.occlusalClearance}</span>
+                  </div>
+                )}
+                {parsedParams.connectorDesign && (
+                  <div className="p-2 rounded-xl bg-muted/30 border border-border/60">
+                    <span className="text-[9px] text-muted-foreground block uppercase font-bold">Connector</span>
+                    <span className="font-bold text-foreground">{parsedParams.connectorDesign}</span>
+                  </div>
+                )}
+                {parsedParams.ponticDesign && (
+                  <div className="p-2 rounded-xl bg-muted/30 border border-border/60">
+                    <span className="text-[9px] text-muted-foreground block uppercase font-bold">Pontic</span>
+                    <span className="font-bold text-foreground">{parsedParams.ponticDesign}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Custom 3-Layer Shade Gradient */}
+              {parsedParams.customShade && (
+                <div className="p-2.5 rounded-xl bg-muted/20 border border-border/60 space-y-1.5">
+                  <span className="text-[9px] font-bold uppercase text-muted-foreground block">3-Layer Shade Recipe</span>
+                  <div className="grid grid-cols-3 gap-1.5 text-center text-xs">
+                    <div className="p-1.5 rounded-lg bg-amber-950/20 border border-amber-500/30">
+                      <span className="text-[8px] text-amber-400 block font-mono">Cervical</span>
+                      <strong className="text-amber-300 font-bold">{parsedParams.customShade.cervical || 'A2'}</strong>
+                    </div>
+                    <div className="p-1.5 rounded-lg bg-amber-950/20 border border-amber-500/30">
+                      <span className="text-[8px] text-amber-400 block font-mono">Body</span>
+                      <strong className="text-amber-300 font-bold">{parsedParams.customShade.body || 'B2'}</strong>
+                    </div>
+                    <div className="p-1.5 rounded-lg bg-amber-950/20 border border-amber-500/30">
+                      <span className="text-[8px] text-amber-400 block font-mono">Incisal</span>
+                      <strong className="text-amber-300 font-bold">{parsedParams.customShade.incisal || 'D4'}</strong>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Characterizations */}
+              {parsedParams.characterizations && parsedParams.characterizations.length > 0 && (
+                <div className="space-y-1">
+                  <span className="text-[9px] font-bold uppercase text-muted-foreground block">Characterizations</span>
+                  <div className="flex flex-wrap gap-1">
+                    {parsedParams.characterizations.map((c, i) => (
+                      <span key={i} className="px-2 py-0.5 rounded-md bg-purple-950/30 border border-purple-500/30 text-purple-300 text-[10px] font-medium">
+                        {c}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Clinical Doctor Preparation Note */}
           <div className="p-4 rounded-2xl bg-card border border-border shadow-xs space-y-2">
             <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
-              Doctor Instructions & Prep Notes
+              Doctor Preparation Notes
             </span>
             <p className="text-xs text-foreground bg-muted/20 p-3 rounded-xl border border-border/60 leading-relaxed">
-              {caseData.instructions || 'Standard chamfer margin preparation. Please maintain heavy mesial contact point and simulate natural stippling.'}
+              {parsedParams.cleanNote}
             </p>
           </div>
         </div>
 
-        {/* CENTER STAGE (Interactive 3D CAD/CAM Viewport, 4.5 cols) */}
+        {/* CENTER STAGE (Interactive 3D CAD/CAM Viewport, 4 cols) */}
         <div className="lg:col-span-4 space-y-4">
           <Card className="border-border bg-card text-card-foreground shadow-xs overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-border gap-3 bg-muted/20">
@@ -333,9 +436,9 @@ export function LabWorkstationStudio({
             </CardHeader>
 
             <CardContent className="p-3">
-              <div className="relative rounded-xl overflow-hidden bg-slate-950 border border-slate-800">
+              <div className="relative rounded-xl overflow-hidden bg-slate-950 border border-slate-800 h-[380px]">
                 <ThreeDViewer
-                  stlUrl={caseData.scanUrl || 'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/stl/ascii/slotted_disk.stl'}
+                  stlUrl={caseData.scanUrl || ''}
                   isReadOnly={false}
                 />
 
@@ -367,9 +470,9 @@ export function LabWorkstationStudio({
               Direct Case Chat with {dentistName}
             </span>
 
-            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+            <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
               {messages.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-4">No messages yet. Direct channel active.</p>
+                <p className="text-xs text-muted-foreground text-center py-3">No messages yet. Direct channel active.</p>
               ) : (
                 messages.map((m: any) => (
                   <div
