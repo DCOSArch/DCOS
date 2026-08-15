@@ -35,38 +35,22 @@ import { getR2PublicUrl } from '@/lib/r2';
 import { toast } from 'sonner';
 import {
   ArrowLeft,
-  Calendar,
-  Activity,
-  Phone,
-  Mail,
-  AlertTriangle,
-  FileText,
-  Clock,
   Plus,
   Camera,
-  Layers,
   DollarSign,
   MessageSquare,
   Sparkles,
   Printer,
-  ChevronRight,
-  Stethoscope,
   Box,
   Send,
   Lock,
   Cpu,
-  Eye,
-  Truck,
   CheckCircle2,
   UploadCloud,
   RefreshCw,
   Share2,
   Shield,
-  CreditCard,
   Radio,
-  ExternalLink,
-  ChevronDown,
-  User as UserIcon,
   Zap,
 } from 'lucide-react';
 import { FeatureGate } from '@/components/subscription/FeatureGate';
@@ -399,96 +383,90 @@ export function UnifiedClinicalWorkspace({
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6 max-w-7xl mx-auto w-full animate-fade-in text-foreground">
       {/* ========================================================================= */}
-      {/* 1. MASTER PATIENT HEADER & OPERATORY STATUS                               */}
+      {/* 1. MASTER PATIENT HEADER                                                  */}
       {/* ========================================================================= */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-border">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-5 pb-5 border-b border-border">
+        <div className="flex items-start gap-3">
           <Link href="/patients">
-            <Button variant="ghost" size="icon" className="hover:bg-muted">
+            <Button variant="ghost" size="icon" className="hover:bg-muted mt-1">
               <ArrowLeft className="w-5 h-5" />
             </Button>
           </Link>
-          <div>
+          <div className="space-y-1.5">
             <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
                 {patient.name}
               </h1>
               <Badge variant="outline" className="font-mono text-xs border-primary/40 text-primary">
-                ID: {patient.id.toUpperCase()}
+                {patient.id.slice(-8).toUpperCase()}
               </Badge>
               {patient.medicalAlerts && patient.medicalAlerts.length > 0 && (
-                <Badge variant="destructive" className="text-xs flex items-center gap-1">
-                  <AlertTriangle className="w-3 h-3" />
+                <Badge variant="destructive" className="text-xs">
                   {patient.medicalAlerts.join(', ')}
                 </Badge>
               )}
             </div>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1 flex items-center gap-3 flex-wrap">
+            <p className="text-xs text-muted-foreground flex items-center gap-2.5 flex-wrap">
               <span>{patient.age ? `${patient.age} yrs` : 'Age N/A'}, {patient.gender || 'Unspecified'}</span>
-              <span>&bull;</span>
-              <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-primary" /> {patient.phone || patient.contactInfo || 'No Phone'}</span>
-              <span>&bull;</span>
-              <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5 text-muted-foreground" /> Registered: {new Date(patient.createdAt).toLocaleDateString()}</span>
+              <span className="text-border">|</span>
+              <span>{patient.phone || patient.contactInfo || 'No Phone'}</span>
+              <span className="text-border">|</span>
+              <span>Since {new Date(patient.createdAt).toLocaleDateString()}</span>
             </p>
+            {/* Tenant org context — compact inline */}
+            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <span>{currentUser?.organizationName || 'Main Practice Clinic'}</span>
+              <Badge
+                variant="outline"
+                className={`text-[9px] font-mono font-bold uppercase px-1.5 py-0 h-4 ${
+                  currentTier === 'ENTERPRISE' ? 'border-purple-500/50 text-purple-400 bg-purple-950/20' :
+                  currentTier === 'PRO_LAB' ? 'border-emerald-500/50 text-emerald-400 bg-emerald-950/20' :
+                  'border-cyan-500/50 text-cyan-400 bg-cyan-950/20'
+                }`}
+              >
+                {currentTier === 'ENTERPRISE' ? 'Enterprise' : currentTier === 'PRO_LAB' ? 'Pro Lab' : 'Starter'}
+              </Badge>
+              {!quota.isUnlimited && (
+                <span className="text-[10px] font-mono text-muted-foreground">
+                  {quota.used}/{quota.limit} cases
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Action Buttons & Tenant Organization Context */}
-        <div className="flex items-center gap-2.5 flex-wrap">
-          {/* Tenant Org & Tier Badge */}
-          <div className="flex items-center gap-1.5 p-1.5 px-2.5 rounded-xl bg-muted/60 border border-border text-xs">
-            <span className="font-semibold text-foreground">{currentUser?.organizationName || 'Main Practice Clinic'}</span>
-            <Badge
-              variant="outline"
-              className={`text-[9px] font-mono font-bold uppercase px-1.5 py-0 h-4 ${
-                currentTier === 'ENTERPRISE' ? 'border-purple-500/50 text-purple-400 bg-purple-950/20' :
-                currentTier === 'PRO_LAB' ? 'border-emerald-500/50 text-emerald-400 bg-emerald-950/20' :
-                'border-cyan-500/50 text-cyan-400 bg-cyan-950/20'
-              }`}
-            >
-              {currentTier === 'ENTERPRISE' ? 'Enterprise' : currentTier === 'PRO_LAB' ? 'Pro Lab' : 'Free Starter'}
-            </Badge>
-            {!quota.isUnlimited && (
-              <span className="text-[10px] text-muted-foreground font-mono pl-1 border-l border-border">
-                {quota.used}/{quota.limit} Cases
-              </span>
+        {/* Vertical action stack */}
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex items-center gap-2">
+            {currentTier === 'STARTER' && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-9 text-xs rounded-full bg-primary/10 border-primary/40 text-primary hover:bg-primary/20 font-bold px-4"
+                onClick={() => {
+                  setUpgradeFeatureKey(undefined);
+                  setShowUpgradeModal(true);
+                }}
+              >
+                <Zap className="w-3.5 h-3.5 mr-1" /> Upgrade Plan
+              </Button>
             )}
+            <Link href={`/patients/${patient.id}/capture`}>
+              <Button variant="outline" size="sm" className="h-9 text-xs rounded-full px-4">
+                Scan
+              </Button>
+            </Link>
+            <Link href={`/visits/new?patientId=${patient.id}`}>
+              <Button size="sm" variant="secondary" className="h-9 text-xs rounded-full font-semibold px-4">
+                New Visit
+              </Button>
+            </Link>
+            <Link href="/?action=create">
+              <Button size="sm" className="h-9 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs shadow-sm px-5">
+                New Order
+              </Button>
+            </Link>
           </div>
-
-          {currentTier === 'STARTER' && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-8 text-xs bg-primary/10 border-primary/40 text-primary hover:bg-primary/20 font-bold"
-              onClick={() => {
-                setUpgradeFeatureKey(undefined);
-                setShowUpgradeModal(true);
-              }}
-            >
-              <Zap className="w-3.5 h-3.5 mr-1 text-primary" /> Upgrade
-            </Button>
-          )}
-
-          <Link href={`/patients/${patient.id}/capture`}>
-            <Button variant="outline" size="sm" className="h-8 text-xs">
-              <Camera className="w-4 h-4 mr-1.5 text-primary" />
-              IOS Scan Body
-            </Button>
-          </Link>
-
-          <Link href={`/visits/new?patientId=${patient.id}`}>
-            <Button size="sm" variant="secondary" className="h-8 text-xs font-semibold">
-              <Stethoscope className="w-4 h-4 mr-1.5" />
-              New Clinical Encounter
-            </Button>
-          </Link>
-
-          <Link href="/?action=create">
-            <Button size="sm" className="h-8 bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-xs shadow-sm">
-              <Plus className="w-4 h-4 mr-1.5" />
-              New Lab Order
-            </Button>
-          </Link>
         </div>
       </div>
 
@@ -496,24 +474,26 @@ export function UnifiedClinicalWorkspace({
       {/* 2. MASTER SPACIOUS TABS NAVIGATION                                        */}
       {/* ========================================================================= */}
       <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val || 'overview')} className="w-full space-y-6">
-        <TabsList className="bg-muted/60 border border-border p-1 rounded-xl inline-flex w-fit max-w-full overflow-x-auto gap-1">
-          <TabsTrigger value="overview" className="text-xs sm:text-sm flex items-center gap-1.5 px-3.5 py-2">
-            <Layers className="w-4 h-4" /> Clinical Overview & Odontogram
+        <TabsList className="bg-muted/60 border border-border p-1 rounded-xl inline-flex w-fit max-w-full overflow-x-auto gap-0.5">
+          <TabsTrigger value="overview" className="text-xs sm:text-sm px-4 py-2 font-medium">
+            Clinical Overview
           </TabsTrigger>
-          <TabsTrigger value="lab-cases" className="text-xs sm:text-sm flex items-center gap-1.5 px-3.5 py-2 text-cyan-400">
-            <Box className="w-4 h-4" /> Digital Lab Orders ({cases.length})
+          {cases.length > 0 && (
+            <TabsTrigger value="lab-cases" className="text-xs sm:text-sm px-4 py-2 font-medium">
+              Lab Orders ({cases.length})
+            </TabsTrigger>
+          )}
+          <TabsTrigger value="visits" className="text-xs sm:text-sm px-4 py-2 font-medium">
+            Visits ({visits.length})
           </TabsTrigger>
-          <TabsTrigger value="visits" className="text-xs sm:text-sm flex items-center gap-1.5 px-3.5 py-2">
-            <Activity className="w-4 h-4" /> Visits ({visits.length})
+          <TabsTrigger value="prescriptions" className="text-xs sm:text-sm px-4 py-2 font-medium">
+            Prescriptions
           </TabsTrigger>
-          <TabsTrigger value="prescriptions" className="text-xs sm:text-sm flex items-center gap-1.5 px-3.5 py-2">
-            <FileText className="w-4 h-4" /> Prescriptions (Rx)
+          <TabsTrigger value="billing" className="text-xs sm:text-sm px-4 py-2 font-medium">
+            Invoices
           </TabsTrigger>
-          <TabsTrigger value="billing" className="text-xs sm:text-sm flex items-center gap-1.5 px-3.5 py-2">
-            <DollarSign className="w-4 h-4" /> Invoices & Dues
-          </TabsTrigger>
-          <TabsTrigger value="whatsapp" className="text-xs sm:text-sm flex items-center gap-1.5 px-3.5 py-2">
-            <MessageSquare className="w-4 h-4" /> WhatsApp
+          <TabsTrigger value="whatsapp" className="text-xs sm:text-sm px-4 py-2 font-medium">
+            WhatsApp
           </TabsTrigger>
         </TabsList>
 
@@ -532,9 +512,8 @@ export function UnifiedClinicalWorkspace({
                   {patient.allergies?.join(', ') || 'No known allergies'}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-4 pt-0 text-xs text-muted-foreground flex items-center justify-between">
+              <CardContent className="p-4 pt-0 text-xs text-muted-foreground">
                 <span>{patient.medicalHistory || 'No systemic conditions'}</span>
-                <AlertTriangle className="w-4 h-4 text-rose-400" />
               </CardContent>
             </Card>
 
@@ -547,9 +526,8 @@ export function UnifiedClinicalWorkspace({
                   ₹{totalOutstanding.toLocaleString('en-IN')}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-4 pt-0 text-xs text-muted-foreground flex items-center justify-between">
+              <CardContent className="p-4 pt-0 text-xs text-muted-foreground">
                 <span>{invoices.filter((i) => i.paymentStatus !== 'PAID').length} pending invoices</span>
-                <DollarSign className="w-4 h-4 text-muted-foreground" />
               </CardContent>
             </Card>
 
@@ -562,9 +540,8 @@ export function UnifiedClinicalWorkspace({
                   {cases.length} Active
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-4 pt-0 text-xs text-muted-foreground flex items-center justify-between">
+              <CardContent className="p-4 pt-0 text-xs text-muted-foreground">
                 <span>{cases.filter((c) => c.status === 'IN_PROGRESS' || c.status === 'QUALITY_CHECK').length} in fabrication</span>
-                <Box className="w-4 h-4 text-cyan-400" />
               </CardContent>
             </Card>
 
@@ -577,9 +554,8 @@ export function UnifiedClinicalWorkspace({
                   {visits.length} Visits
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-4 pt-0 text-xs text-muted-foreground flex items-center justify-between">
+              <CardContent className="p-4 pt-0 text-xs text-muted-foreground">
                 <span>Last: {visits.length > 0 ? new Date(visits[0].visitDate).toLocaleDateString() : 'None'}</span>
-                <Activity className="w-4 h-4 text-primary" />
               </CardContent>
             </Card>
           </div>
@@ -671,54 +647,70 @@ export function UnifiedClinicalWorkspace({
                 </div>
               </div>
 
-              {/* 6-Stage Manufacturing Stepper */}
+              {/* Obsidian Glass Production Rail */}
               {activeCase && (
-                <Card className="bg-card border-border shadow-xs overflow-hidden">
+                <div className="space-y-3">
                   {activeCase.status === 'DRAFT' && (
-                    <div className="bg-amber-500/10 border-b border-amber-500/30 p-3 px-4 flex items-center justify-between text-xs text-amber-300">
-                      <div className="flex items-center gap-2">
-                        <AlertTriangle className="w-4 h-4 text-amber-400" />
-                        <span><strong>Draft Lab Order:</strong> This case is saved as a draft and has not yet been submitted to the lab.</span>
-                      </div>
-                      <Button size="sm" className="h-7 bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs" onClick={handlePublishDraft}>
-                        Publish for Production
+                    <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 px-4 flex items-center justify-between text-xs text-amber-300">
+                      <span><strong>Draft:</strong> Not yet submitted to lab.</span>
+                      <Button size="sm" className="h-8 rounded-full bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs px-4" onClick={handlePublishDraft}>
+                        Publish
                       </Button>
                     </div>
                   )}
 
-                  <div className="p-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                    {PIPELINE_STEPS.map((step, idx) => {
-                      const isPast = currentStatusIdx > idx;
-                      const isCurrent = currentStatusIdx === idx;
-                      return (
-                        <div
-                          key={step.status}
-                          className={`p-3 rounded-xl border transition-all text-center ${
-                            isCurrent
-                              ? 'bg-primary/10 border-primary shadow-xs'
-                              : isPast
-                              ? 'bg-muted/40 border-emerald-500/30 text-muted-foreground'
-                              : 'bg-muted/20 border-border opacity-50 text-muted-foreground'
-                          }`}
-                        >
-                          <div className="flex items-center justify-center gap-1.5 mb-1">
-                            {isPast ? (
-                              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                            ) : isCurrent ? (
-                              <div className="w-2.5 h-2.5 rounded-full bg-primary animate-ping" />
-                            ) : (
-                              <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                  {/* Horizontal connected rail */}
+                  <div className="relative rounded-2xl border border-border bg-card/80 backdrop-blur-sm p-5 overflow-hidden">
+                    {/* Background glass effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary/[0.03] via-transparent to-emerald-500/[0.03] pointer-events-none" />
+
+                    <div className="relative flex items-center justify-between">
+                      {PIPELINE_STEPS.map((step, idx) => {
+                        const isPast = currentStatusIdx > idx;
+                        const isCurrent = currentStatusIdx === idx;
+                        const isFuture = !isPast && !isCurrent;
+                        return (
+                          <React.Fragment key={step.status}>
+                            {/* Connecting line before node (skip first) */}
+                            {idx > 0 && (
+                              <div className="flex-1 h-px mx-1">
+                                <div className={`h-full transition-all duration-500 ${
+                                  isPast ? 'bg-emerald-500/60' : isCurrent ? 'bg-gradient-to-r from-emerald-500/60 to-border' : 'bg-border border-t border-dashed border-border'
+                                }`} />
+                              </div>
                             )}
-                            <span className={`text-xs font-bold ${isCurrent ? 'text-foreground font-extrabold' : ''}`}>
-                              {step.label}
-                            </span>
-                          </div>
-                          <p className="text-[10px] text-muted-foreground leading-tight truncate">{step.desc}</p>
-                        </div>
-                      );
-                    })}
+                            {/* Stage node */}
+                            <div className="flex flex-col items-center gap-1.5 min-w-0">
+                              <div className={`relative flex items-center justify-center rounded-full transition-all duration-300 ${
+                                isCurrent
+                                  ? 'w-10 h-10 bg-primary/15 border-2 border-primary shadow-[0_0_16px_rgba(var(--primary-rgb),0.25)]'
+                                  : isPast
+                                  ? 'w-7 h-7 bg-emerald-500/20 border border-emerald-500/50'
+                                  : 'w-7 h-7 bg-muted/40 border border-border'
+                              }`}>
+                                {isPast ? (
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                                ) : isCurrent ? (
+                                  <div className="w-3 h-3 rounded-full bg-primary animate-pulse" />
+                                ) : (
+                                  <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
+                                )}
+                              </div>
+                              <span className={`text-[10px] font-semibold leading-tight text-center max-w-[64px] ${
+                                isCurrent ? 'text-foreground font-bold' : isPast ? 'text-muted-foreground' : 'text-muted-foreground/50'
+                              }`}>
+                                {step.label}
+                              </span>
+                              {isCurrent && (
+                                <span className="text-[9px] text-primary font-medium">{step.desc}</span>
+                              )}
+                            </div>
+                          </React.Fragment>
+                        );
+                      })}
+                    </div>
                   </div>
-                </Card>
+                </div>
               )}
 
               {/* Main Workstation: Left 3D Stage (8 Cols) + Right Order Chat (4 Cols) */}
@@ -975,7 +967,6 @@ export function UnifiedClinicalWorkspace({
           {visits.length === 0 ? (
             <Card className="bg-card border-border text-center py-12">
               <CardContent className="space-y-2">
-                <Activity className="w-10 h-10 mx-auto text-muted-foreground opacity-30" />
                 <p className="text-xs text-muted-foreground">No visits recorded for this patient yet.</p>
               </CardContent>
             </Card>
@@ -984,18 +975,13 @@ export function UnifiedClinicalWorkspace({
               {visits.map((visit) => (
                 <Card key={visit.id} className="bg-card border-border shadow-xs">
                   <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between border-b border-border">
-                    <div className="flex items-center gap-2.5">
-                      <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                        <Activity className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-sm font-bold text-foreground">
-                          {visit.diagnosis || 'Clinical Consultation'}
-                        </CardTitle>
-                        <CardDescription className="text-xs text-muted-foreground">
-                          {new Date(visit.visitDate).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' })}
-                        </CardDescription>
-                      </div>
+                    <div>
+                      <CardTitle className="text-sm font-bold text-foreground">
+                        {visit.diagnosis || 'Clinical Consultation'}
+                      </CardTitle>
+                      <CardDescription className="text-xs text-muted-foreground">
+                        {new Date(visit.visitDate).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' })}
+                      </CardDescription>
                     </div>
                     <Badge variant="outline" className="text-xs border-primary/40 text-primary">
                       {visit.status}
@@ -1030,8 +1016,8 @@ export function UnifiedClinicalWorkspace({
           <Card className="bg-card border-border shadow-xs">
             <CardHeader className="pb-3 border-b border-border flex flex-row items-center justify-between">
               <div>
-                <CardTitle className="text-base font-bold flex items-center gap-2 text-foreground">
-                  <Activity className="w-4 h-4 text-primary" /> Pharmacological Record
+                <CardTitle className="text-base font-bold text-foreground">
+                  Pharmacological Record
                 </CardTitle>
                 <CardDescription className="text-xs text-muted-foreground">
                   Complete medication history prescribed at this practice.
@@ -1132,8 +1118,8 @@ export function UnifiedClinicalWorkspace({
         <TabsContent value="whatsapp" className="space-y-4">
           <Card className="bg-card border-border shadow-xs">
             <CardHeader className="pb-3 border-b border-border">
-              <CardTitle className="text-base font-bold flex items-center gap-2 text-foreground">
-                <MessageSquare className="w-4 h-4 text-emerald-400" /> WhatsApp Patient Automations
+              <CardTitle className="text-base font-bold text-foreground">
+                WhatsApp Patient Automations
               </CardTitle>
               <CardDescription className="text-xs text-muted-foreground">
                 Pre-formatted, 1-click clinical communication templates sent to {patient.phone || patient.contactInfo || 'patient'}.

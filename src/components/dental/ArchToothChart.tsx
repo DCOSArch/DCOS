@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -177,8 +177,26 @@ export function ArchToothChart({
   const panStartRef = useRef({ x: 0, y: 0 });
   const isPanningRef = useRef(false);
   const svgContainerRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
   const [isPanMode, setIsPanMode] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Native Fullscreen API toggle
+  const toggleFullscreen = useCallback(() => {
+    if (!cardRef.current) return;
+    if (!document.fullscreenElement) {
+      cardRef.current.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  }, []);
+
+  // Sync isFullscreen state with browser fullscreen changes
+  useEffect(() => {
+    const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', onFsChange);
+    return () => document.removeEventListener('fullscreenchange', onFsChange);
+  }, []);
 
   const [isPaintDragging, setIsPaintDragging] = useState(false);
   const [paintMode, setPaintMode] = useState<'ADD' | 'REMOVE' | null>(null);
@@ -369,7 +387,7 @@ export function ArchToothChart({
 
   const chart = (
     <div
-      className={`chart-container w-full h-full relative flex items-center justify-center bg-slate-950 select-none overflow-hidden ${isFullscreen ? 'fixed inset-0 z-[100] rounded-none' : `${canvasHeightClass} rounded-xl border border-slate-800`}`}
+      className={`chart-container w-full h-full relative flex items-center justify-center bg-slate-950 select-none overflow-hidden ${canvasHeightClass} rounded-xl border border-slate-800`}
       onWheel={handleWheel}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
@@ -409,7 +427,7 @@ export function ArchToothChart({
         <div className="w-px h-4 bg-slate-800 mx-1" />
         <button type="button" onClick={() => setIsPanMode(v => !v)} title={isPanMode ? 'Switch to paint mode' : 'Switch to pan mode'}
           className={`p-1.5 rounded transition-colors ${isPanMode ? 'bg-blue-600 text-white' : 'hover:bg-slate-800 text-slate-300 hover:text-white'}`}><Hand className="w-3.5 h-3.5" /></button>
-        <button type="button" onClick={() => setIsFullscreen(v => !v)} title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+        <button type="button" onClick={toggleFullscreen} title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
           className="p-1.5 hover:bg-slate-800 text-slate-300 hover:text-white rounded transition-colors">{isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}</button>
       </div>
 
@@ -637,7 +655,7 @@ export function ArchToothChart({
   );
 
   return (
-    <Card className="w-full border-border bg-card text-card-foreground shadow-xs overflow-hidden">
+    <Card ref={cardRef} className={`w-full border-border bg-card text-card-foreground shadow-xs overflow-hidden ${isFullscreen ? 'rounded-none' : ''}`}>
       <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-border gap-3 bg-muted/20">
         <div className="min-w-0">
           <CardTitle className="text-base sm:text-lg font-bold flex items-center gap-2 text-foreground">
