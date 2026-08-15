@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -21,7 +21,6 @@ import {
   ClinicalInvoice,
   User,
   ChatMessage,
-  CaseStatus,
 } from '@/types';
 import {
   getPatientToothChart,
@@ -34,12 +33,10 @@ import { getR2PublicUrl } from '@/lib/r2';
 import { toast } from 'sonner';
 import {
   ArrowLeft,
-  User as UserIcon,
   Calendar,
   Activity,
   Phone,
   Mail,
-  MapPin,
   AlertTriangle,
   FileText,
   Clock,
@@ -53,7 +50,6 @@ import {
   ChevronRight,
   Stethoscope,
   Box,
-  Link2,
   Send,
   Lock,
   Cpu,
@@ -65,20 +61,19 @@ import {
   Share2,
   Shield,
   CreditCard,
-  ChevronDown,
-  Check,
-  Maximize2,
   Radio,
   ExternalLink,
+  ChevronDown,
+  User as UserIcon,
 } from 'lucide-react';
 
 // Dynamic import for WebGL ThreeDViewer (client-side only)
 const ThreeDViewer = dynamic(() => import('@/components/ThreeDViewer'), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full min-h-[350px] flex flex-col items-center justify-center text-muted-foreground gap-3 bg-neutral-950/40 rounded-xl border border-border">
+    <div className="w-full h-[480px] flex flex-col items-center justify-center text-muted-foreground gap-3 bg-neutral-950/60 rounded-2xl border border-border">
       <div className="w-10 h-10 rounded-full border-2 border-border border-t-primary animate-spin" />
-      <p className="text-xs font-mono text-muted-foreground">Initializing 3D WebGL Engine...</p>
+      <p className="text-xs font-mono text-muted-foreground">Initializing WebGL 3D Engine...</p>
     </div>
   ),
 });
@@ -87,8 +82,8 @@ const ThreeDViewer = dynamic(() => import('@/components/ThreeDViewer'), {
 const DicomMprViewer = dynamic(() => import('@/components/viewer/DicomMprViewer').then(m => m.DicomMprViewer), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full min-h-[350px] flex flex-col items-center justify-center text-muted-foreground gap-3 bg-neutral-950/40 rounded-xl border border-border">
-      <div className="w-10 h-10 rounded-full border-2 border-border border-t-cyan-500 animate-spin" />
+    <div className="w-full h-[480px] flex flex-col items-center justify-center text-muted-foreground gap-3 bg-neutral-950/60 rounded-2xl border border-border">
+      <div className="w-10 h-10 rounded-full border-2 border-border border-t-purple-500 animate-spin" />
       <p className="text-xs font-mono text-muted-foreground">Loading DICOM MPR Slices...</p>
     </div>
   ),
@@ -100,7 +95,7 @@ const PIPELINE_STEPS = [
   { status: 'QUALITY_CHECK', label: 'QC & Finishing', desc: 'Precision inspection' },
   { status: 'DISPATCHED', label: 'Dispatched', desc: 'In transit to clinic' },
   { status: 'DELIVERED', label: 'Delivered', desc: 'Delivered to clinic' },
-  { status: 'COMPLETED', label: 'Completed', desc: 'Fitted and confirmed' },
+  { status: 'COMPLETED', label: 'Completed', desc: 'Fitted & finalized' },
 ];
 const statusOrder = ['PENDING', 'IN_PROGRESS', 'QUALITY_CHECK', 'DISPATCHED', 'DELIVERED', 'COMPLETED'];
 
@@ -126,16 +121,17 @@ export function UnifiedClinicalWorkspace({
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
 
-  // 1. Core Patient EHR State
+  // Main Top-Level Tab State
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    return initialActiveCaseId ? 'lab-cases' : 'overview';
+  });
+
+  // Patient EHR State
   const [toothChart, setToothChart] = useState<ToothChartData>({});
   const [visits, setVisits] = useState<ClinicalVisit[]>([]);
   const [invoices, setInvoices] = useState<ClinicalInvoice[]>([]);
-  const [leftTab, setLeftTab] = useState<'overview' | 'visits' | 'prescriptions' | 'billing' | 'whatsapp'>('overview');
 
-  // 2. Central Stage Mode (Tooth Chart vs 3D STL vs CAD Specs)
-  const [centerMode, setCenterMode] = useState<'chart' | 'stl' | 'specs' | 'dicom'>('chart');
-
-  // 3. Multi-Case Selection State
+  // Multi-Case State
   const [cases, setCases] = useState<Case[]>(initialCases);
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(() => {
     if (initialActiveCaseId && initialCases.some(c => c.id === initialActiveCaseId)) {
@@ -145,24 +141,23 @@ export function UnifiedClinicalWorkspace({
   });
 
   const activeCase = useMemo(() => {
-    return cases.find(c => c.id === selectedCaseId) || null;
+    return cases.find(c => c.id === selectedCaseId) || cases[0] || null;
   }, [cases, selectedCaseId]);
 
-  // 4. Case Logistics, Modals & Chat State
+  // Lab View Submode (3D STL vs CAD Specs vs DICOM)
+  const [labViewMode, setLabViewMode] = useState<'3d' | 'specs' | 'dicom'>('3d');
+
+  // Modals & Chat State
   const [showPatientLinkModal, setShowPatientLinkModal] = useState(false);
   const [showTryInModal, setShowTryInModal] = useState(false);
   const [tryInNotes, setTryInNotes] = useState('');
-  const [isCopied, setIsCopied] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [newMessage, setNewMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [chatId, setChatId] = useState<string | null>(initialChatId);
-  const [timeline, setTimeline] = useState<any[]>(initialTimeline);
   const [isUploadingDesign, setIsUploadingDesign] = useState(false);
-  const [dentistName, setDentistName] = useState('');
-  const [labName, setLabName] = useState('');
 
-  // 5. Initial Data Load
+  // Initial load
   useEffect(() => {
     if (patient?.id) {
       setToothChart(getPatientToothChart(patient.id));
@@ -175,7 +170,7 @@ export function UnifiedClinicalWorkspace({
     setCases(initialCases);
   }, [initialCases]);
 
-  // 6. Parsed Design Parameters from Custom Instructions
+  // Design Parameters Parser
   const parsedDesignParams = useMemo(() => {
     if (!activeCase?.instructions) return null;
     const marker = '[Design Parameters]:';
@@ -185,12 +180,11 @@ export function UnifiedClinicalWorkspace({
       const jsonStr = activeCase.instructions.substring(index + marker.length).trim();
       return JSON.parse(jsonStr);
     } catch (e) {
-      console.error('Failed to parse design parameters:', e);
       return null;
     }
   }, [activeCase?.instructions]);
 
-  // 7. Chat Lock Rules
+  // Chat Unlock Rule
   const isChatUnlocked = useMemo(() => {
     if (!activeCase) return false;
     return activeCase.status !== 'DRAFT' && activeCase.status !== 'PENDING' && (activeCase.status as string) !== 'REJECTED';
@@ -205,7 +199,7 @@ export function UnifiedClinicalWorkspace({
     return activeCase?.designUrl ? getR2PublicUrl(activeCase.designUrl) : null;
   }, [activeCase?.designUrl]);
 
-  // 8. Realtime Chat Subscription
+  // Realtime Chat Room Subscription
   useEffect(() => {
     if (!activeCase || !isChatUnlocked) return;
 
@@ -287,7 +281,7 @@ export function UnifiedClinicalWorkspace({
     };
   }, [activeCase?.id, isChatUnlocked, supabase]);
 
-  // 9. Handlers
+  // Handlers
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !chatId || isSending) return;
@@ -322,7 +316,6 @@ export function UnifiedClinicalWorkspace({
         });
       }
     } catch (err: any) {
-      console.error('Error sending message:', err);
       toast.error('Failed to send message: ' + err.message);
       setNewMessage(textToSend);
     } finally {
@@ -335,11 +328,9 @@ export function UnifiedClinicalWorkspace({
     try {
       const { error } = await supabase.from('cases').update({ status: 'PENDING' }).eq('id', activeCase.id);
       if (error) throw error;
-
       setCases(prev => prev.map(c => c.id === activeCase.id ? { ...c, status: 'PENDING' } : c));
-      toast.success('Case submitted to laboratory for production!');
+      toast.success('Case submitted to lab for production!');
     } catch (err: any) {
-      console.error('Error submitting draft:', err);
       toast.error('Failed to submit case: ' + err.message);
     }
   };
@@ -384,34 +375,34 @@ export function UnifiedClinicalWorkspace({
     if (!cleanPhone) return '#';
     let text = '';
     if (type === 'reminder') {
-      text = `Dear ${patient.name}, this is a reminder from DentalConnect OS regarding your upcoming visit. Please reply to confirm.`;
+      text = `Dear ${patient.name}, this is a friendly reminder from DentalConnect OS regarding your upcoming visit. Please reply to confirm.`;
     } else if (type === 'balance') {
-      text = `Dear ${patient.name}, your outstanding balance is ₹${totalOutstanding.toLocaleString('en-IN')}. Pay via UPI: upi://pay?pa=clinic@okaxis&pn=DentalClinic&am=${totalOutstanding}`;
+      text = `Dear ${patient.name}, your treatment balance is ₹${totalOutstanding.toLocaleString('en-IN')}. Clear it via UPI: upi://pay?pa=clinic@okaxis&pn=DentalClinic&am=${totalOutstanding}`;
     } else {
-      text = `Dear ${patient.name}, following up on your recent dental procedure. How are you feeling today? Let us know if you have any discomfort.`;
+      text = `Dear ${patient.name}, following up on your recent dental appointment. How is your comfort today? Reach out if you need anything.`;
     }
     return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
   };
 
   return (
-    <div className="flex-1 space-y-5 p-4 md:p-6 max-w-[1700px] mx-auto w-full animate-fade-in text-foreground">
+    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6 max-w-7xl mx-auto w-full animate-fade-in text-foreground">
       {/* ========================================================================= */}
       {/* 1. MASTER PATIENT HEADER & OPERATORY STATUS                               */}
       {/* ========================================================================= */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-4 rounded-2xl bg-card border border-border shadow-xs">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-border">
         <div className="flex items-center gap-3">
           <Link href="/patients">
-            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl hover:bg-muted">
+            <Button variant="ghost" size="icon" className="hover:bg-muted">
               <ArrowLeft className="w-5 h-5" />
             </Button>
           </Link>
           <div>
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
                 {patient.name}
               </h1>
               <Badge variant="outline" className="font-mono text-xs border-primary/40 text-primary">
-                ID: {patient.id.slice(-6).toUpperCase()}
+                ID: {patient.id.toUpperCase()}
               </Badge>
               {patient.medicalAlerts && patient.medicalAlerts.length > 0 && (
                 <Badge variant="destructive" className="text-xs flex items-center gap-1">
@@ -420,381 +411,195 @@ export function UnifiedClinicalWorkspace({
                 </Badge>
               )}
             </div>
-            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-3 flex-wrap">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1 flex items-center gap-3 flex-wrap">
               <span>{patient.age ? `${patient.age} yrs` : 'Age N/A'}, {patient.gender || 'Unspecified'}</span>
               <span>&bull;</span>
-              <span className="flex items-center gap-1"><Phone className="w-3 h-3 text-primary" /> {patient.phone || patient.contactInfo || 'No Phone'}</span>
+              <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-primary" /> {patient.phone || patient.contactInfo || 'No Phone'}</span>
               <span>&bull;</span>
-              <span className="flex items-center gap-1"><Calendar className="w-3 h-3 text-muted-foreground" /> Registered: {new Date(patient.createdAt).toLocaleDateString()}</span>
+              <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5 text-muted-foreground" /> Registered: {new Date(patient.createdAt).toLocaleDateString()}</span>
             </p>
           </div>
         </div>
 
-        {/* Quick Operatory Actions */}
+        {/* Action Buttons */}
         <div className="flex items-center gap-2 flex-wrap">
           <Link href={`/patients/${patient.id}/capture`}>
-            <Button variant="outline" size="sm" className="h-8 text-xs font-semibold">
-              <Camera className="w-3.5 h-3.5 mr-1 text-primary" />
+            <Button variant="outline" size="sm" className="text-xs">
+              <Camera className="w-4 h-4 mr-1.5 text-primary" />
               IOS Scan Body
             </Button>
           </Link>
 
           <Link href={`/visits/new?patientId=${patient.id}`}>
-            <Button size="sm" variant="secondary" className="h-8 text-xs font-semibold">
-              <Stethoscope className="w-3.5 h-3.5 mr-1" />
+            <Button size="sm" variant="secondary" className="text-xs font-semibold">
+              <Stethoscope className="w-4 h-4 mr-1.5" />
               New Clinical Encounter
             </Button>
           </Link>
 
           <Link href="/?action=create">
-            <Button size="sm" className="h-8 bg-teal-600 hover:bg-teal-500 text-white font-semibold text-xs shadow-xs">
-              <Plus className="w-3.5 h-3.5 mr-1" />
-              New Lab Case
+            <Button size="sm" className="bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-xs shadow-sm">
+              <Plus className="w-4 h-4 mr-1.5" />
+              New Lab Order
             </Button>
           </Link>
         </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. LINKED LAB CASES STRIP & CASE SELECTOR                                 */}
+      {/* 2. MASTER SPACIOUS TABS NAVIGATION                                        */}
       {/* ========================================================================= */}
-      {cases.length > 0 && (
-        <div className="flex items-center justify-between gap-3 p-2.5 px-4 rounded-xl bg-muted/40 border border-border overflow-x-auto">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap flex items-center gap-1.5">
-              <Box className="w-3.5 h-3.5 text-primary" /> Active Lab Orders ({cases.length}):
-            </span>
-            <div className="flex items-center gap-2">
-              {cases.map((c) => {
-                const isSelected = c.id === selectedCaseId;
-                return (
-                  <button
-                    key={c.id}
-                    onClick={() => {
-                      setSelectedCaseId(c.id);
-                      if (c.scanUrl && centerMode === 'chart') setCenterMode('stl');
-                    }}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer border ${
-                      isSelected
-                        ? 'bg-card text-foreground border-primary shadow-xs'
-                        : 'bg-muted/60 text-muted-foreground border-border hover:text-foreground hover:bg-muted'
-                    }`}
-                  >
-                    <span className={`w-2 h-2 rounded-full ${
-                      c.status === 'DELIVERED' || c.status === 'COMPLETED' ? 'bg-emerald-500' :
-                      c.status === 'IN_PROGRESS' || c.status === 'QUALITY_CHECK' ? 'bg-cyan-500 animate-pulse' :
-                      'bg-amber-500'
-                    }`} />
-                    <span>#{c.id.slice(-6).toUpperCase()} ({c.requestedTreatment})</span>
-                    <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-border">
-                      {c.status}
-                    </Badge>
-                  </button>
-                );
-              })}
-            </div>
+      <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val || 'overview')} className="w-full space-y-6">
+        <TabsList className="bg-muted/60 border border-border p-1 rounded-xl inline-flex w-fit max-w-full overflow-x-auto gap-1">
+          <TabsTrigger value="overview" className="text-xs sm:text-sm flex items-center gap-1.5 px-3.5 py-2">
+            <Layers className="w-4 h-4" /> Clinical Overview & Odontogram
+          </TabsTrigger>
+          <TabsTrigger value="lab-cases" className="text-xs sm:text-sm flex items-center gap-1.5 px-3.5 py-2 text-cyan-400">
+            <Box className="w-4 h-4" /> Digital Lab Orders ({cases.length})
+          </TabsTrigger>
+          <TabsTrigger value="visits" className="text-xs sm:text-sm flex items-center gap-1.5 px-3.5 py-2">
+            <Activity className="w-4 h-4" /> Visits ({visits.length})
+          </TabsTrigger>
+          <TabsTrigger value="prescriptions" className="text-xs sm:text-sm flex items-center gap-1.5 px-3.5 py-2">
+            <FileText className="w-4 h-4" /> Prescriptions (Rx)
+          </TabsTrigger>
+          <TabsTrigger value="billing" className="text-xs sm:text-sm flex items-center gap-1.5 px-3.5 py-2">
+            <DollarSign className="w-4 h-4" /> Invoices & Dues
+          </TabsTrigger>
+          <TabsTrigger value="whatsapp" className="text-xs sm:text-sm flex items-center gap-1.5 px-3.5 py-2">
+            <MessageSquare className="w-4 h-4" /> WhatsApp
+          </TabsTrigger>
+        </TabsList>
+
+        {/* ======================================================================= */}
+        {/* TAB 1: CLINICAL OVERVIEW & EXPANSIVE 32-TOOTH ODONTOGRAM                */}
+        {/* ======================================================================= */}
+        <TabsContent value="overview" className="space-y-6">
+          {/* Top 3 KPI Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="bg-card border-border shadow-xs">
+              <CardHeader className="p-4 pb-2">
+                <CardDescription className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                  Outstanding Balance
+                </CardDescription>
+                <CardTitle className={`text-2xl font-extrabold ${totalOutstanding > 0 ? 'text-destructive' : 'text-emerald-500'}`}>
+                  ₹{totalOutstanding.toLocaleString('en-IN')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-0 text-xs text-muted-foreground flex items-center justify-between">
+                <span>{invoices.filter((i) => i.paymentStatus !== 'PAID').length} pending invoices</span>
+                <DollarSign className="w-4 h-4 text-muted-foreground" />
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card border-border shadow-xs">
+              <CardHeader className="p-4 pb-2">
+                <CardDescription className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                  Active Lab Orders
+                </CardDescription>
+                <CardTitle className="text-2xl font-extrabold text-foreground">
+                  {cases.length} Active
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-0 text-xs text-muted-foreground flex items-center justify-between">
+                <span>{cases.filter((c) => c.status === 'IN_PROGRESS' || c.status === 'QUALITY_CHECK').length} currently in production</span>
+                <Box className="w-4 h-4 text-cyan-400" />
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card border-border shadow-xs">
+              <CardHeader className="p-4 pb-2">
+                <CardDescription className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                  Total Visits Recorded
+                </CardDescription>
+                <CardTitle className="text-2xl font-extrabold text-foreground">
+                  {visits.length} Recorded
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-0 text-xs text-muted-foreground flex items-center justify-between">
+                <span>Last visit: {visits.length > 0 ? new Date(visits[0].visitDate).toLocaleDateString() : 'N/A'}</span>
+                <Activity className="w-4 h-4 text-primary" />
+              </CardContent>
+            </Card>
           </div>
 
-          {activeCase && (
-            <div className="flex items-center gap-2 whitespace-nowrap">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 text-xs px-2.5"
-                onClick={() => setShowPatientLinkModal(true)}
-              >
-                <Share2 className="w-3 h-3 mr-1 text-primary" /> Patient 3D Link
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 text-xs px-2.5"
-                onClick={() => setShowTryInModal(true)}
-              >
-                <RefreshCw className="w-3 h-3 mr-1 text-amber-500" /> Request Try-In
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* 3. LIVE CAD/CAM MANUFACTURING STEPPER                                     */}
-      {/* ========================================================================= */}
-      {activeCase && (
-        <Card className="bg-card border-border shadow-xs overflow-hidden">
-          {/* Draft Notice Banner if status is DRAFT */}
-          {activeCase.status === 'DRAFT' && (
-            <div className="bg-amber-500/10 border-b border-amber-500/30 p-3 px-4 flex items-center justify-between text-xs text-amber-300">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-400" />
-                <span><strong>Draft Lab Order:</strong> This case is saved as a draft and has not yet been submitted to the milling center.</span>
-              </div>
-              <Button size="sm" className="h-7 bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs" onClick={handlePublishDraft}>
-                Publish for Production
-              </Button>
-            </div>
-          )}
-
-          <div className="p-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {PIPELINE_STEPS.map((step, idx) => {
-              const isPast = currentStatusIdx > idx;
-              const isCurrent = currentStatusIdx === idx;
-              return (
-                <div
-                  key={step.status}
-                  className={`p-2.5 rounded-xl border transition-all text-center ${
-                    isCurrent
-                      ? 'bg-primary/10 border-primary shadow-xs'
-                      : isPast
-                      ? 'bg-muted/40 border-emerald-500/30 text-muted-foreground'
-                      : 'bg-muted/20 border-border opacity-50 text-muted-foreground'
-                  }`}
-                >
-                  <div className="flex items-center justify-center gap-1.5 mb-1">
-                    {isPast ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                    ) : isCurrent ? (
-                      <div className="w-2.5 h-2.5 rounded-full bg-primary animate-ping" />
-                    ) : (
-                      <Clock className="w-3.5 h-3.5 text-muted-foreground" />
-                    )}
-                    <span className={`text-xs font-bold ${isCurrent ? 'text-foreground font-extrabold' : ''}`}>
-                      {step.label}
-                    </span>
+          {/* 2-Column Spacious Layout: Left Details + Right Wide Odontogram */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Left: Patient Details (4 Cols) */}
+            <div className="lg:col-span-4 space-y-4">
+              <Card className="bg-card border-border shadow-xs">
+                <CardHeader className="pb-3 border-b border-border">
+                  <CardTitle className="text-sm font-bold flex items-center gap-2 text-foreground">
+                    <UserIcon className="w-4 h-4 text-primary" /> Patient Details & History
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 space-y-3 text-xs">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-muted-foreground block">Phone</span>
+                    <p className="font-medium text-foreground mt-0.5">{patient.phone || patient.contactInfo || 'N/A'}</p>
                   </div>
-                  <p className="text-[10px] text-muted-foreground leading-tight truncate">{step.desc}</p>
-                </div>
-              );
-            })}
-          </div>
-        </Card>
-      )}
-
-      {/* ========================================================================= */}
-      {/* 4. MAIN 3-PANE WORKSPACE (CLINICAL EHR | OPERATORY STAGE | LAB HUB)       */}
-      {/* ========================================================================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* ----------------------------------------------------------------------- */}
-        {/* PANE 1: CLINICAL PRACTICE RECORD & EHR (4 COLS)                         */}
-        {/* ----------------------------------------------------------------------- */}
-        <div className="lg:col-span-4 space-y-4">
-          <Card className="bg-card border-border shadow-xs">
-            <CardHeader className="p-3.5 pb-2 border-b border-border">
-              <Tabs value={leftTab} onValueChange={(val: any) => setLeftTab(val)} className="w-full">
-                <TabsList className="grid grid-cols-5 h-8 bg-muted/60 p-0.5 rounded-lg text-xs">
-                  <TabsTrigger value="overview" className="text-[11px] p-0 font-medium">Overview</TabsTrigger>
-                  <TabsTrigger value="visits" className="text-[11px] p-0 font-medium">Visits ({visits.length})</TabsTrigger>
-                  <TabsTrigger value="prescriptions" className="text-[11px] p-0 font-medium">Rx</TabsTrigger>
-                  <TabsTrigger value="billing" className="text-[11px] p-0 font-medium">Ledger</TabsTrigger>
-                  <TabsTrigger value="whatsapp" className="text-[11px] p-0 font-medium">WhatsApp</TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </CardHeader>
-
-            <CardContent className="p-4 text-xs space-y-4 max-h-[620px] overflow-y-auto">
-              {/* TAB A: OVERVIEW & DEMOGRAPHICS */}
-              {leftTab === 'overview' && (
-                <div className="space-y-3.5">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="p-3 rounded-xl bg-muted/30 border border-border">
-                      <span className="text-[10px] uppercase font-bold text-muted-foreground block">Balance Due</span>
-                      <span className={`text-base font-extrabold ${totalOutstanding > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
-                        ₹{totalOutstanding.toLocaleString('en-IN')}
-                      </span>
-                    </div>
-                    <div className="p-3 rounded-xl bg-muted/30 border border-border">
-                      <span className="text-[10px] uppercase font-bold text-muted-foreground block">Visits Logged</span>
-                      <span className="text-base font-extrabold text-foreground">{visits.length} Visits</span>
-                    </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-muted-foreground block">Email</span>
+                    <p className="font-medium text-foreground mt-0.5">{patient.email || 'N/A'}</p>
                   </div>
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between p-2 rounded-lg bg-muted/20 border border-border">
-                      <span className="text-muted-foreground">Phone:</span>
-                      <span className="font-medium text-foreground">{patient.phone || patient.contactInfo || 'N/A'}</span>
-                    </div>
-                    <div className="flex justify-between p-2 rounded-lg bg-muted/20 border border-border">
-                      <span className="text-muted-foreground">Email:</span>
-                      <span className="font-medium text-foreground truncate max-w-[180px]">{patient.email || 'N/A'}</span>
-                    </div>
-                    <div className="p-2 rounded-lg bg-muted/20 border border-border">
-                      <span className="text-muted-foreground block text-[10px] uppercase font-bold mb-0.5">Medical History & Allergies:</span>
-                      <p className="text-foreground">{patient.medicalHistory || 'No major systemic conditions logged.'}</p>
-                      {patient.allergies && patient.allergies.length > 0 && (
-                        <p className="text-rose-400 mt-1 font-semibold">⚠️ Allergies: {patient.allergies.join(', ')}</p>
-                      )}
-                    </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-muted-foreground block">Allergies</span>
+                    <p className="font-semibold text-rose-400 mt-0.5">{patient.allergies?.join(', ') || 'None recorded'}</p>
                   </div>
-                </div>
-              )}
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-muted-foreground block">Medical History</span>
+                    <p className="font-medium text-foreground mt-0.5">{patient.medicalHistory || 'No major systemic issues.'}</p>
+                  </div>
+                </CardContent>
+              </Card>
 
-              {/* TAB B: CLINICAL VISITS (SOAP NOTES) */}
-              {leftTab === 'visits' && (
-                <div className="space-y-3">
-                  {visits.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-8">No clinical encounters recorded yet.</p>
-                  ) : (
-                    visits.map((v) => (
-                      <div key={v.id} className="p-3 rounded-xl bg-muted/30 border border-border space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-foreground">{v.diagnosis || 'Clinical Consultation'}</span>
-                          <span className="text-[10px] text-muted-foreground font-mono">{new Date(v.visitDate).toLocaleDateString()}</span>
+              {/* Linked Cases Quick Box */}
+              {cases.length > 0 && (
+                <Card className="bg-card border-border shadow-xs">
+                  <CardHeader className="pb-2 border-b border-border flex flex-row items-center justify-between">
+                    <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      Linked Lab Cases ({cases.length})
+                    </CardTitle>
+                    <Button size="sm" variant="ghost" className="h-6 text-xs text-primary" onClick={() => setActiveTab('lab-cases')}>
+                      View All <ChevronRight className="w-3 h-3 ml-1" />
+                    </Button>
+                  </CardHeader>
+                  <CardContent className="p-3 space-y-2">
+                    {cases.map((c) => (
+                      <div
+                        key={c.id}
+                        onClick={() => {
+                          setSelectedCaseId(c.id);
+                          setActiveTab('lab-cases');
+                        }}
+                        className="p-2.5 rounded-lg bg-muted/40 border border-border hover:border-primary/50 cursor-pointer flex items-center justify-between text-xs transition-colors"
+                      >
+                        <div>
+                          <p className="font-bold text-foreground">{c.requestedTreatment}</p>
+                          <p className="text-[10px] text-muted-foreground font-mono">#{c.id.slice(-6).toUpperCase()} &bull; Due: {new Date(c.dueDate).toLocaleDateString()}</p>
                         </div>
-                        {v.chiefComplaint && (
-                          <p className="text-muted-foreground"><strong className="text-primary">Complaint:</strong> {v.chiefComplaint}</p>
-                        )}
-                        {v.treatmentRendered && (
-                          <p className="text-muted-foreground"><strong className="text-primary">Treatment:</strong> {v.treatmentRendered}</p>
-                        )}
+                        <StatusBadge status={c.status} />
                       </div>
-                    ))
-                  )}
-                </div>
-              )}
-
-              {/* TAB C: PRESCRIPTIONS (Rx) */}
-              {leftTab === 'prescriptions' && (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-border">
-                    <span className="font-bold text-foreground">Pharmacological Record</span>
-                    <Button size="sm" variant="outline" className="h-6 text-[10px] px-2" onClick={() => window.print()}>
-                      <Printer className="w-3 h-3 mr-1" /> Print Slip
-                    </Button>
-                  </div>
-                  {visits.flatMap(v => v.prescriptions || []).length === 0 ? (
-                    <p className="text-center text-muted-foreground py-8">No prescriptions issued.</p>
-                  ) : (
-                    visits.map(v => v.prescriptions?.map(rx => (
-                      <div key={rx.id} className="p-2.5 rounded-lg bg-muted/30 border border-border">
-                        <div className="flex items-center justify-between font-bold text-foreground">
-                          <span>💊 {rx.drugName}</span>
-                          <Badge variant="outline" className="text-[9px]">{rx.dosage}</Badge>
-                        </div>
-                        <p className="text-[11px] text-muted-foreground mt-1">
-                          Frequency: {rx.frequency} &bull; Duration: {rx.duration}
-                        </p>
-                      </div>
-                    )))
-                  )}
-                </div>
-              )}
-
-              {/* TAB D: BILLING & LEDGER */}
-              {leftTab === 'billing' && (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-foreground">Invoices & Dues</span>
-                    <Link href={`/billing`}>
-                      <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 text-primary">
-                        Open Billing Hub
-                      </Button>
-                    </Link>
-                  </div>
-                  {invoices.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-8">No invoices recorded.</p>
-                  ) : (
-                    invoices.map(inv => (
-                      <div key={inv.id} className="p-3 rounded-lg bg-muted/30 border border-border space-y-1">
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold font-mono text-foreground">{inv.invoiceNumber}</span>
-                          <Badge variant={inv.paymentStatus === 'PAID' ? 'secondary' : 'destructive'} className="text-[9px]">
-                            {inv.paymentStatus}
-                          </Badge>
-                        </div>
-                        <div className="flex justify-between text-muted-foreground">
-                          <span>Total: ₹{inv.grandTotal.toLocaleString('en-IN')}</span>
-                          <span>Balance: <strong className="text-rose-400">₹{inv.balanceAmount.toLocaleString('en-IN')}</strong></span>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
-
-              {/* TAB E: WHATSAPP 1-CLICK ACTIONS */}
-              {leftTab === 'whatsapp' && (
-                <div className="space-y-2.5">
-                  <span className="font-bold text-foreground block text-xs mb-1">Instant WhatsApp Communication</span>
-                  <a href={generateWhatsAppLink('reminder')} target="_blank" rel="noreferrer" className="block">
-                    <Button variant="outline" className="w-full justify-start text-xs h-9 bg-emerald-950/20 border-emerald-500/30 text-emerald-300 hover:bg-emerald-900/30">
-                      <MessageSquare className="w-3.5 h-3.5 mr-2 text-emerald-400" /> Send Appointment Reminder
-                    </Button>
-                  </a>
-                  <a href={generateWhatsAppLink('balance')} target="_blank" rel="noreferrer" className="block">
-                    <Button variant="outline" className="w-full justify-start text-xs h-9 bg-amber-950/20 border-amber-500/30 text-amber-300 hover:bg-amber-900/30">
-                      <DollarSign className="w-3.5 h-3.5 mr-2 text-amber-400" /> Send Outstanding Balance Notice
-                    </Button>
-                  </a>
-                  <a href={generateWhatsAppLink('followup')} target="_blank" rel="noreferrer" className="block">
-                    <Button variant="outline" className="w-full justify-start text-xs h-9 bg-cyan-950/20 border-cyan-500/30 text-cyan-300 hover:bg-cyan-900/30">
-                      <Stethoscope className="w-3.5 h-3.5 mr-2 text-cyan-400" /> Send Post-Op Comfort Follow-up
-                    </Button>
-                  </a>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* ----------------------------------------------------------------------- */}
-        {/* PANE 2: CENTRAL OPERATORY STAGE (TOOTH CHART | 3D STL | CAD SPECS) (5 COLS)*/}
-        {/* ----------------------------------------------------------------------- */}
-        <div className="lg:col-span-5 space-y-4">
-          <Card className="bg-card border-border shadow-xs overflow-hidden">
-            {/* Center Stage Mode Toolbar */}
-            <div className="flex items-center justify-between p-3 border-b border-border bg-muted/20">
-              <div className="flex items-center gap-1 bg-muted/60 p-0.5 rounded-lg">
-                <Button
-                  size="sm"
-                  variant={centerMode === 'chart' ? 'secondary' : 'ghost'}
-                  className="h-7 text-xs px-3 font-semibold"
-                  onClick={() => setCenterMode('chart')}
-                >
-                  <Layers className="w-3.5 h-3.5 mr-1" /> 32-Tooth Chart
-                </Button>
-                <Button
-                  size="sm"
-                  variant={centerMode === 'stl' ? 'secondary' : 'ghost'}
-                  className="h-7 text-xs px-3 font-semibold"
-                  onClick={() => setCenterMode('stl')}
-                >
-                  <Box className="w-3.5 h-3.5 mr-1 text-cyan-400" /> 3D STL Mesh
-                </Button>
-                <Button
-                  size="sm"
-                  variant={centerMode === 'specs' ? 'secondary' : 'ghost'}
-                  className="h-7 text-xs px-3 font-semibold"
-                  onClick={() => setCenterMode('specs')}
-                >
-                  <Cpu className="w-3.5 h-3.5 mr-1 text-primary" /> CAD Specs
-                </Button>
-                {activeCase?.dicomUrl && (
-                  <Button
-                    size="sm"
-                    variant={centerMode === 'dicom' ? 'secondary' : 'ghost'}
-                    className="h-7 text-xs px-3 font-semibold text-purple-400"
-                    onClick={() => setCenterMode('dicom')}
-                  >
-                    <Radio className="w-3.5 h-3.5 mr-1" /> CBCT Slices
-                  </Button>
-                )}
-              </div>
-
-              {centerMode === 'stl' && activeCase?.scanUrl && (
-                <a href={getR2PublicUrl(activeCase.scanUrl)} download>
-                  <Button size="sm" variant="outline" className="h-7 text-xs px-2 text-primary">
-                    <UploadCloud className="w-3 h-3 mr-1" /> Download STL
-                  </Button>
-                </a>
+                    ))}
+                  </CardContent>
+                </Card>
               )}
             </div>
 
-            {/* STAGE VIEWPORT */}
-            <CardContent className="p-4 min-h-[480px] flex flex-col justify-center">
-              {/* MODE A: 32-TOOTH ODONTOGRAM */}
-              {centerMode === 'chart' && (
-                <div className="w-full flex flex-col items-center">
+            {/* Right: Full-Size 32-Tooth FDI Odontogram (8 Cols) */}
+            <div className="lg:col-span-8">
+              <Card className="bg-card border-border shadow-xs overflow-hidden">
+                <CardHeader className="pb-3 border-b border-border flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle className="text-base font-bold flex items-center gap-2 text-foreground">
+                      <Layers className="w-4 h-4 text-primary" /> Current Dentition Overview
+                    </CardTitle>
+                    <CardDescription className="text-xs text-muted-foreground">
+                      Live interactive 32-tooth chart reflecting ongoing restorations, cavities, and planned crowns.
+                    </CardDescription>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 sm:p-6 flex flex-col items-center">
                   <ToothChart
                     initialData={toothChart}
                     onChange={(updated) => {
@@ -802,199 +607,594 @@ export function UnifiedClinicalWorkspace({
                       if (patient?.id) savePatientToothChart(patient.id, updated);
                     }}
                   />
-                </div>
-              )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
 
-              {/* MODE B: 3D WEBGL STL VIEWER */}
-              {centerMode === 'stl' && (
-                <div className="w-full h-[450px] relative rounded-xl overflow-hidden bg-neutral-950/80 border border-neutral-800">
-                  {activeCase?.scanUrl ? (
-                    <ThreeDViewer
-                      stlUrl={getR2PublicUrl(activeCase.scanUrl)}
-                      isReadOnly={false}
-                    />
-                  ) : (
-                    <div className="h-full flex flex-col items-center justify-center text-muted-foreground p-6 text-center space-y-3">
-                      <Box className="w-12 h-12 text-muted-foreground/30 animate-pulse" />
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">No 3D Scan Uploaded for this Case</p>
-                        <p className="text-xs text-muted-foreground mt-1">Upload an IOS STL impression file to activate interactive 3D inspection.</p>
+        {/* ======================================================================= */}
+        {/* TAB 2: DIGITAL LAB ORDERS & 3D CAD/CAM WORKSTATION                      */}
+        {/* ======================================================================= */}
+        <TabsContent value="lab-cases" className="space-y-6">
+          {cases.length === 0 ? (
+            <Card className="bg-card border-border text-center py-16">
+              <CardContent className="space-y-3">
+                <Box className="w-12 h-12 mx-auto text-muted-foreground opacity-30" />
+                <h3 className="text-base font-bold text-foreground">No Lab Orders Linked to this Patient</h3>
+                <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                  Create a structured digital prescription with prep scans and Exocad parameters to send to the lab.
+                </p>
+                <Link href="/?action=create">
+                  <Button size="sm" className="bg-primary text-primary-foreground text-xs mt-2">
+                    <Plus className="w-4 h-4 mr-1.5" /> Create First Lab Order
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-5">
+              {/* Active Cases Switcher Bar */}
+              <div className="flex items-center justify-between gap-3 p-3 px-4 rounded-xl bg-card border border-border overflow-x-auto shadow-xs">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+                    Active Cases:
+                  </span>
+                  <div className="flex items-center gap-2">
+                    {cases.map((c) => {
+                      const isSelected = c.id === activeCase?.id;
+                      return (
+                        <button
+                          key={c.id}
+                          onClick={() => setSelectedCaseId(c.id)}
+                          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer border ${
+                            isSelected
+                              ? 'bg-muted text-foreground border-primary shadow-xs'
+                              : 'bg-muted/40 text-muted-foreground border-border hover:text-foreground hover:bg-muted/80'
+                          }`}
+                        >
+                          <span className={`w-2 h-2 rounded-full ${
+                            c.status === 'DELIVERED' || c.status === 'COMPLETED' ? 'bg-emerald-500' :
+                            c.status === 'IN_PROGRESS' || c.status === 'QUALITY_CHECK' ? 'bg-cyan-500 animate-pulse' :
+                            'bg-amber-500'
+                          }`} />
+                          <span>#{c.id.slice(-6).toUpperCase()} ({c.requestedTreatment})</span>
+                          <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-border">
+                            {c.status}
+                          </Badge>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 whitespace-nowrap">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs px-3"
+                    onClick={() => setShowPatientLinkModal(true)}
+                  >
+                    <Share2 className="w-3.5 h-3.5 mr-1.5 text-primary" /> Patient 3D Link
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs px-3"
+                    onClick={() => setShowTryInModal(true)}
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 mr-1.5 text-amber-500" /> Request Try-In
+                  </Button>
+                </div>
+              </div>
+
+              {/* 6-Stage Manufacturing Stepper */}
+              {activeCase && (
+                <Card className="bg-card border-border shadow-xs overflow-hidden">
+                  {activeCase.status === 'DRAFT' && (
+                    <div className="bg-amber-500/10 border-b border-amber-500/30 p-3 px-4 flex items-center justify-between text-xs text-amber-300">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4 text-amber-400" />
+                        <span><strong>Draft Lab Order:</strong> This case is saved as a draft and has not yet been submitted to the lab.</span>
                       </div>
-                      <Link href={`/patients/${patient.id}/capture`}>
-                        <Button size="sm" variant="outline" className="text-xs">
-                          <Camera className="w-3.5 h-3.5 mr-1.5 text-primary" /> Capture via Hardware Bridge
-                        </Button>
-                      </Link>
+                      <Button size="sm" className="h-7 bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs" onClick={handlePublishDraft}>
+                        Publish for Production
+                      </Button>
                     </div>
                   )}
-                </div>
+
+                  <div className="p-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                    {PIPELINE_STEPS.map((step, idx) => {
+                      const isPast = currentStatusIdx > idx;
+                      const isCurrent = currentStatusIdx === idx;
+                      return (
+                        <div
+                          key={step.status}
+                          className={`p-3 rounded-xl border transition-all text-center ${
+                            isCurrent
+                              ? 'bg-primary/10 border-primary shadow-xs'
+                              : isPast
+                              ? 'bg-muted/40 border-emerald-500/30 text-muted-foreground'
+                              : 'bg-muted/20 border-border opacity-50 text-muted-foreground'
+                          }`}
+                        >
+                          <div className="flex items-center justify-center gap-1.5 mb-1">
+                            {isPast ? (
+                              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                            ) : isCurrent ? (
+                              <div className="w-2.5 h-2.5 rounded-full bg-primary animate-ping" />
+                            ) : (
+                              <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                            )}
+                            <span className={`text-xs font-bold ${isCurrent ? 'text-foreground font-extrabold' : ''}`}>
+                              {step.label}
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-muted-foreground leading-tight truncate">{step.desc}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Card>
               )}
 
-              {/* MODE C: EXOCAD CAD SPECS & VITA SHADE CANVAS */}
-              {centerMode === 'specs' && (
-                <div className="space-y-4 text-xs">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3 rounded-xl bg-muted/30 border border-border">
-                      <span className="text-[10px] uppercase font-bold text-muted-foreground block">Occlusal Clearance</span>
-                      <span className="text-sm font-bold text-foreground">{parsedDesignParams?.occlusalClearance || 'Medium (1.5mm)'}</span>
-                    </div>
-                    <div className="p-3 rounded-xl bg-muted/30 border border-border">
-                      <span className="text-[10px] uppercase font-bold text-muted-foreground block">Contact Design</span>
-                      <span className="text-sm font-bold text-foreground">{parsedDesignParams?.contactDesign || 'Normal'}</span>
-                    </div>
-                    <div className="p-3 rounded-xl bg-muted/30 border border-border">
-                      <span className="text-[10px] uppercase font-bold text-muted-foreground block">Connector Design</span>
-                      <span className="text-sm font-bold text-foreground">{parsedDesignParams?.connectorDesign || 'Anatomical'}</span>
-                    </div>
-                    <div className="p-3 rounded-xl bg-muted/30 border border-border">
-                      <span className="text-[10px] uppercase font-bold text-muted-foreground block">Pontic Geometry</span>
-                      <span className="text-sm font-bold text-foreground">{parsedDesignParams?.ponticDesign || 'Ovate'}</span>
-                    </div>
-                  </div>
+              {/* Main Workstation: Left 3D Stage (8 Cols) + Right Order Chat (4 Cols) */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                {/* Left 8 Cols: Full-Size 3D STL & CAD Specs Stage */}
+                <div className="lg:col-span-8 space-y-4">
+                  <Card className="bg-card border-border shadow-xs overflow-hidden">
+                    <div className="flex items-center justify-between p-3.5 border-b border-border bg-muted/20">
+                      <div className="flex items-center gap-1 bg-muted/60 p-0.5 rounded-lg">
+                        <Button
+                          size="sm"
+                          variant={labViewMode === '3d' ? 'secondary' : 'ghost'}
+                          className="h-8 text-xs px-3.5 font-semibold"
+                          onClick={() => setLabViewMode('3d')}
+                        >
+                          <Box className="w-3.5 h-3.5 mr-1.5 text-cyan-400" /> 3D STL Viewer
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={labViewMode === 'specs' ? 'secondary' : 'ghost'}
+                          className="h-8 text-xs px-3.5 font-semibold"
+                          onClick={() => setLabViewMode('specs')}
+                        >
+                          <Cpu className="w-3.5 h-3.5 mr-1.5 text-primary" /> CAD Specs & Shading
+                        </Button>
+                        {activeCase?.dicomUrl && (
+                          <Button
+                            size="sm"
+                            variant={labViewMode === 'dicom' ? 'secondary' : 'ghost'}
+                            className="h-8 text-xs px-3.5 font-semibold text-purple-400"
+                            onClick={() => setLabViewMode('dicom')}
+                          >
+                            <Radio className="w-3.5 h-3.5 mr-1.5" /> CBCT Slices
+                          </Button>
+                        )}
+                      </div>
 
-                  <div className="p-3.5 rounded-xl bg-muted/30 border border-border space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="font-bold text-foreground">Prescribed Material & Shade</span>
-                      <Badge className="bg-primary/20 text-primary border-primary/30">
-                        {activeCase?.shade || 'A2'}
+                      {labViewMode === '3d' && activeCase?.scanUrl && (
+                        <a href={getR2PublicUrl(activeCase.scanUrl)} download>
+                          <Button size="sm" variant="outline" className="h-8 text-xs px-3 text-primary">
+                            <UploadCloud className="w-3.5 h-3.5 mr-1.5" /> Download STL
+                          </Button>
+                        </a>
+                      )}
+                    </div>
+
+                    <CardContent className="p-4 sm:p-6 min-h-[500px] flex flex-col justify-center">
+                      {labViewMode === '3d' && (
+                        <div className="w-full h-[480px] relative rounded-2xl overflow-hidden bg-neutral-950/90 border border-neutral-800 shadow-inner">
+                          {activeCase?.scanUrl ? (
+                            <ThreeDViewer
+                              stlUrl={getR2PublicUrl(activeCase.scanUrl)}
+                              isReadOnly={false}
+                            />
+                          ) : (
+                            <div className="h-full flex flex-col items-center justify-center text-muted-foreground p-8 text-center space-y-3">
+                              <Box className="w-14 h-14 text-muted-foreground/30 animate-pulse" />
+                              <div>
+                                <p className="text-sm font-semibold text-foreground">No 3D Scan Uploaded for this Case</p>
+                                <p className="text-xs text-muted-foreground mt-1">Upload an IOS STL impression file to activate interactive 3D inspection.</p>
+                              </div>
+                              <Link href={`/patients/${patient.id}/capture`}>
+                                <Button size="sm" variant="outline" className="text-xs">
+                                  <Camera className="w-3.5 h-3.5 mr-1.5 text-primary" /> Capture via Hardware Bridge
+                                </Button>
+                              </Link>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {labViewMode === 'specs' && (
+                        <div className="space-y-5 text-xs">
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <div className="p-3.5 rounded-xl bg-muted/40 border border-border">
+                              <span className="text-[10px] uppercase font-bold text-muted-foreground block">Occlusal Clearance</span>
+                              <span className="text-sm font-bold text-foreground mt-0.5 block">{parsedDesignParams?.occlusalClearance || 'Medium (1.5mm)'}</span>
+                            </div>
+                            <div className="p-3.5 rounded-xl bg-muted/40 border border-border">
+                              <span className="text-[10px] uppercase font-bold text-muted-foreground block">Contact Design</span>
+                              <span className="text-sm font-bold text-foreground mt-0.5 block">{parsedDesignParams?.contactDesign || 'Normal'}</span>
+                            </div>
+                            <div className="p-3.5 rounded-xl bg-muted/40 border border-border">
+                              <span className="text-[10px] uppercase font-bold text-muted-foreground block">Connector Design</span>
+                              <span className="text-sm font-bold text-foreground mt-0.5 block">{parsedDesignParams?.connectorDesign || 'Anatomical'}</span>
+                            </div>
+                            <div className="p-3.5 rounded-xl bg-muted/40 border border-border">
+                              <span className="text-[10px] uppercase font-bold text-muted-foreground block">Pontic Geometry</span>
+                              <span className="text-sm font-bold text-foreground mt-0.5 block">{parsedDesignParams?.ponticDesign || 'Ovate'}</span>
+                            </div>
+                          </div>
+
+                          <div className="p-4 rounded-xl bg-muted/40 border border-border space-y-2">
+                            <div className="flex justify-between items-center">
+                              <span className="font-bold text-foreground text-sm">Prescribed Material & Shade</span>
+                              <Badge className="bg-primary/20 text-primary border-primary/30 text-xs px-2.5 py-0.5">
+                                Shade: {activeCase?.shade || 'A2'}
+                              </Badge>
+                            </div>
+                            <p className="text-muted-foreground">
+                              Restorative Material: <strong className="text-foreground">{activeCase?.material || 'Monolithic Zirconia HT'}</strong>
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {labViewMode === 'dicom' && activeCase?.dicomUrl && (
+                        <div className="w-full h-[480px] rounded-2xl overflow-hidden border border-border">
+                          <DicomMprViewer />
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Right 4 Cols: Live Lab Order Chat & Soft-Copy Archive */}
+                <div className="lg:col-span-4 space-y-4">
+                  <Card className="bg-card border-border shadow-xs flex flex-col h-[520px]">
+                    <CardHeader className="p-3.5 pb-2 border-b border-border flex flex-row items-center justify-between">
+                      <div>
+                        <CardTitle className="text-sm font-bold flex items-center gap-2 text-foreground">
+                          <MessageSquare className="w-4 h-4 text-cyan-400" /> Lab Order Chat
+                        </CardTitle>
+                        <CardDescription className="text-[11px] text-muted-foreground">
+                          {activeCase ? `Direct line for Case #${activeCase.id.slice(-6).toUpperCase()}` : 'Select a case'}
+                        </CardDescription>
+                      </div>
+                      <Badge variant={isChatUnlocked ? 'secondary' : 'outline'} className="text-[10px]">
+                        {isChatUnlocked ? 'Live' : 'Locked'}
                       </Badge>
+                    </CardHeader>
+
+                    {/* Chat Messages */}
+                    <CardContent className="flex-1 p-3.5 overflow-y-auto space-y-2.5 text-xs">
+                      {!activeCase ? (
+                        <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground p-4">
+                          <Box className="w-8 h-8 opacity-30 mb-2" />
+                          <p>No active case selected.</p>
+                        </div>
+                      ) : !isChatUnlocked ? (
+                        <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground p-4 space-y-2">
+                          <Lock className="w-8 h-8 text-amber-500/60 mb-1" />
+                          <p className="font-semibold text-foreground">Communication Locked</p>
+                          <p className="text-[11px] text-muted-foreground leading-relaxed">
+                            Direct order chat automatically unlocks once the laboratory accepts this case into production.
+                          </p>
+                        </div>
+                      ) : messages.length === 0 ? (
+                        <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground p-4">
+                          <Sparkles className="w-8 h-8 text-primary opacity-40 mb-2" />
+                          <p>Order room active. Send your first message or CAD instruction to the technician.</p>
+                        </div>
+                      ) : (
+                        messages.map((m) => {
+                          const isMe = m.senderId === (currentUser?.id || 'u1');
+                          return (
+                            <div key={m.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                              <div className={`p-2.5 rounded-xl max-w-[85%] leading-relaxed ${
+                                isMe ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-muted/60 text-foreground border border-border rounded-bl-none'
+                              }`}>
+                                {m.content}
+                              </div>
+                              <span className="text-[9px] text-muted-foreground font-mono mt-0.5 px-1">
+                                {new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
+                          );
+                        })
+                      )}
+                    </CardContent>
+
+                    {/* Chat Input */}
+                    <CardFooter className="p-2.5 border-t border-border bg-muted/10">
+                      <form onSubmit={handleSendMessage} className="flex items-center gap-1.5 w-full">
+                        <Input
+                          disabled={!isChatUnlocked || isSending}
+                          value={newMessage}
+                          onChange={(e) => setNewMessage(e.target.value)}
+                          placeholder={isChatUnlocked ? 'Message technician...' : 'Chat locked'}
+                          className="h-8 text-xs bg-background"
+                        />
+                        <Button disabled={!isChatUnlocked || isSending || !newMessage.trim()} size="icon" className="h-8 w-8 shrink-0 bg-primary text-primary-foreground">
+                          <Send className="w-3.5 h-3.5" />
+                        </Button>
+                      </form>
+                    </CardFooter>
+                  </Card>
+
+                  {/* CAD Soft-Copy Card */}
+                  {activeCase && (
+                    <Card className="bg-card border-border shadow-xs p-3.5 text-xs space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-foreground flex items-center gap-1.5">
+                          <Shield className="w-3.5 h-3.5 text-emerald-400" /> CAD Soft-Copy Archive
+                        </span>
+                        {designFileUrl && (
+                          <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[9px]">
+                            Archived
+                          </Badge>
+                        )}
+                      </div>
+
+                      {designFileUrl ? (
+                        <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30 border border-border">
+                          <span className="text-muted-foreground truncate max-w-[140px] font-mono text-[10px]">
+                            {activeCase.designUrl}
+                          </span>
+                          <a href={designFileUrl} download target="_blank" rel="noreferrer">
+                            <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 text-primary">
+                              Download
+                            </Button>
+                          </a>
+                        </div>
+                      ) : (
+                        <div className="space-y-1.5">
+                          <p className="text-[11px] text-muted-foreground">Permanent remake warranty file not yet uploaded.</p>
+                          <label className="block cursor-pointer">
+                            <div className="flex items-center justify-center w-full h-7 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground text-xs font-medium transition-colors">
+                              <UploadCloud className="w-3 h-3 mr-1" />
+                              {isUploadingDesign ? 'Uploading...' : 'Archive Milled Mesh'}
+                            </div>
+                            <input type="file" className="hidden" accept=".stl,.ply,.zip,.exocad" onChange={handleDesignUpload} disabled={isUploadingDesign} />
+                          </label>
+                        </div>
+                      )}
+                    </Card>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </TabsContent>
+
+        {/* ======================================================================= */}
+        {/* TAB 3: CLINICAL ENCOUNTERS & SOAP VISITS                                */}
+        {/* ======================================================================= */}
+        <TabsContent value="visits" className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-foreground">Clinical Encounters & SOAP Notes</h3>
+              <p className="text-xs text-muted-foreground">Chronological record of chairside examinations, diagnoses, and procedures.</p>
+            </div>
+            <Link href={`/visits/new?patientId=${patient.id}`}>
+              <Button size="sm" className="bg-primary text-primary-foreground font-semibold text-xs">
+                <Plus className="w-4 h-4 mr-1" /> New Clinical Visit
+              </Button>
+            </Link>
+          </div>
+
+          {visits.length === 0 ? (
+            <Card className="bg-card border-border text-center py-12">
+              <CardContent className="space-y-2">
+                <Activity className="w-10 h-10 mx-auto text-muted-foreground opacity-30" />
+                <p className="text-xs text-muted-foreground">No visits recorded for this patient yet.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {visits.map((visit) => (
+                <Card key={visit.id} className="bg-card border-border shadow-xs">
+                  <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between border-b border-border">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                        <Activity className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-sm font-bold text-foreground">
+                          {visit.diagnosis || 'Clinical Consultation'}
+                        </CardTitle>
+                        <CardDescription className="text-xs text-muted-foreground">
+                          {new Date(visit.visitDate).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' })}
+                        </CardDescription>
+                      </div>
                     </div>
-                    <p className="text-muted-foreground">
-                      Material: <strong className="text-foreground">{activeCase?.material || 'Monolithic Zirconia HT'}</strong>
-                    </p>
-                  </div>
-                </div>
-              )}
+                    <Badge variant="outline" className="text-xs border-primary/40 text-primary">
+                      {visit.status}
+                    </Badge>
+                  </CardHeader>
+                  <CardContent className="p-4 space-y-3 text-xs">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="p-2.5 rounded-lg bg-muted/40 border border-border">
+                        <span className="text-[10px] font-bold uppercase text-primary">Chief Complaint:</span>
+                        <p className="text-foreground mt-0.5">{visit.chiefComplaint}</p>
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-muted/40 border border-border">
+                        <span className="text-[10px] font-bold uppercase text-primary">Clinical Findings:</span>
+                        <p className="text-foreground mt-0.5">{visit.clinicalFindings}</p>
+                      </div>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-muted/40 border border-border">
+                      <span className="text-[10px] font-bold uppercase text-primary">Treatment Rendered:</span>
+                      <p className="text-foreground mt-0.5 font-medium">{visit.treatmentRendered}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
 
-              {/* MODE D: CBCT DICOM MPR SLICES */}
-              {centerMode === 'dicom' && activeCase?.dicomUrl && (
-                <div className="w-full h-[450px] rounded-xl overflow-hidden border border-border">
-                  <DicomMprViewer />
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* ----------------------------------------------------------------------- */}
-        {/* PANE 3: DIGITAL LAB COLLABORATION & TELEMETRY (3 COLS)                  */}
-        {/* ----------------------------------------------------------------------- */}
-        <div className="lg:col-span-3 space-y-4">
-          <Card className="bg-card border-border shadow-xs flex flex-col h-[560px]">
-            <CardHeader className="p-3.5 pb-2 border-b border-border flex flex-row items-center justify-between">
+        {/* ======================================================================= */}
+        {/* TAB 4: PRESCRIPTIONS (Rx)                                               */}
+        {/* ======================================================================= */}
+        <TabsContent value="prescriptions" className="space-y-4">
+          <Card className="bg-card border-border shadow-xs">
+            <CardHeader className="pb-3 border-b border-border flex flex-row items-center justify-between">
               <div>
-                <CardTitle className="text-sm font-bold flex items-center gap-1.5 text-foreground">
-                  <MessageSquare className="w-4 h-4 text-cyan-400" /> Lab Order Chat
+                <CardTitle className="text-base font-bold flex items-center gap-2 text-foreground">
+                  <Activity className="w-4 h-4 text-primary" /> Pharmacological Record
                 </CardTitle>
-                <CardDescription className="text-[11px] text-muted-foreground">
-                  {activeCase ? `Direct line for Case #${activeCase.id.slice(-6).toUpperCase()}` : 'Select a case'}
+                <CardDescription className="text-xs text-muted-foreground">
+                  Complete medication history prescribed at this practice.
                 </CardDescription>
               </div>
-              <Badge variant={isChatUnlocked ? 'secondary' : 'outline'} className="text-[10px]">
-                {isChatUnlocked ? 'Live' : 'Locked'}
-              </Badge>
+              <Button size="sm" variant="outline" className="text-xs flex items-center gap-1.5" onClick={() => window.print()}>
+                <Printer className="w-3.5 h-3.5" /> Print Rx Slip
+              </Button>
             </CardHeader>
-
-            {/* CHAT BODY */}
-            <CardContent className="flex-1 p-3 overflow-y-auto space-y-2.5 text-xs">
-              {!activeCase ? (
-                <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground p-4">
-                  <Box className="w-8 h-8 opacity-30 mb-2" />
-                  <p>No active case selected.</p>
-                </div>
-              ) : !isChatUnlocked ? (
-                <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground p-4 space-y-2">
-                  <Lock className="w-8 h-8 text-amber-500/60 mb-1" />
-                  <p className="font-semibold text-foreground">Communication Locked</p>
-                  <p className="text-[11px] text-muted-foreground leading-relaxed">
-                    Direct order chat automatically unlocks once the laboratory accepts this case into production.
-                  </p>
-                </div>
-              ) : messages.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground p-4">
-                  <Sparkles className="w-8 h-8 text-primary opacity-40 mb-2" />
-                  <p>Order room active. Send your first message or CAD instruction to the technician.</p>
-                </div>
+            <CardContent className="p-4 space-y-3">
+              {visits.flatMap((v) => v.prescriptions || []).length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-8">No prescriptions issued yet.</p>
               ) : (
-                messages.map((m) => {
-                  const isMe = m.senderId === (currentUser?.id || 'u1');
-                  return (
-                    <div key={m.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                      <div className={`p-2.5 rounded-xl max-w-[85%] leading-relaxed ${
-                        isMe ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-muted/60 text-foreground border border-border rounded-bl-none'
-                      }`}>
-                        {m.content}
+                visits.map((v) =>
+                  v.prescriptions?.map((rx) => (
+                    <div key={rx.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-lg bg-muted/40 border border-border gap-2 text-xs">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-sm text-foreground">{rx.drugName}</span>
+                          <Badge variant="outline" className="text-[10px] border-primary/40 text-primary">{rx.dosage}</Badge>
+                        </div>
+                        <p className="text-muted-foreground mt-1">
+                          Frequency: <span className="text-foreground font-medium">{rx.frequency}</span> &bull; Duration: <span className="text-foreground font-medium">{rx.duration}</span>
+                        </p>
                       </div>
-                      <span className="text-[9px] text-muted-foreground font-mono mt-0.5 px-1">
-                        {new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                        Prescribed: {new Date(v.visitDate).toLocaleDateString()}
                       </span>
                     </div>
-                  );
-                })
+                  ))
+                )
               )}
             </CardContent>
-
-            {/* CHAT INPUT */}
-            <CardFooter className="p-2.5 border-t border-border bg-muted/10">
-              <form onSubmit={handleSendMessage} className="flex items-center gap-1.5 w-full">
-                <Input
-                  disabled={!isChatUnlocked || isSending}
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder={isChatUnlocked ? 'Message technician...' : 'Chat locked'}
-                  className="h-8 text-xs bg-background"
-                />
-                <Button disabled={!isChatUnlocked || isSending || !newMessage.trim()} size="icon" className="h-8 w-8 shrink-0 bg-primary text-primary-foreground">
-                  <Send className="w-3.5 h-3.5" />
-                </Button>
-              </form>
-            </CardFooter>
           </Card>
+        </TabsContent>
 
-          {/* CAD/CAM Design Soft-Copy Card */}
-          {activeCase && (
-            <Card className="bg-card border-border shadow-xs p-3.5 text-xs space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-foreground flex items-center gap-1.5">
-                  <Shield className="w-3.5 h-3.5 text-emerald-400" /> CAD Soft-Copy Archive
-                </span>
-                {designFileUrl && (
-                  <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[9px]">
-                    Archived
-                  </Badge>
-                )}
+        {/* ======================================================================= */}
+        {/* TAB 5: INVOICES & FINANCIAL LEDGER                                      */}
+        {/* ======================================================================= */}
+        <TabsContent value="billing" className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-foreground">Invoices & Clinical Ledger</h3>
+              <p className="text-xs text-muted-foreground">Comprehensive billing ledger with itemized treatment breakdown.</p>
+            </div>
+            <Link href="/billing">
+              <Button size="sm" variant="outline" className="text-xs text-primary">
+                Open Billing Hub
+              </Button>
+            </Link>
+          </div>
+
+          {invoices.length === 0 ? (
+            <Card className="bg-card border-border text-center py-12">
+              <CardContent className="space-y-2">
+                <DollarSign className="w-10 h-10 mx-auto text-muted-foreground opacity-30" />
+                <p className="text-xs text-muted-foreground">No invoices recorded for this patient.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {invoices.map((inv) => (
+                <Card key={inv.id} className="bg-card border-border shadow-xs">
+                  <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between border-b border-border">
+                    <div>
+                      <CardTitle className="text-sm font-bold font-mono text-foreground">
+                        {inv.invoiceNumber}
+                      </CardTitle>
+                      <CardDescription className="text-xs text-muted-foreground">
+                        Issued: {new Date(inv.createdAt).toLocaleDateString()}
+                      </CardDescription>
+                    </div>
+                    <Badge variant={inv.paymentStatus === 'PAID' ? 'secondary' : 'destructive'} className="text-xs">
+                      {inv.paymentStatus}
+                    </Badge>
+                  </CardHeader>
+                  <CardContent className="p-4 flex justify-between items-center text-xs">
+                    <div>
+                      <p className="text-muted-foreground">Grand Total: <strong className="text-foreground">₹{inv.grandTotal.toLocaleString('en-IN')}</strong></p>
+                      <p className="text-muted-foreground">Paid: ₹{(inv.paidAmount || 0).toLocaleString('en-IN')}</p>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] uppercase font-bold text-muted-foreground block">Balance Due</span>
+                      <span className={`text-base font-extrabold ${inv.balanceAmount > 0 ? 'text-destructive' : 'text-emerald-500'}`}>
+                        ₹{inv.balanceAmount.toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* ======================================================================= */}
+        {/* TAB 6: WHATSAPP DIRECT ENGAGEMENT                                       */}
+        {/* ======================================================================= */}
+        <TabsContent value="whatsapp" className="space-y-4">
+          <Card className="bg-card border-border shadow-xs">
+            <CardHeader className="pb-3 border-b border-border">
+              <CardTitle className="text-base font-bold flex items-center gap-2 text-foreground">
+                <MessageSquare className="w-4 h-4 text-emerald-400" /> WhatsApp Patient Automations
+              </CardTitle>
+              <CardDescription className="text-xs text-muted-foreground">
+                Pre-formatted, 1-click clinical communication templates sent to {patient.phone || patient.contactInfo || 'patient'}.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-4 space-y-3 text-xs">
+              <div className="p-3 rounded-xl bg-muted/40 border border-border flex items-center justify-between gap-3">
+                <div>
+                  <span className="font-bold text-foreground">Appointment Reminder</span>
+                  <p className="text-muted-foreground mt-0.5">Sends scheduled visit date, chairside time, and clinic address.</p>
+                </div>
+                <a href={generateWhatsAppLink('reminder')} target="_blank" rel="noreferrer">
+                  <Button size="sm" variant="outline" className="text-xs bg-emerald-950/20 border-emerald-500/30 text-emerald-300 hover:bg-emerald-900/30">
+                    Send Reminder
+                  </Button>
+                </a>
               </div>
 
-              {designFileUrl ? (
-                <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30 border border-border">
-                  <span className="text-muted-foreground truncate max-w-[140px] font-mono text-[10px]">
-                    {activeCase.designUrl}
-                  </span>
-                  <a href={designFileUrl} download target="_blank" rel="noreferrer">
-                    <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 text-primary">
-                      Download
-                    </Button>
-                  </a>
+              <div className="p-3 rounded-xl bg-muted/40 border border-border flex items-center justify-between gap-3">
+                <div>
+                  <span className="font-bold text-foreground">Outstanding Balance Notice</span>
+                  <p className="text-muted-foreground mt-0.5">Sends balance amount (₹{totalOutstanding.toLocaleString('en-IN')}) with UPI payment deep link.</p>
                 </div>
-              ) : (
-                <div className="space-y-1.5">
-                  <p className="text-[11px] text-muted-foreground">Permanent remake warranty file not yet uploaded.</p>
-                  <label className="block cursor-pointer">
-                    <div className="flex items-center justify-center w-full h-7 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground text-xs font-medium transition-colors">
-                      <UploadCloud className="w-3 h-3 mr-1" />
-                      {isUploadingDesign ? 'Uploading...' : 'Archive Milled Mesh'}
-                    </div>
-                    <input type="file" className="hidden" accept=".stl,.ply,.zip,.exocad" onChange={handleDesignUpload} disabled={isUploadingDesign} />
-                  </label>
+                <a href={generateWhatsAppLink('balance')} target="_blank" rel="noreferrer">
+                  <Button size="sm" variant="outline" className="text-xs bg-amber-950/20 border-amber-500/30 text-amber-300 hover:bg-amber-900/30">
+                    Send Balance Notice
+                  </Button>
+                </a>
+              </div>
+
+              <div className="p-3 rounded-xl bg-muted/40 border border-border flex items-center justify-between gap-3">
+                <div>
+                  <span className="font-bold text-foreground">Post-Op Comfort Follow-up</span>
+                  <p className="text-muted-foreground mt-0.5">Automated 48-hour post-procedure recovery check-in.</p>
                 </div>
-              )}
-            </Card>
-          )}
-        </div>
-      </div>
+                <a href={generateWhatsAppLink('followup')} target="_blank" rel="noreferrer">
+                  <Button size="sm" variant="outline" className="text-xs bg-cyan-950/20 border-cyan-500/30 text-cyan-300 hover:bg-cyan-900/30">
+                    Send Follow-up
+                  </Button>
+                </a>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* ========================================================================= */}
-      {/* 5. MODALS (PATIENT 3D LINK & TRY-IN REQUEST)                              */}
+      {/* 3. MODALS (PATIENT 3D LINK & TRY-IN REQUEST)                              */}
       {/* ========================================================================= */}
       {/* Modal A: Patient 3D Link */}
       <Dialog open={showPatientLinkModal} onOpenChange={setShowPatientLinkModal}>
