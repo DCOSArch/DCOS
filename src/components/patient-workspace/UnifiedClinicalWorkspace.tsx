@@ -21,6 +21,8 @@ import {
   ClinicalInvoice,
   User,
   ChatMessage,
+  FeatureKey,
+  SubscriptionTier,
 } from '@/types';
 import {
   getPatientToothChart,
@@ -65,7 +67,11 @@ import {
   ExternalLink,
   ChevronDown,
   User as UserIcon,
+  Zap,
 } from 'lucide-react';
+import { FeatureGate } from '@/components/subscription/FeatureGate';
+import { UpgradeModal } from '@/components/subscription/UpgradeModal';
+import { evaluateCaseQuota, DEFAULT_STARTER_SUBSCRIPTION } from '@/lib/subscriptions';
 
 // Dynamic import for WebGL ThreeDViewer (client-side only)
 const ThreeDViewer = dynamic(() => import('@/components/ThreeDViewer'), {
@@ -146,6 +152,12 @@ export function UnifiedClinicalWorkspace({
 
   // Lab View Submode (3D STL vs CAD Specs vs DICOM)
   const [labViewMode, setLabViewMode] = useState<'3d' | 'specs' | 'dicom'>('3d');
+
+  // Subscription & Tier State
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeFeatureKey, setUpgradeFeatureKey] = useState<FeatureKey | undefined>(undefined);
+  const currentTier: SubscriptionTier = currentUser?.tier || 'STARTER';
+  const quota = useMemo(() => evaluateCaseQuota(DEFAULT_STARTER_SUBSCRIPTION), []);
 
   // Modals & Chat State
   const [showPatientLinkModal, setShowPatientLinkModal] = useState(false);
@@ -421,24 +433,58 @@ export function UnifiedClinicalWorkspace({
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2 flex-wrap">
+        {/* Action Buttons & Tenant Organization Context */}
+        <div className="flex items-center gap-2.5 flex-wrap">
+          {/* Tenant Org & Tier Badge */}
+          <div className="flex items-center gap-1.5 p-1.5 px-2.5 rounded-xl bg-muted/60 border border-border text-xs">
+            <span className="font-semibold text-foreground">{currentUser?.organizationName || 'Main Practice Clinic'}</span>
+            <Badge
+              variant="outline"
+              className={`text-[9px] font-mono font-bold uppercase px-1.5 py-0 h-4 ${
+                currentTier === 'ENTERPRISE' ? 'border-purple-500/50 text-purple-400 bg-purple-950/20' :
+                currentTier === 'PRO_LAB' ? 'border-emerald-500/50 text-emerald-400 bg-emerald-950/20' :
+                'border-cyan-500/50 text-cyan-400 bg-cyan-950/20'
+              }`}
+            >
+              {currentTier === 'ENTERPRISE' ? 'Enterprise' : currentTier === 'PRO_LAB' ? 'Pro Lab' : 'Free Starter'}
+            </Badge>
+            {!quota.isUnlimited && (
+              <span className="text-[10px] text-muted-foreground font-mono pl-1 border-l border-border">
+                {quota.used}/{quota.limit} Cases
+              </span>
+            )}
+          </div>
+
+          {currentTier === 'STARTER' && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 text-xs bg-primary/10 border-primary/40 text-primary hover:bg-primary/20 font-bold"
+              onClick={() => {
+                setUpgradeFeatureKey(undefined);
+                setShowUpgradeModal(true);
+              }}
+            >
+              <Zap className="w-3.5 h-3.5 mr-1 text-primary" /> Upgrade
+            </Button>
+          )}
+
           <Link href={`/patients/${patient.id}/capture`}>
-            <Button variant="outline" size="sm" className="text-xs">
+            <Button variant="outline" size="sm" className="h-8 text-xs">
               <Camera className="w-4 h-4 mr-1.5 text-primary" />
               IOS Scan Body
             </Button>
           </Link>
 
           <Link href={`/visits/new?patientId=${patient.id}`}>
-            <Button size="sm" variant="secondary" className="text-xs font-semibold">
+            <Button size="sm" variant="secondary" className="h-8 text-xs font-semibold">
               <Stethoscope className="w-4 h-4 mr-1.5" />
               New Clinical Encounter
             </Button>
           </Link>
 
           <Link href="/?action=create">
-            <Button size="sm" className="bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-xs shadow-sm">
+            <Button size="sm" className="h-8 bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-xs shadow-sm">
               <Plus className="w-4 h-4 mr-1.5" />
               New Lab Order
             </Button>
@@ -780,9 +826,11 @@ export function UnifiedClinicalWorkspace({
                       )}
 
                       {labViewMode === 'dicom' && activeCase?.dicomUrl && (
-                        <div className="w-full h-[480px] rounded-2xl overflow-hidden border border-border">
-                          <DicomMprViewer />
-                        </div>
+                        <FeatureGate feature="dicom_mpr" userTier={currentTier}>
+                          <div className="w-full h-[480px] rounded-2xl overflow-hidden border border-border">
+                            <DicomMprViewer />
+                          </div>
+                        </FeatureGate>
                       )}
                     </CardContent>
                   </Card>
@@ -863,42 +911,44 @@ export function UnifiedClinicalWorkspace({
 
                   {/* CAD Soft-Copy Card */}
                   {activeCase && (
-                    <Card className="bg-card border-border shadow-xs p-3.5 text-xs space-y-2.5">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-foreground flex items-center gap-1.5">
-                          <Shield className="w-3.5 h-3.5 text-emerald-400" /> CAD Soft-Copy Archive
-                        </span>
-                        {designFileUrl && (
-                          <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[9px]">
-                            Archived
-                          </Badge>
-                        )}
-                      </div>
-
-                      {designFileUrl ? (
-                        <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30 border border-border">
-                          <span className="text-muted-foreground truncate max-w-[140px] font-mono text-[10px]">
-                            {activeCase.designUrl}
+                    <FeatureGate feature="cad_bridge" userTier={currentTier} compact>
+                      <Card className="bg-card border-border shadow-xs p-3.5 text-xs space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-foreground flex items-center gap-1.5">
+                            <Shield className="w-3.5 h-3.5 text-emerald-400" /> CAD Soft-Copy Archive
                           </span>
-                          <a href={designFileUrl} download target="_blank" rel="noreferrer">
-                            <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 text-primary">
-                              Download
-                            </Button>
-                          </a>
+                          {designFileUrl && (
+                            <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[9px]">
+                              Archived
+                            </Badge>
+                          )}
                         </div>
-                      ) : (
-                        <div className="space-y-1.5">
-                          <p className="text-[11px] text-muted-foreground">Permanent remake warranty file not yet uploaded.</p>
-                          <label className="block cursor-pointer">
-                            <div className="flex items-center justify-center w-full h-7 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground text-xs font-medium transition-colors">
-                              <UploadCloud className="w-3 h-3 mr-1" />
-                              {isUploadingDesign ? 'Uploading...' : 'Archive Milled Mesh'}
-                            </div>
-                            <input type="file" className="hidden" accept=".stl,.ply,.zip,.exocad" onChange={handleDesignUpload} disabled={isUploadingDesign} />
-                          </label>
-                        </div>
-                      )}
-                    </Card>
+
+                        {designFileUrl ? (
+                          <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30 border border-border">
+                            <span className="text-muted-foreground truncate max-w-[140px] font-mono text-[10px]">
+                              {activeCase.designUrl}
+                            </span>
+                            <a href={designFileUrl} download target="_blank" rel="noreferrer">
+                              <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 text-primary">
+                                Download
+                              </Button>
+                            </a>
+                          </div>
+                        ) : (
+                          <div className="space-y-1.5">
+                            <p className="text-[11px] text-muted-foreground">Permanent remake warranty file not yet uploaded.</p>
+                            <label className="block cursor-pointer">
+                              <div className="flex items-center justify-center w-full h-7 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground text-xs font-medium transition-colors">
+                                <UploadCloud className="w-3 h-3 mr-1" />
+                                {isUploadingDesign ? 'Uploading...' : 'Archive Milled Mesh'}
+                              </div>
+                              <input type="file" className="hidden" accept=".stl,.ply,.zip,.exocad" onChange={handleDesignUpload} disabled={isUploadingDesign} />
+                            </label>
+                          </div>
+                        )}
+                      </Card>
+                    </FeatureGate>
                   )}
                 </div>
               </div>
@@ -1198,6 +1248,13 @@ export function UnifiedClinicalWorkspace({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal C: Tier Upgrade Modal */}
+      <UpgradeModal
+        open={showUpgradeModal}
+        onOpenChange={setShowUpgradeModal}
+        featureKey={upgradeFeatureKey}
+      />
     </div>
   );
 }

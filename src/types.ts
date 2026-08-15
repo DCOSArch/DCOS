@@ -7,6 +7,10 @@ export interface User {
   name: string;
   role: Role;
   labId?: string;
+  organizationId?: string;
+  organizationName?: string;
+  orgRole?: 'OWNER' | 'ADMIN' | 'MEMBER';
+  tier?: SubscriptionTier;
   avatarUrl?: string;
 }
 
@@ -305,4 +309,68 @@ export interface OrderChat {
   id: string;
   caseId: string;
   messages: ChatMessage[];
+}
+
+// ----------------- MULTI-TENANCY & ORGANIZATIONS -----------------
+export type OrganizationType = 'CLINIC' | 'LAB' | 'DSO_NETWORK';
+export type OrgMemberRole = 'OWNER' | 'ADMIN' | 'DENTIST' | 'TECHNICIAN' | 'RECEPTIONIST';
+
+export interface Organization {
+  id: string;
+  name: string;
+  type: OrganizationType;
+  slug: string;
+  billingEmail?: string;
+  phone?: string;
+  address?: string;
+  logoUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OrganizationMembership {
+  id: string;
+  organizationId: string;
+  userId: string;
+  role: OrgMemberRole;
+  createdAt: string;
+}
+
+// ----------------- SUBSCRIPTIONS & TIER ENTITLEMENTS -----------------
+export type SubscriptionTier = 'STARTER' | 'PRO_LAB' | 'ENTERPRISE';
+export type SubscriptionStatus = 'ACTIVE' | 'TRIALING' | 'PAST_DUE' | 'CANCELED';
+
+export type FeatureKey =
+  | 'dicom_mpr'
+  | 'cad_bridge'
+  | 'whatsapp_automation'
+  | 'unlimited_cases'
+  | 'hardware_bridge'
+  | 'ai_margin_detection'
+  | 'merkle_audit'
+  | 'custom_sso';
+
+export interface SubscriptionFeatures {
+  dicom_mpr: boolean;
+  cad_bridge: boolean;
+  whatsapp_automation: boolean;
+  unlimited_cases: boolean;
+  hardware_bridge: boolean;
+  ai_margin_detection: boolean;
+  merkle_audit: boolean;
+  custom_sso: boolean;
+}
+
+export interface Subscription {
+  id: string;
+  organizationId: string;
+  tier: SubscriptionTier;
+  status: SubscriptionStatus;
+  casesUsedThisPeriod: number;
+  caseLimit: number; // -1 indicates unlimited
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  features: SubscriptionFeatures;
+  createdAt: string;
+  updatedAt: string;
 }
