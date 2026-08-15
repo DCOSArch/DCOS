@@ -1,6 +1,30 @@
 {
   "version": 1,
   "skills": {
+    "aceternity-ui": {
+      "source": "secondsky/claude-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/aceternity-ui/skills/aceternity-ui/SKILL.md",
+      "computedHash": "46163dff7c0d895685b71f38179bd5feebd42cd66177addf20e21ecff95ce4b7"
+    },
+    "design-taste-frontend": {
+      "source": "bnd-1/taste-skill",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "89fb0ffc370300f65add6ccced60d8e59f45fe072bfa7f2a53b40a03a1366a12"
+    },
+    "flutter-ui-ux": {
+      "source": "ajianaz/skills-collection",
+      "sourceType": "github",
+      "skillPath": "skills/flutter-ui-ux/SKILL.md",
+      "computedHash": "9e74fa709465fa235164ce83b4407708f1fc5205feb0e889495d1e387f544d15"
+    },
+    "senior-frontend": {
+      "source": "alirezarezvani/claude-skills",
+      "sourceType": "github",
+      "skillPath": "engineering-team/skills/senior-frontend/SKILL.md",
+      "computedHash": "e106cfe8f4d644c3b4d8177abde66e34e0f3f83cae114038715fa7aa4a06d57d"
+    },
     "supabase": {
       "source": "supabase/agent-skills",
       "sourceType": "github",
@@ -12,6 +36,12 @@
       "sourceType": "github",
       "skillPath": "skills/supabase-postgres-best-practices/SKILL.md",
       "computedHash": "3639bed1f40b3fbadae79fee631c42c89b2d1f5c30b05d5aa3cca06422a6bbbc"
+    },
+    "text-to-lottie": {
+      "source": "diffusionstudio/lottie",
+      "sourceType": "github",
+      "skillPath": "skills/text-to-lottie/SKILL.md",
+      "computedHash": "6657f58de9b9b647a9e9761f708634534f0073e597436034023d09bf8707de81"
     }
   }
 }

@@ -501,63 +501,51 @@ export function UnifiedClinicalWorkspace({
         {/* TAB 1: CLINICAL OVERVIEW & EXPANSIVE 32-TOOTH ODONTOGRAM                */}
         {/* ======================================================================= */}
         <TabsContent value="overview" className="space-y-6">
-          {/* Top Row: Patient Vitals, Alerts & Summary Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="bg-card border-border shadow-xs">
-              <CardHeader className="p-4 pb-2">
-                <CardDescription className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                  Patient Medical Alerts
-                </CardDescription>
-                <CardTitle className="text-base font-bold text-rose-400 mt-1">
-                  {patient.allergies?.join(', ') || 'No known allergies'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 pt-0 text-xs text-muted-foreground">
-                <span>{patient.medicalHistory || 'No systemic conditions'}</span>
-              </CardContent>
-            </Card>
+          {/* Unified Compact Clinical Summary Bar */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 rounded-2xl bg-card border border-border shadow-xs">
+            <div className="p-2.5 px-3 rounded-xl bg-muted/30 border border-border/60">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+                Medical Alerts
+              </span>
+              <p className="text-xs font-bold text-rose-400 truncate mt-0.5">
+                {patient.allergies?.join(', ') || patient.medicalHistory || 'No known allergies'}
+              </p>
+            </div>
 
-            <Card className="bg-card border-border shadow-xs">
-              <CardHeader className="p-4 pb-2">
-                <CardDescription className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                  Outstanding Balance
-                </CardDescription>
-                <CardTitle className={`text-2xl font-extrabold ${totalOutstanding > 0 ? 'text-destructive' : 'text-emerald-500'}`}>
-                  ₹{totalOutstanding.toLocaleString('en-IN')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 pt-0 text-xs text-muted-foreground">
-                <span>{invoices.filter((i) => i.paymentStatus !== 'PAID').length} pending invoices</span>
-              </CardContent>
-            </Card>
+            <div className="p-2.5 px-3 rounded-xl bg-muted/30 border border-border/60">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+                Outstanding Balance
+              </span>
+              <p className={`text-sm font-extrabold mt-0.5 ${totalOutstanding > 0 ? 'text-destructive' : 'text-emerald-500'}`}>
+                ₹{totalOutstanding.toLocaleString('en-IN')}
+                <span className="text-[10px] font-normal text-muted-foreground ml-1.5 font-sans">
+                  ({invoices.filter((i) => i.paymentStatus !== 'PAID').length} due)
+                </span>
+              </p>
+            </div>
 
-            <Card className="bg-card border-border shadow-xs">
-              <CardHeader className="p-4 pb-2">
-                <CardDescription className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                  Active Lab Orders
-                </CardDescription>
-                <CardTitle className="text-2xl font-extrabold text-foreground">
-                  {cases.length} Active
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 pt-0 text-xs text-muted-foreground">
-                <span>{cases.filter((c) => c.status === 'IN_PROGRESS' || c.status === 'QUALITY_CHECK').length} in fabrication</span>
-              </CardContent>
-            </Card>
+            <div className="p-2.5 px-3 rounded-xl bg-muted/30 border border-border/60">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+                Lab Orders
+              </span>
+              <p className="text-xs font-bold text-foreground mt-0.5 flex items-center gap-1.5">
+                <span className={`w-2 h-2 rounded-full ${cases.length > 0 ? 'bg-cyan-400 animate-pulse' : 'bg-muted-foreground'}`} />
+                <span>{cases.length} Active</span>
+                <span className="text-[10px] font-normal text-muted-foreground">({cases.filter((c) => c.status === 'IN_PROGRESS' || c.status === 'QUALITY_CHECK').length} in lab)</span>
+              </p>
+            </div>
 
-            <Card className="bg-card border-border shadow-xs">
-              <CardHeader className="p-4 pb-2">
-                <CardDescription className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                  Visits Recorded
-                </CardDescription>
-                <CardTitle className="text-2xl font-extrabold text-foreground">
-                  {visits.length} Visits
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 pt-0 text-xs text-muted-foreground">
-                <span>Last: {visits.length > 0 ? new Date(visits[0].visitDate).toLocaleDateString() : 'None'}</span>
-              </CardContent>
-            </Card>
+            <div className="p-2.5 px-3 rounded-xl bg-muted/30 border border-border/60">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+                Encounters Recorded
+              </span>
+              <p className="text-xs font-bold text-foreground mt-0.5">
+                {visits.length} Visits
+                <span className="text-[10px] font-normal text-muted-foreground ml-1.5">
+                  (Last: {visits.length > 0 ? new Date(visits[0].visitDate).toLocaleDateString() : 'None'})
+                </span>
+              </p>
+            </div>
           </div>
 
           {/* Full-Width Hero 32-Tooth FDI Interactive Odontogram */}
