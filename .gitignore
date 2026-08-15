@@ -30,6 +30,8 @@ Thumbs.db
 !.vscode/extensions.json
 !.vscode/settings.json
 .idea/
+*.local.json
+tsconfig.tsbuildinfo
 
 # Internal Knowledge Base & Proprietary Agent Memory (Company Secrets Protocol)
 agent_memory/

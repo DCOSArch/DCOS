@@ -56,6 +56,12 @@ import {
 import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { UpgradeModal } from '@/components/subscription/UpgradeModal';
 import { evaluateCaseQuota, DEFAULT_STARTER_SUBSCRIPTION } from '@/lib/subscriptions';
+import { motion, AnimatePresence } from 'framer-motion';
+import { OperatoryRail } from './OperatoryRail';
+import { CaseFlowRail, STATUS_ORDER } from './CaseFlowRail';
+import { WorkspaceNavRail, type NavSection } from './WorkspaceNavRail';
+import { panelVariants, staggerParent, staggerItem, TACTILE_SPRING } from './workspace-motion';
+import { Stethoscope, CalendarDays, Pill, Receipt, MessageCircle } from 'lucide-react';
 
 // Dynamic import for WebGL ThreeDViewer (client-side only)
 const ThreeDViewer = dynamic(() => import('@/components/ThreeDViewer'), {
@@ -79,15 +85,7 @@ const DicomMprViewer = dynamic(() => import('@/components/viewer/DicomMprViewer'
   ),
 });
 
-const PIPELINE_STEPS = [
-  { status: 'PENDING', label: 'Incoming', desc: 'Awaiting lab approval' },
-  { status: 'IN_PROGRESS', label: 'Production', desc: 'CAD/CAM milling' },
-  { status: 'QUALITY_CHECK', label: 'QC & Finishing', desc: 'Precision inspection' },
-  { status: 'DISPATCHED', label: 'Dispatched', desc: 'In transit to clinic' },
-  { status: 'DELIVERED', label: 'Delivered', desc: 'Delivered to clinic' },
-  { status: 'COMPLETED', label: 'Completed', desc: 'Fitted & finalized' },
-];
-const statusOrder = ['PENDING', 'IN_PROGRESS', 'QUALITY_CHECK', 'DISPATCHED', 'DELIVERED', 'COMPLETED'];
+// PIPELINE_STEPS / STATUS_ORDER now live with the rail that renders them.
 
 interface UnifiedClinicalWorkspaceProps {
   patient: Patient;
@@ -188,7 +186,7 @@ export function UnifiedClinicalWorkspace({
 
   const currentStatusIdx = useMemo(() => {
     if (!activeCase) return -1;
-    return statusOrder.indexOf(activeCase.status);
+    return STATUS_ORDER.indexOf(activeCase.status);
   }, [activeCase]);
 
   const designFileUrl = useMemo(() => {
@@ -366,6 +364,22 @@ export function UnifiedClinicalWorkspace({
 
   const totalOutstanding = invoices.reduce((acc, inv) => acc + (inv.balanceAmount || 0), 0);
 
+  const navSections = useMemo<NavSection[]>(() => {
+    const sections: NavSection[] = [
+      { value: 'overview', label: 'Clinical Overview', icon: Stethoscope },
+    ];
+    if (cases.length > 0) {
+      sections.push({ value: 'lab-cases', label: 'Lab Orders', icon: Box, count: cases.length });
+    }
+    sections.push(
+      { value: 'visits', label: 'Visits', icon: CalendarDays, count: visits.length },
+      { value: 'prescriptions', label: 'Prescriptions', icon: Pill },
+      { value: 'billing', label: 'Invoices', icon: Receipt },
+      { value: 'whatsapp', label: 'WhatsApp', icon: MessageCircle },
+    );
+    return sections;
+  }, [cases.length, visits.length]);
+
   const generateWhatsAppLink = (type: 'reminder' | 'balance' | 'followup') => {
     const cleanPhone = (patient.phone || patient.contactInfo || '').replace(/[^0-9]/g, '');
     if (!cleanPhone) return '#';
@@ -381,7 +395,10 @@ export function UnifiedClinicalWorkspace({
   };
 
   return (
-    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6 max-w-7xl mx-auto w-full animate-fade-in text-foreground">
+    /* No max-width or padding here — the (dashboard) layout already supplies
+       both. Setting them again produced a container inside a container and
+       left large ambiguous gutters on wide screens. */
+    <div className="flex-1 space-y-5 w-full animate-fade-in text-foreground">
       {/* ========================================================================= */}
       {/* 1. MASTER PATIENT HEADER                                                  */}
       {/* ========================================================================= */}
@@ -440,83 +457,91 @@ export function UnifiedClinicalWorkspace({
       {/* ========================================================================= */}
       {/* 2. 2-COLUMN OPERATORY WORKSPACE (MAIN CONTENT + RIGHT VERTICAL RAIL)     */}
       {/* ========================================================================= */}
-      <div className="flex flex-col lg:flex-row items-start gap-6 w-full">
-        {/* Main Clinical Content Column */}
+      <div className="flex flex-col lg:flex-row items-start gap-4 lg:gap-5 w-full">
+        {/* Left: section navigation */}
+        <WorkspaceNavRail
+          sections={navSections}
+          value={activeTab}
+          onValueChange={setActiveTab}
+        />
+
+        {/* Centre: clinical content, fills between the two rails */}
         <div className="flex-1 w-full min-w-0">
-          <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val || 'overview')} className="w-full space-y-6">
-            <TabsList className="bg-muted/60 border border-border p-1 rounded-xl inline-flex w-fit max-w-full overflow-x-auto gap-0.5">
-              <TabsTrigger value="overview" className="text-xs sm:text-sm px-4 py-2 font-medium">
-                Clinical Overview
-              </TabsTrigger>
-              {cases.length > 0 && (
-                <TabsTrigger value="lab-cases" className="text-xs sm:text-sm px-4 py-2 font-medium">
-                  Lab Orders ({cases.length})
-                </TabsTrigger>
-              )}
-              <TabsTrigger value="visits" className="text-xs sm:text-sm px-4 py-2 font-medium">
-                Visits ({visits.length})
-              </TabsTrigger>
-              <TabsTrigger value="prescriptions" className="text-xs sm:text-sm px-4 py-2 font-medium">
-                Prescriptions
-              </TabsTrigger>
-              <TabsTrigger value="billing" className="text-xs sm:text-sm px-4 py-2 font-medium">
-                Invoices
-              </TabsTrigger>
-              <TabsTrigger value="whatsapp" className="text-xs sm:text-sm px-4 py-2 font-medium">
-                WhatsApp
-              </TabsTrigger>
-            </TabsList>
+          <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val || 'overview')} className="w-full">
+
+            {/* Keyed on activeTab so switching sections replays the enter
+                transition. Radix Tabs.Content reads from context, so nesting
+                it inside this wrapper is safe.
+                NOTE: this applies a transform while animating — the odontogram's
+                fullscreen overlay MUST stay portaled to <body> or it will be
+                trapped in this box. See ArchToothChart. */}
+            <motion.div
+              key={activeTab}
+              variants={panelVariants}
+              initial="hidden"
+              animate="show"
+            >
 
         {/* ======================================================================= */}
         {/* TAB 1: CLINICAL OVERVIEW & EXPANSIVE 32-TOOTH ODONTOGRAM                */}
         {/* ======================================================================= */}
         <TabsContent value="overview" className="space-y-6">
-          {/* Unified Compact Clinical Summary Bar */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 rounded-2xl bg-card border border-border shadow-xs">
-            <div className="p-2.5 px-3 rounded-xl bg-muted/30 border border-border/60">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+          {/* Clinical summary. One surface split by hairlines (gap-px over a
+              border-colored parent) rather than four bordered boxes nested
+              inside a fifth bordered box. */}
+          <motion.dl
+            variants={staggerParent}
+            initial="hidden"
+            animate="show"
+            className="grid grid-cols-2 md:grid-cols-4 gap-px rounded-2xl bg-border/70 border border-border overflow-hidden"
+          >
+            <motion.div variants={staggerItem} className="bg-card p-3.5">
+              <dt className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                 Medical Alerts
-              </span>
-              <p className="text-xs font-bold text-rose-400 truncate mt-0.5">
+              </dt>
+              <dd className="text-xs font-bold text-rose-400 truncate mt-1">
                 {patient.allergies?.join(', ') || patient.medicalHistory || 'No known allergies'}
-              </p>
-            </div>
+              </dd>
+            </motion.div>
 
-            <div className="p-2.5 px-3 rounded-xl bg-muted/30 border border-border/60">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+            <motion.div variants={staggerItem} className="bg-card p-3.5">
+              <dt className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                 Outstanding Balance
-              </span>
-              <p className={`text-sm font-extrabold mt-0.5 ${totalOutstanding > 0 ? 'text-destructive' : 'text-emerald-500'}`}>
+              </dt>
+              <dd className={`text-sm font-extrabold font-mono tabular-nums mt-1 ${totalOutstanding > 0 ? 'text-destructive' : 'text-emerald-500'}`}>
                 ₹{totalOutstanding.toLocaleString('en-IN')}
                 <span className="text-[10px] font-normal text-muted-foreground ml-1.5 font-sans">
-                  ({invoices.filter((i) => i.paymentStatus !== 'PAID').length} due)
+                  {invoices.filter((i) => i.paymentStatus !== 'PAID').length} due
                 </span>
-              </p>
-            </div>
+              </dd>
+            </motion.div>
 
-            <div className="p-2.5 px-3 rounded-xl bg-muted/30 border border-border/60">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+            <motion.div variants={staggerItem} className="bg-card p-3.5">
+              <dt className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                 Lab Orders
-              </span>
-              <p className="text-xs font-bold text-foreground mt-0.5 flex items-center gap-1.5">
-                <span className={`w-2 h-2 rounded-full ${cases.length > 0 ? 'bg-cyan-400 animate-pulse' : 'bg-muted-foreground'}`} />
-                <span>{cases.length} Active</span>
-                <span className="text-[10px] font-normal text-muted-foreground">({cases.filter((c) => c.status === 'IN_PROGRESS' || c.status === 'QUALITY_CHECK').length} in lab)</span>
-              </p>
-            </div>
-
-            <div className="p-2.5 px-3 rounded-xl bg-muted/30 border border-border/60">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
-                Encounters Recorded
-              </span>
-              <p className="text-xs font-bold text-foreground mt-0.5">
-                {visits.length} Visits
-                <span className="text-[10px] font-normal text-muted-foreground ml-1.5">
-                  (Last: {visits.length > 0 ? new Date(visits[0].visitDate).toLocaleDateString() : 'None'})
+              </dt>
+              <dd className="text-xs font-bold text-foreground mt-1 flex items-center gap-1.5">
+                <span className={`w-1.5 h-1.5 rounded-full ${cases.length > 0 ? 'bg-cyan-400 animate-pulse' : 'bg-muted-foreground'}`} />
+                <span className="font-mono tabular-nums">{cases.length}</span>
+                <span>Active</span>
+                <span className="text-[10px] font-normal text-muted-foreground">
+                  {cases.filter((c) => c.status === 'IN_PROGRESS' || c.status === 'QUALITY_CHECK').length} in lab
                 </span>
-              </p>
-            </div>
-          </div>
+              </dd>
+            </motion.div>
+
+            <motion.div variants={staggerItem} className="bg-card p-3.5">
+              <dt className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                Encounters Recorded
+              </dt>
+              <dd className="text-xs font-bold text-foreground mt-1">
+                <span className="font-mono tabular-nums">{visits.length}</span> Visits
+                <span className="text-[10px] font-normal text-muted-foreground ml-1.5">
+                  Last {visits.length > 0 ? new Date(visits[0].visitDate).toLocaleDateString() : '—'}
+                </span>
+              </dd>
+            </motion.div>
+          </motion.dl>
 
           {/* Full-Width Hero 32-Tooth FDI Interactive Odontogram */}
           <div className="w-full">
@@ -551,58 +576,47 @@ export function UnifiedClinicalWorkspace({
             </Card>
           ) : (
             <div className="space-y-5">
-              {/* Active Cases Switcher Bar */}
-              <div className="flex items-center justify-between gap-3 p-3 px-4 rounded-xl bg-card border border-border overflow-x-auto shadow-xs">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
-                    Active Cases:
-                  </span>
-                  <div className="flex items-center gap-2">
-                    {cases.map((c) => {
-                      const isSelected = c.id === activeCase?.id;
-                      return (
-                        <button
-                          key={c.id}
-                          onClick={() => setSelectedCaseId(c.id)}
-                          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer border ${
-                            isSelected
-                              ? 'bg-muted text-foreground border-primary shadow-xs'
-                              : 'bg-muted/40 text-muted-foreground border-border hover:text-foreground hover:bg-muted/80'
-                          }`}
-                        >
-                          <span className={`w-2 h-2 rounded-full ${
-                            c.status === 'DELIVERED' || c.status === 'COMPLETED' ? 'bg-emerald-500' :
-                            c.status === 'IN_PROGRESS' || c.status === 'QUALITY_CHECK' ? 'bg-cyan-500 animate-pulse' :
-                            'bg-amber-500'
-                          }`} />
-                          <span>#{c.id.slice(-6).toUpperCase()} ({c.requestedTreatment})</span>
-                          <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-border">
-                            {c.status}
-                          </Badge>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 whitespace-nowrap">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 text-xs px-3"
-                    onClick={() => setShowPatientLinkModal(true)}
-                  >
-                    <Share2 className="w-3.5 h-3.5 mr-1.5 text-primary" /> Patient 3D Link
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 text-xs px-3"
-                    onClick={() => setShowTryInModal(true)}
-                  >
-                    <RefreshCw className="w-3.5 h-3.5 mr-1.5 text-amber-500" /> Request Try-In
-                  </Button>
-                </div>
+              {/* Active case switcher. The "Patient 3D Link" / "Request Try-In"
+                  buttons that used to sit here are gone — they duplicated the
+                  operatory rail under different labels. Rail is the one home. */}
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Active Cases
+                </span>
+                {cases.map((c) => {
+                  const isSelected = c.id === activeCase?.id;
+                  return (
+                    <motion.button
+                      key={c.id}
+                      type="button"
+                      onClick={() => setSelectedCaseId(c.id)}
+                      whileTap={{ scale: 0.97 }}
+                      transition={TACTILE_SPRING}
+                      className="relative flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer"
+                    >
+                      {isSelected && (
+                        <motion.span
+                          layoutId="active-case-chip"
+                          transition={TACTILE_SPRING}
+                          className="absolute inset-0 rounded-lg bg-muted border border-primary/60"
+                        />
+                      )}
+                      <span className="relative z-10 flex items-center gap-2">
+                        <span className={`w-1.5 h-1.5 rounded-full ${
+                          c.status === 'DELIVERED' || c.status === 'COMPLETED' ? 'bg-emerald-500' :
+                          c.status === 'IN_PROGRESS' || c.status === 'QUALITY_CHECK' ? 'bg-cyan-500 animate-pulse' :
+                          'bg-amber-500'
+                        }`} />
+                        <span className={`font-mono ${isSelected ? 'text-foreground' : 'text-muted-foreground'}`}>
+                          #{c.id.slice(-6).toUpperCase()}
+                        </span>
+                        <span className="text-[10px] font-normal text-muted-foreground">
+                          {c.requestedTreatment}
+                        </span>
+                      </span>
+                    </motion.button>
+                  );
+                })}
               </div>
 
               {/* Obsidian Glass Production Rail */}
@@ -617,57 +631,7 @@ export function UnifiedClinicalWorkspace({
                     </div>
                   )}
 
-                  {/* Horizontal connected rail */}
-                  <div className="relative rounded-2xl border border-border bg-card/80 backdrop-blur-sm p-5 overflow-hidden">
-                    {/* Background glass effect */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-primary/[0.03] via-transparent to-emerald-500/[0.03] pointer-events-none" />
-
-                    <div className="relative flex items-center justify-between">
-                      {PIPELINE_STEPS.map((step, idx) => {
-                        const isPast = currentStatusIdx > idx;
-                        const isCurrent = currentStatusIdx === idx;
-                        const isFuture = !isPast && !isCurrent;
-                        return (
-                          <React.Fragment key={step.status}>
-                            {/* Connecting line before node (skip first) */}
-                            {idx > 0 && (
-                              <div className="flex-1 h-px mx-1">
-                                <div className={`h-full transition-all duration-500 ${
-                                  isPast ? 'bg-emerald-500/60' : isCurrent ? 'bg-gradient-to-r from-emerald-500/60 to-border' : 'bg-border border-t border-dashed border-border'
-                                }`} />
-                              </div>
-                            )}
-                            {/* Stage node */}
-                            <div className="flex flex-col items-center gap-1.5 min-w-0">
-                              <div className={`relative flex items-center justify-center rounded-full transition-all duration-300 ${
-                                isCurrent
-                                  ? 'w-10 h-10 bg-primary/15 border-2 border-primary shadow-[0_0_16px_rgba(var(--primary-rgb),0.25)]'
-                                  : isPast
-                                  ? 'w-7 h-7 bg-emerald-500/20 border border-emerald-500/50'
-                                  : 'w-7 h-7 bg-muted/40 border border-border'
-                              }`}>
-                                {isPast ? (
-                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                                ) : isCurrent ? (
-                                  <div className="w-3 h-3 rounded-full bg-primary animate-pulse" />
-                                ) : (
-                                  <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
-                                )}
-                              </div>
-                              <span className={`text-[10px] font-semibold leading-tight text-center max-w-[64px] ${
-                                isCurrent ? 'text-foreground font-bold' : isPast ? 'text-muted-foreground' : 'text-muted-foreground/50'
-                              }`}>
-                                {step.label}
-                              </span>
-                              {isCurrent && (
-                                <span className="text-[9px] text-primary font-medium">{step.desc}</span>
-                              )}
-                            </div>
-                          </React.Fragment>
-                        );
-                      })}
-                    </div>
-                  </div>
+                  <CaseFlowRail currentIdx={currentStatusIdx} caseId={activeCase.id} />
                 </div>
               )}
 
@@ -677,33 +641,38 @@ export function UnifiedClinicalWorkspace({
                 <div className="lg:col-span-8 space-y-4">
                   <Card className="bg-card border-border shadow-xs overflow-hidden">
                     <div className="flex items-center justify-between p-3.5 border-b border-border bg-muted/20">
-                      <div className="flex items-center gap-1 bg-muted/60 p-0.5 rounded-lg">
-                        <Button
-                          size="sm"
-                          variant={labViewMode === '3d' ? 'secondary' : 'ghost'}
-                          className="h-8 text-xs px-3.5 font-semibold"
-                          onClick={() => setLabViewMode('3d')}
-                        >
-                          <Box className="w-3.5 h-3.5 mr-1.5 text-cyan-400" /> 3D STL Viewer
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant={labViewMode === 'specs' ? 'secondary' : 'ghost'}
-                          className="h-8 text-xs px-3.5 font-semibold"
-                          onClick={() => setLabViewMode('specs')}
-                        >
-                          <Cpu className="w-3.5 h-3.5 mr-1.5 text-primary" /> CAD Specs & Shading
-                        </Button>
-                        {activeCase?.dicomUrl && (
-                          <Button
-                            size="sm"
-                            variant={labViewMode === 'dicom' ? 'secondary' : 'ghost'}
-                            className="h-8 text-xs px-3.5 font-semibold text-purple-400"
-                            onClick={() => setLabViewMode('dicom')}
-                          >
-                            <Radio className="w-3.5 h-3.5 mr-1.5" /> CBCT Slices
-                          </Button>
-                        )}
+                      {/* Mode switcher — one shared-layout pill slides between
+                          modes instead of three buttons swapping variants. */}
+                      <div className="flex items-center gap-0.5 bg-muted/50 p-0.5 rounded-lg">
+                        {([
+                          { key: '3d' as const, label: '3D STL Viewer', Icon: Box, tone: 'text-cyan-400' },
+                          { key: 'specs' as const, label: 'CAD Specs & Shading', Icon: Cpu, tone: 'text-primary' },
+                          ...(activeCase?.dicomUrl
+                            ? [{ key: 'dicom' as const, label: 'CBCT Slices', Icon: Radio, tone: 'text-purple-400' }]
+                            : []),
+                        ]).map(({ key, label, Icon, tone }) => {
+                          const isActive = labViewMode === key;
+                          return (
+                            <button
+                              key={key}
+                              type="button"
+                              onClick={() => setLabViewMode(key)}
+                              className="relative h-8 px-3.5 rounded-md text-xs font-semibold cursor-pointer whitespace-nowrap"
+                            >
+                              {isActive && (
+                                <motion.span
+                                  layoutId="lab-view-pill"
+                                  transition={TACTILE_SPRING}
+                                  className="absolute inset-0 rounded-md bg-card border border-border"
+                                />
+                              )}
+                              <span className={`relative z-10 flex items-center gap-1.5 ${isActive ? 'text-foreground' : 'text-muted-foreground'}`}>
+                                <Icon className={`w-3.5 h-3.5 ${tone}`} />
+                                {label}
+                              </span>
+                            </button>
+                          );
+                        })}
                       </div>
 
                       {labViewMode === '3d' && activeCase?.scanUrl && (
@@ -715,9 +684,12 @@ export function UnifiedClinicalWorkspace({
                       )}
                     </div>
 
-                    <CardContent className="p-4 sm:p-6 min-h-[500px] flex flex-col justify-center">
+                    <CardContent className="p-0 min-h-[500px] flex flex-col justify-center">
+                      {/* Stage runs edge-to-edge inside the card. It previously
+                          sat in a padded CardContent inside its own bordered,
+                          rounded box — three nested frames around one canvas. */}
                       {labViewMode === '3d' && (
-                        <div className="w-full h-[480px] relative rounded-2xl overflow-hidden bg-neutral-950/90 border border-neutral-800 shadow-inner">
+                        <div className="w-full h-[500px] relative overflow-hidden bg-neutral-950">
                           {activeCase?.scanUrl ? (
                             <ThreeDViewer
                               stlUrl={getR2PublicUrl(activeCase.scanUrl)}
@@ -741,7 +713,7 @@ export function UnifiedClinicalWorkspace({
                       )}
 
                       {labViewMode === 'specs' && (
-                        <div className="space-y-5 text-xs">
+                        <div className="space-y-5 text-xs p-5 sm:p-6">
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                             <div className="p-3.5 rounded-xl bg-muted/40 border border-border">
                               <span className="text-[10px] uppercase font-bold text-muted-foreground block">Occlusal Clearance</span>
@@ -777,7 +749,7 @@ export function UnifiedClinicalWorkspace({
 
                       {labViewMode === 'dicom' && activeCase?.dicomUrl && (
                         <FeatureGate feature="dicom_mpr" userTier={currentTier}>
-                          <div className="w-full h-[480px] rounded-2xl overflow-hidden border border-border">
+                          <div className="w-full h-[500px] overflow-hidden">
                             <DicomMprViewer />
                           </div>
                         </FeatureGate>
@@ -1122,78 +1094,21 @@ export function UnifiedClinicalWorkspace({
             </CardContent>
           </Card>
         </TabsContent>
+            </motion.div>
       </Tabs>
     </div>
 
-    {/* Right Persistent Vertical Operatory Action Dock */}
-    <div className="w-full lg:w-56 shrink-0 space-y-3">
-      {/* Primary Operatory Actions */}
-      <div className="p-3 rounded-2xl bg-card border border-border shadow-xs space-y-2">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-1 block">
-          Operatory Actions
-        </span>
-        <Link href="/?action=create" className="block w-full">
-          <Button size="sm" className="w-full h-9 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs shadow-sm flex items-center justify-center gap-1.5">
-            <Plus className="w-4 h-4" /> New Lab Order
-          </Button>
-        </Link>
-        <Link href={`/visits/new?patientId=${patient.id}`} className="block w-full">
-          <Button size="sm" variant="secondary" className="w-full h-9 rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5">
-            New Visit
-          </Button>
-        </Link>
-        <Link href={`/patients/${patient.id}/capture`} className="block w-full">
-          <Button variant="outline" size="sm" className="w-full h-9 rounded-xl text-xs flex items-center justify-center gap-1.5">
-            <Camera className="w-3.5 h-3.5 mr-1 text-primary" /> IOS Scan Body
-          </Button>
-        </Link>
-        {currentTier === 'STARTER' && (
-          <Button
-            size="sm"
-            variant="outline"
-            className="w-full h-9 text-xs rounded-xl bg-primary/10 border-primary/40 text-primary hover:bg-primary/20 font-bold flex items-center justify-center"
-            onClick={() => {
-              setUpgradeFeatureKey(undefined);
-              setShowUpgradeModal(true);
-            }}
-          >
-            <Zap className="w-3.5 h-3.5 mr-1" /> Upgrade Plan
-          </Button>
-        )}
-      </div>
-
-      {/* Patient Quick Tools Card */}
-      <div className="p-3 rounded-2xl bg-card border border-border shadow-xs space-y-1.5 text-xs">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-1 block">
-          Patient Tools
-        </span>
-        <button
-          type="button"
-          onClick={() => setShowPatientLinkModal(true)}
-          className="w-full py-2 px-3 rounded-xl bg-muted/30 hover:bg-muted border border-border/60 text-foreground font-medium flex items-center gap-2 transition-colors text-left cursor-pointer"
-        >
-          <Share2 className="w-3.5 h-3.5 text-primary shrink-0" />
-          <span className="truncate">Share 3D Smile</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setShowTryInModal(true)}
-          className="w-full py-2 px-3 rounded-xl bg-muted/30 hover:bg-muted border border-border/60 text-foreground font-medium flex items-center gap-2 transition-colors text-left cursor-pointer"
-        >
-          <RefreshCw className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-          <span className="truncate">Request Try-In</span>
-        </button>
-        <a
-          href={generateWhatsAppLink('reminder')}
-          target="_blank"
-          rel="noreferrer"
-          className="w-full py-2 px-3 rounded-xl bg-muted/30 hover:bg-muted border border-border/60 text-foreground font-medium flex items-center gap-2 transition-colors text-left block"
-        >
-          <MessageSquare className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-          <span className="truncate">WhatsApp Notice</span>
-        </a>
-      </div>
-    </div>
+    <OperatoryRail
+      patientId={patient.id}
+      tier={currentTier}
+      whatsappHref={generateWhatsAppLink('reminder')}
+      onShare3D={() => setShowPatientLinkModal(true)}
+      onRequestTryIn={() => setShowTryInModal(true)}
+      onUpgrade={() => {
+        setUpgradeFeatureKey(undefined);
+        setShowUpgradeModal(true);
+      }}
+    />
   </div>
 
       {/* ========================================================================= */}

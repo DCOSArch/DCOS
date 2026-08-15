@@ -41,7 +41,10 @@ export default async function DashboardLayout({
   return (
     <>
       <Navbar currentUser={userProfile} cases={mappedCases} />
-      <main className="flex-1 w-full p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
+      {/* 1600px rather than max-w-7xl (1280px): this is a data-dense clinical
+          cockpit and 1280 left ~300px of dead gutter per side on wide
+          displays. */}
+      <main className="flex-1 w-full p-4 md:p-6 lg:px-8 lg:py-6 max-w-[1600px] mx-auto">
         {children}
       </main>
     </>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -185,6 +186,13 @@ export function ArchToothChart({
     setIsFullscreen(prev => !prev);
   }, []);
 
+  // The studio overlay is portaled to <body>. Without this it renders inside
+  // the workspace tree, where ANY animated ancestor (framer-motion applies a
+  // transform while animating) establishes a containing block and traps
+  // `fixed inset-0` inside that box instead of the viewport.
+  const [isPortalReady, setIsPortalReady] = useState(false);
+  useEffect(() => setIsPortalReady(true), []);
+
   // Escape key listener for in-app fullscreen
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -194,6 +202,16 @@ export function ArchToothChart({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isFullscreen]);
+
+  // Lock background scroll while the studio is open.
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previous;
+    };
   }, [isFullscreen]);
 
   const [isPaintDragging, setIsPaintDragging] = useState(false);
@@ -379,9 +397,11 @@ export function ArchToothChart({
 
   const displayNum = (id: number) => (system === 'FDI' ? id : (FDI_TO_UNIVERSAL[id] ?? id));
 
+  // Height steps with the CONTAINER, not the viewport. A flat 640px min-height
+  // turned the canvas into a tall ribbon whenever the flanks squeezed its width.
   const canvasHeightClass = compact
     ? 'min-h-[360px] md:min-h-[420px]'
-    : 'min-h-[480px] md:min-h-[640px]';
+    : 'min-h-[460px] @3xl:min-h-[540px] @5xl:min-h-[600px]';
 
   const chart = (
     <div
@@ -564,7 +584,7 @@ export function ArchToothChart({
 
   // Left vertical diagnosis palette
   const leftPalette = readOnly ? null : (
-    <div className="w-full lg:w-60 shrink-0 flex flex-col gap-2 p-3 bg-slate-900/60 backdrop-blur-md rounded-2xl border border-slate-800/80 shadow-xs">
+    <div className="w-full @5xl:w-60 shrink-0 flex flex-col gap-2 p-3 bg-slate-900/60 backdrop-blur-md rounded-2xl border border-slate-800/80 shadow-xs">
       <div className="flex items-center justify-between px-1 pb-1.5 border-b border-slate-800/60">
         <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
           Diagnosis Palette
@@ -609,7 +629,7 @@ export function ArchToothChart({
 
   // Right vertical action and operatory controls rail
   const rightControls = (
-    <div className="w-full lg:w-56 shrink-0 flex flex-col gap-3 p-3 bg-slate-900/60 backdrop-blur-md rounded-2xl border border-slate-800/80 shadow-xs text-xs">
+    <div className="w-full @5xl:w-56 shrink-0 flex flex-col gap-3 p-3 bg-slate-900/60 backdrop-blur-md rounded-2xl border border-slate-800/80 shadow-xs text-xs">
       {/* Notation System Switch */}
       <div className="space-y-1.5">
         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-1">Notation System</span>
@@ -823,9 +843,9 @@ export function ArchToothChart({
     </div>
   );
 
-  // In-App Fullscreen Studio Mode
-  if (isFullscreen) {
-    return (
+  // In-App Fullscreen Studio Mode (portaled to <body> — see isPortalReady above)
+  if (isFullscreen && isPortalReady) {
+    return createPortal(
       <div className="fixed inset-0 z-[150] bg-background/98 backdrop-blur-2xl p-4 sm:p-6 flex flex-col animate-fade-in overflow-hidden">
         {/* Fullscreen Studio Top Bar */}
         <div className="flex items-center justify-between pb-3 mb-3 border-b border-border">
@@ -847,7 +867,7 @@ export function ArchToothChart({
         </div>
 
         {/* 3-Column Studio Flanks filling the entire viewport */}
-        <div className="flex-1 flex flex-col lg:flex-row items-stretch justify-center gap-4 w-full min-h-0 overflow-hidden">
+        <div className="@container flex-1 flex flex-col @5xl:flex-row items-stretch justify-center gap-4 w-full min-h-0 overflow-hidden">
           {leftPalette}
           <div className="flex-1 w-full min-w-0 flex items-center justify-center bg-slate-950 rounded-2xl border border-slate-800 p-2 overflow-hidden h-full">
             {chart}
@@ -856,7 +876,8 @@ export function ArchToothChart({
         </div>
 
         {toothDetailsModal}
-      </div>
+      </div>,
+      document.body
     );
   }
 
@@ -872,9 +893,14 @@ export function ArchToothChart({
         </div>
       </CardHeader>
 
-      <CardContent className="p-4 sm:p-5">
-        {/* Modern 3-Column Vertical Flanking Layout */}
-        <div className="flex flex-col lg:flex-row items-start justify-center gap-4 w-full">
+      <CardContent className="@container p-4 sm:p-5">
+        {/* 3-column flanking layout, gated on CONTAINER width rather than the
+            viewport. This component sits between a nav rail and an operatory
+            rail, so viewport width says nothing about the space it actually
+            has. The flanks cost a fixed 240 + 224 + 32px = 496px; below a
+            1024px container that left the arch a ~245px ribbon, so the flanks
+            stack above/below instead and the canvas takes full width. */}
+        <div className="flex flex-col @5xl:flex-row items-start justify-center gap-4 w-full">
           {/* Left: Vertical Diagnosis Palette */}
           {leftPalette}
 
