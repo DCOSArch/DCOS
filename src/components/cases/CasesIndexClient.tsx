@@ -190,9 +190,9 @@ export default function CasesIndexClient({ initialCases, currentUser }: CasesInd
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Link href={`/cases/${c.id}`}>
+                        <Link href={c.patientId ? `/patients/${c.patientId}?caseId=${c.id}` : `/cases/${c.id}`}>
                           <Button size="sm" variant="ghost" className="h-8 text-xs">
-                            Details
+                            Open Workspace
                             <ChevronRight className="w-3.5 h-3.5 ml-1 group-hover:translate-x-0.5 transition-transform" />
                           </Button>
                         </Link>

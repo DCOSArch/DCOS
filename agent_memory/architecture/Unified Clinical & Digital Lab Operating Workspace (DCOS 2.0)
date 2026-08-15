@@ -1,0 +1,148 @@
+# Unified Clinical & Digital Lab Operating Workspace (DCOS 2.0)
+## Master Architectural Blueprint & Exhaustive Permutations Plan
+
+Consolidate the fragmented **Patient Record** (`/patients/[id]`) and **Digital Lab Case** (`/cases/[id]`) into a **single, unified, comprehensive Clinical & Lab Operating Workspace** ("One Patient, One Record, One Timeline"). This plan exhaustively maps every clinical, restorative, CAD/CAM, diagnostic, financial, logistical, and communication permutation to guarantee **zero loss of functionality**.
+
+---
+
+## 🧭 Master Permutation & State Decision Trees
+
+```mermaid
+graph TD
+    A[Patient Workspace: Rahul Sharma] --> B{Active Lab Cases?}
+    B -->|0 Cases| C[Show 32-Tooth Odontogram + 'New Lab Order' CTA]
+    B -->|1 Case| D[Auto-Dock Active Case HUD + 3D Stage]
+    B -->|Multiple Cases| E[Header Pill Switcher: Case 1 #14 | Case 2 #30]
+
+    D --> F{Case Status}
+    E --> F
+
+    F -->|DRAFT| G1[Banner: Draft Order<br/>Chat: LOCKED<br/>Actions: Publish for Production<br/>3D: View Pre-op Scan]
+    F -->|PENDING| G2[Badge: Awaiting Lab Acceptance<br/>Chat: LOCKED<br/>Stepper: Incoming<br/>Actions: Due Date Negotiation]
+    F -->|IN_PROGRESS| G3[Badge: CAD/CAM Production<br/>Chat: UNLOCKED & LIVE<br/>Stepper: Production<br/>3D: Pre-op Scan + Lab CAD<br/>Actions: Request Try-in / Annotate]
+    F -->|TRY_IN_STAGE| G4[Badge: Try-In Dispatched<br/>Chat: UNLOCKED<br/>Actions: Approve Try-in / Request Adjustments]
+    F -->|QUALITY_CHECK| G5[Badge: QC Hold<br/>Chat: UNLOCKED<br/>Actions: Technician Soft-copy Verify]
+    F -->|DISPATCHED| G6[Badge: In Transit<br/>Chat: UNLOCKED<br/>Actions: Delivery Tracking / Notify Patient]
+    F -->|DELIVERED| G7[Badge: Received at Clinic<br/>Actions: Fit & Complete ➔ Sync to Odontogram]
+    F -->|COMPLETED| G8[Badge: Fitted & Finalized<br/>Tooth Chart: Marked as Existing Zirconia Crown<br/>Warranty & CAD Archive: Permanent Link]
+```
+
+---
+
+## 🔬 Exhaustive Permutations Matrix Across All Subsystems
+
+### 1. Treatment Type & Indication Permutations
+
+| Treatment Type | Specific Clinical Parameters | Tooth Selection & Chart Behavior | 3D & Imaging Workflow |
+| :--- | :--- | :--- | :--- |
+| **Single Crown / Inlay / Onlay / Veneer** | Occlusal clearance (0.5mm–2.0mm), Margin type (Chamfer, Shoulder, Feather), Contact design (Normal, Tight, Light). | Single tooth selected on FDI chart. Color code: Blue (Crown), Pink (Veneer), Cyan (Inlay). | Upper/Lower STL scan + buccal bite registration. Spatial margin spline inspection. |
+| **Multi-Unit Bridge (e.g. 3–4 Units)** | Connector design (Anatomical, Oval, Reduced), Pontic design (Ovate, Sanitary, Modified Ridge Lap). | Contiguous teeth selection (max 6 per jaw). Bridge connector lines rendered between abutments & pontics. | Path-of-insertion check & undercut evaluation. |
+| **Surgical Implant & Custom Abutment** | Implant Brand (Nobel Biocare, Straumann, Osstem, Dentium), Scan Body Model, Analog Logistics (`Clinic Provided` vs `Lab Provided`), Abutment Type (Screw-retained vs Ti-Base Hybrid). | Implant screw chimney icon rendered over tooth root on FDI chart. | IOS scan body STL + Optional CBCT DICOM volume with nerve canal mapping. |
+| **Removable Denture / Nightguard** | Material (Dual-Laminate Acrylic, Cast Framework, Valplast, 3D Resin), Arch (Upper/Lower/Dual). | Full arch selection or edentulous ridge mapping. | Dual-arch STL impression + tissue relief clearance parameters. |
+
+---
+
+### 2. Clinical Encounter $\leftrightarrow$ Lab Case Living Synchronization
+
+| Operational Trigger | Patient EHR & Odontogram Effect | Lab Production Effect |
+| :--- | :--- | :--- |
+| **Case Submitted for Production (Tooth #14)** | Tooth #14 on 32-tooth odontogram automatically turns **Striped Blue / Yellow** ("Under Fabrication"). | Lab receives new ticket in `Pending` queue with 5-tab prescription specs. |
+| **Lab Advances Status to `DISPATCHED`** | Patient record displays green transit badge; 1-click WhatsApp notification available to alert patient. | Case milestone event added to bi-temporal ledger. |
+| **Dentist Marks Case `FITTED / COMPLETED`** | Tooth #14 permanently transitions to **Solid Green/Blue ("Existing Zirconia Crown")** in patient's master record. | Case archived with permanent CAD soft-copy and warranty ID. |
+| **Try-In Failed / Remake Requested** | Clinician clicks `[Request Remake]` directly on the tooth; previous record preserved in Merkle ledger; new iteration linked. | Lab receives remake ticket with attached clinical adjustment notes and discrepancy photos. |
+| **Ambient Voice Dictation Encounter** | Voice engine records SOAP notes, 6-point perio probing, and pre-fills the 5-tab lab prescription modal. | Instant 1-click case submission from the encounter. |
+
+---
+
+### 3. Logistical & Manufacturing Permutations
+
+| Scenario | State Trigger | UI Representation & User Controls |
+| :--- | :--- | :--- |
+| **Trial Try-In Required** | `treatmentType === 'IMPLANT' \|\| isComplexAesthetic` | `[Request Trial Try-in]` modal accessible. Status can transition to `TRY_IN_PENDING ➔ TRY_IN_DELIVERED ➔ TRY_IN_APPROVED`. |
+| **Due Date Proposal by Lab** | `dueDateProposalsCount > 0 && proposedDueDate` | Prominent amber negotiation bar on case HUD: `[Accept New Date: 20th Aug]` or `[Counter-Propose / Request Rush]`. |
+| **Rush Priority Case** | `urgency === 'URGENT'` | Pulsing red badge; priority sorting on all dashboards; automated SMS/WhatsApp alerts. |
+| **Analog / Physical Parts Handling** | `analogLogistics === 'CLINIC_SENDING_PHYSICAL'` | Physical dispatch checklist: "Awaiting physical implant analog shipment from clinic before milling can begin." |
+
+---
+
+### 4. Multimodal Diagnostic Viewer Permutations
+
+| Media Asset | Present State | Absent / Empty State |
+| :--- | :--- | :--- |
+| **Intraoral Scan (.STL / .PLY)** | WebGL Three.js viewport with 360° orbit, zoom, surface texture, spatial pins, and `[Download STL]` button. | "No 3D Scan Attached" with drag-and-drop STL upload dropzone. |
+| **CBCT Volume (.DCM / .ZIP)** | "CBCT Volume Available" pill; launches embedded 4-tier DICOM MPR slice viewer (Axial, Coronal, Sagittal). | DICOM tab hidden or shows `[Upload CBCT Dataset]`. |
+| **Clinical Shade Photographs** | 3-Zone VITA shade card with side-by-side high-res photo gallery and polarized comparison tool. | VITA Classical 16-shade hex fallback selector. |
+| **CAD/CAM Soft-Copy (.dentalCAD / .stl)** | Green "CAD Soft-Copy Archived" badge with `[Download Final Mesh]` for permanent remake protection. | Lab Admin mode: Upload dropzone enabled. Dentist mode: "Awaiting CAD Design from Lab". |
+| **Patient 3D Preview Link** | `[Generate Patient Magic Link]` generates tokenized URL (`/preview/[hash]`) for mobile sharing. | Hash generated on case creation. |
+
+---
+
+### 5. Financial, Billing & Inventory Permutations
+
+| Dimension | Scenario A | Scenario B |
+| :--- | :--- | :--- |
+| **Doctor Payment Mode** | **Virtual Credit Drawdown**: Doctor has pre-purchased block credits (e.g. 94/100 remaining). Submitting case deducts 1 credit with zero checkout friction. | **Direct Invoicing**: Generates dynamic UPI Intent link (`upi://pay`), QR invoice, and payment gateway checkout. |
+| **Patient Payment Status** | **Outstanding Balance Due**: Displays red badge (e.g. `₹3,200 Pending`) with 1-click WhatsApp payment reminder. | **Paid in Full**: Green `Paid` status with printable tax invoice slip. |
+| **Insurance Adjudication** | **Autonomous CDT Prior-Auth Approved**: (e.g. D2740 80% coverage $\rightarrow$ Copay ₹2,400 / Insurance ₹9,600). | **Self-Pay / Non-Insured**: Full clinical fee schedule applied. |
+
+---
+
+### 6. Role-Based Permissions Permutations
+
+| Feature / Action | Prescribing Dentist (`DENTIST`) | Lab Technician / Admin (`LAB_ADMIN`) |
+| :--- | :--- | :--- |
+| **Patient Medical Records (EHR)** | Full access (Medical alerts, prescriptions, allergies, SOAP notes). | PHI-sanitized view (Patient age & gender only; HIPAA isolation). |
+| **Manufacturing Stepper** | View-only progress tracking. | Interactive stage control (`Incoming ➔ Production ➔ QC ➔ Dispatched ➔ Delivered`). |
+| **Order Chat Room** | Unlocked upon lab order acceptance; direct line to technician. | Unlocked upon order acceptance; direct line to prescribing doctor. |
+| **CAD Soft-Copy Archiving** | Download & inspect final restorative mesh. | Upload final milled design files and Exocad project XMLs. |
+| **Due Date Adjustments** | Propose target due date; accept/reject lab counter-proposals. | Propose alternative delivery dates based on milling capacity. |
+
+---
+
+## 🏗️ Architectural Layout: The 3-Pane High-Density Unified Workspace
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│  ← Rahul Sharma [ID: P1]  |  ⚠️ High Blood Pressure  |  35 yrs, MALE  |  ☎️ +91 98765 43210  |  Registered: 6/1/2026        │
+├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│  [ACTIVE CASES PILL BAR]:  [● Case #9916911E: Tooth 14 Zirconia HT (Production)]  [Case #8821034A: Tooth 30]  [+ New Order] │
+├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│  [LIVE PRODUCTION STEPPER]:  Incoming  ➔  ● Production (CAD/CAM Milling)  ➔  QC Hold  ➔  Dispatched  ➔  Delivered         │
+├──────────────────────────────────────────┬────────────────────────────────────────────┬──────────────────────────────────┤
+│ 👤 LEFT: CLINICAL & FINANCIAL EHR        │ 🦷 CENTER: DUAL-MODE OPERATORY STAGE       │ 💬 RIGHT: LAB COLLABORATION      │
+│                                          │                                            │                                  │
+│ • Patient Demographics & Contact         │ [ TABS: 🦷 Tooth Chart  |  🧊 3D Scan/CAD ]│ • Order Chat (Realtime WS)       │
+│ • Medical Alerts & Drug Allergies        │                                            │   (Auto-unlocks on production)   │
+│ • Outstanding Treatment Dues (₹3,200)    │ ── MODE A: 32-Tooth FDI Odontogram ──      │ • Exocad Design Specifications   │
+│ • Clinical Visits & SOAP Encounter Notes │   • Interactive restorative status cycling │   • Clearance: 1.0mm | Margins   │
+│ • Prescriptions (Rx) Medication History  │   • 6-Point periodontal probing depth grid │   • 3-Zone VITA Shade Canvas     │
+│ • Invoices, Receipts & UPI Deep Links    │                                            │ • CAD/CAM Design Soft-Copy       │
+│ • 1-Click WhatsApp Communications        │ ── MODE B: WebGL 3D Design Viewer ──       │ • Trial Try-In & Patient Link    │
+│   (Appointment, Balance, Follow-up)      │   • Three.js orbit controls & spatial pins │ • Live Production Timeline Feed  │
+│                                          │   • 4-Tier DICOM MPR Slice Viewer toggle   │ • Due Date Negotiation Banner    │
+└──────────────────────────────────────────┴────────────────────────────────────────────┴──────────────────────────────────┘
+```
+
+---
+
+## 🛠️ Step-by-Step Implementation Roadmap
+
+### 1. Build the Unified Workspace Core Component
+- Create [`src/components/patient-workspace/UnifiedClinicalWorkspace.tsx`](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/components/patient-workspace/UnifiedClinicalWorkspace.tsx):
+  - Integrates all subcomponents, state machines, and real-time WebSocket listeners from `PatientWorkspace.tsx` and `CaseDetailsClient.tsx`.
+  - Implements multi-case state switching, dual-mode central stage (Tooth Chart $\leftrightarrow$ 3D STL), contextual chat unlocking, and try-in workflows.
+
+### 2. Update Patient & Case App Router Endpoints
+- Update [`src/app/(dashboard)/patients/[id]/page.tsx`](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/app/(dashboard)/patients/[id]/page.tsx) to fetch patient data, linked cases, timeline events, chat messages, and user profiles in parallel.
+- Update [`src/app/(dashboard)/cases/[id]/page.tsx`](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/app/(dashboard)/cases/[id]/page.tsx) to seamlessly resolve the patient and render the full unified workspace with that case active.
+- Update [`src/components/cases/CasesIndexClient.tsx`](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/components/cases/CasesIndexClient.tsx) so clicking any case opens the unified workspace.
+
+### 3. Streamline Top Navigation
+- Update [`src/components/Navbar.tsx`](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/components/Navbar.tsx) to present an intuitive, unified navigation hierarchy (`Dashboard`, `Clinical Workspace (Patients & Cases)`, `Billing`, `Inventory`, `Directory`).
+
+---
+
+## 🧪 Comprehensive Verification Suite
+1. **Automated Verification**: Run `scripts/verify-backend-master.ts` (33/33 tests passing).
+2. **Production Compilation**: Run `npm run build` with zero TypeScript/JSX errors across all 21 routes.
+3. **End-to-End Permutation Testing**: Test draft publishing, chat locking/unlocking, try-in requests, 3D STL loading, multi-case switching, and live WebSocket message delivery.

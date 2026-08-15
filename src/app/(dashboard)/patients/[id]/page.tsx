@@ -1,77 +1,90 @@
 import { createClient } from '@/lib/supabase/server';
 import { getCachedUserProfile } from '@/lib/data';
 import { mockPatients, mockCases } from '@/mockData';
-import { PatientWorkspace } from '@/components/patient-workspace/PatientWorkspace';
+import { UnifiedClinicalWorkspace } from '@/components/patient-workspace/UnifiedClinicalWorkspace';
 import { Patient, Case } from '@/types';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 
-export default async function PatientDetailsPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default async function PatientDetailsPage(props: {
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<{ caseId?: string }>;
+}) {
+  const { id } = await props.params;
+  const searchParams = props.searchParams ? await props.searchParams : {};
+  const targetCaseId = searchParams?.caseId;
+
   let patient: Patient | null = null;
   let cases: Case[] = [];
+  let currentUser = null;
 
   try {
     const supabase = await createClient();
-    const userProfile = await getCachedUserProfile();
+    currentUser = await getCachedUserProfile();
 
-    if (userProfile?.role === 'DENTIST') {
-      const { data: dbPatient } = await supabase
-        .from('patients')
+    const { data: dbPatient } = await supabase
+      .from('patients')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (dbPatient) {
+      patient = {
+        id: dbPatient.id,
+        dentistId: dbPatient.dentist_id,
+        name: dbPatient.name,
+        age: dbPatient.age,
+        gender: dbPatient.gender,
+        medicalHistory: dbPatient.medical_history,
+        contactInfo: dbPatient.contact_info,
+        phone: dbPatient.contact_info,
+        createdAt: dbPatient.created_at,
+      };
+
+      const { data: dbCases } = await supabase
+        .from('cases')
         .select('*')
-        .eq('id', id)
-        .single();
+        .eq('patient_id', id)
+        .order('created_at', { ascending: false });
 
-      if (dbPatient) {
-        patient = {
-          id: dbPatient.id,
-          dentistId: dbPatient.dentist_id,
-          name: dbPatient.name,
-          age: dbPatient.age,
-          gender: dbPatient.gender,
-          medicalHistory: dbPatient.medical_history,
-          contactInfo: dbPatient.contact_info,
-          phone: dbPatient.contact_info,
-          createdAt: dbPatient.created_at,
-        };
-
-        const { data: dbCases } = await supabase
-          .from('cases')
-          .select('*')
-          .eq('patient_id', id)
-          .order('created_at', { ascending: false });
-
-        if (dbCases) {
-          cases = dbCases.map((c) => ({
-            id: c.id,
-            patientId: c.patient_id,
-            patientName: c.patient_name || dbPatient.name,
-            dentistId: c.dentist_id,
-            labId: c.lab_id,
-            status: c.status,
-            urgency: c.urgency,
-            requestedTreatment: c.requested_treatment,
-            material: c.material,
-            scanUrl: c.scan_url,
-            createdAt: c.created_at,
-            dueDate: c.due_date,
-            shade: c.shade,
-            selectedTeeth: c.selected_teeth,
-          }));
-        }
+      if (dbCases) {
+        cases = dbCases.map((c) => ({
+          id: c.id,
+          patientId: c.patient_id,
+          patientName: c.patient_name || dbPatient.name,
+          dentistId: c.dentist_id,
+          labId: c.lab_id,
+          status: c.status,
+          urgency: c.urgency,
+          requestedTreatment: c.requested_treatment,
+          material: c.material,
+          scanUrl: c.scan_url,
+          createdAt: c.created_at,
+          dueDate: c.due_date,
+          shade: c.shade,
+          selectedTeeth: c.selected_teeth,
+          instructions: c.instructions,
+          designUrl: c.design_url,
+          dicomUrl: c.dicom_url,
+          patientAge: c.patient_age,
+          patientGender: c.patient_gender,
+          implantBrand: c.implant_brand,
+          scanBodyModel: c.scan_body_model,
+          analogLogistics: c.analog_logistics,
+        }));
       }
     }
   } catch (err) {
     console.warn('Supabase patient lookup fallback to mock dataset', err);
   }
 
-  // Fallback to rich mock patient if not found in db or in local development
+  // Fallback to mock patient if in local development or not in DB
   if (!patient) {
     const foundMock = mockPatients.find((p) => p.id === id);
     if (foundMock) {
       patient = foundMock;
-      cases = mockCases.filter((c) => c.patientId === id);
+      cases = mockCases.filter((c) => c.patientId === id || c.patientName === foundMock.name);
     }
   }
 
@@ -91,5 +104,12 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
     );
   }
 
-  return <PatientWorkspace patient={patient} cases={cases} />;
+  return (
+    <UnifiedClinicalWorkspace
+      patient={patient}
+      cases={cases}
+      currentUser={currentUser || undefined}
+      initialActiveCaseId={targetCaseId}
+    />
+  );
 }
