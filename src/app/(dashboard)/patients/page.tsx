@@ -16,22 +16,19 @@ export default async function PatientsDirectory() {
     const supabase = await createClient();
     userProfile = await getCachedUserProfile();
 
-    if (userProfile && userProfile.role === 'DENTIST') {
-      const { data: dbPatients } = await supabase
-        .from('patients')
-        .select('*')
-        .eq('dentist_id', userProfile.id)
-        .order('created_at', { ascending: false });
+    const { data: dbPatients, error: patErr } = await supabase
+      .from('patients')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-      if (dbPatients && dbPatients.length > 0) {
-        patients = dbPatients;
-      }
+    if (dbPatients && dbPatients.length > 0) {
+      patients = dbPatients;
     }
   } catch (err) {
     console.warn('Database error, falling back to mock dataset', err);
   }
 
-  // If no DB patients found or in demo mode, use our rich mockPatients
+  // If no DB patients found, use fallback
   if (patients.length === 0) {
     patients = mockPatients.map((p) => ({
       id: p.id,

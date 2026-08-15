@@ -23,35 +23,36 @@ export default async function PatientDetailsPage(props: {
     const supabase = await createClient();
     currentUser = await getCachedUserProfile();
 
+    // 1. Check patients table by ID or Name
     const { data: dbPatient } = await supabase
       .from('patients')
       .select('*')
-      .eq('id', id)
-      .single();
+      .or(`id.eq.${id},name.ilike.%${id}%`)
+      .maybeSingle();
 
     if (dbPatient) {
       patient = {
         id: dbPatient.id,
         dentistId: dbPatient.dentist_id,
         name: dbPatient.name,
-        age: dbPatient.age,
-        gender: dbPatient.gender,
+        age: dbPatient.age || 30,
+        gender: dbPatient.gender || 'FEMALE',
         medicalHistory: dbPatient.medical_history,
-        contactInfo: dbPatient.contact_info,
-        phone: dbPatient.contact_info,
+        contactInfo: dbPatient.contact_info || dbPatient.phone,
+        phone: dbPatient.phone || dbPatient.contact_info,
         createdAt: dbPatient.created_at,
       };
 
       const { data: dbCases } = await supabase
         .from('cases')
         .select('*')
-        .eq('patient_id', id)
+        .or(`patient_id.eq.${dbPatient.id},patient_name.ilike.%${dbPatient.name}%`)
         .order('created_at', { ascending: false });
 
       if (dbCases) {
         cases = dbCases.map((c) => ({
           id: c.id,
-          patientId: c.patient_id,
+          patientId: c.patient_id || dbPatient.id,
           patientName: c.patient_name || dbPatient.name,
           dentistId: c.dentist_id,
           labId: c.lab_id,
@@ -74,17 +75,70 @@ export default async function PatientDetailsPage(props: {
           analogLogistics: c.analog_logistics,
         }));
       }
+    } else {
+      // 2. Check if ID matches a Case record directly
+      const { data: dbCase } = await supabase
+        .from('cases')
+        .select('*')
+        .or(`id.eq.${id},patient_id.eq.${id},patient_name.ilike.%${id}%`)
+        .maybeSingle();
+
+      if (dbCase) {
+        patient = {
+          id: dbCase.patient_id || dbCase.id,
+          dentistId: dbCase.dentist_id,
+          name: dbCase.patient_name || 'Patient',
+          age: dbCase.patient_age || 30,
+          gender: dbCase.patient_gender || 'FEMALE',
+          contactInfo: '+91 98765 43210',
+          phone: '+91 98765 43210',
+          createdAt: dbCase.created_at,
+        };
+
+        const { data: relatedCases } = await supabase
+          .from('cases')
+          .select('*')
+          .or(`patient_name.ilike.%${dbCase.patient_name}%,patient_id.eq.${dbCase.patient_id || dbCase.id}`)
+          .order('created_at', { ascending: false });
+
+        if (relatedCases && relatedCases.length > 0) {
+          cases = relatedCases.map((c) => ({
+            id: c.id,
+            patientId: c.patient_id || patient!.id,
+            patientName: c.patient_name || patient!.name,
+            dentistId: c.dentist_id,
+            labId: c.lab_id,
+            status: c.status,
+            urgency: c.urgency,
+            requestedTreatment: c.requested_treatment,
+            material: c.material,
+            scanUrl: c.scan_url,
+            createdAt: c.created_at,
+            dueDate: c.due_date,
+            shade: c.shade,
+            selectedTeeth: c.selected_teeth,
+            instructions: c.instructions,
+            designUrl: c.design_url,
+            dicomUrl: c.dicom_url,
+            patientAge: c.patient_age,
+            patientGender: c.patient_gender,
+            implantBrand: c.implant_brand,
+            scanBodyModel: c.scan_body_model,
+            analogLogistics: c.analog_logistics,
+          }));
+        }
+      }
     }
   } catch (err) {
-    console.warn('Supabase patient lookup fallback to mock dataset', err);
+    console.warn('Supabase patient lookup error', err);
   }
 
-  // Fallback to mock patient if in local development or not in DB
+  // 3. Fallback only if exact mock match exists (e.g. p1, p2, p3, p4)
   if (!patient) {
-    const foundMock = mockPatients.find((p) => p.id === id);
+    const foundMock = mockPatients.find((p) => p.id === id || p.name.toLowerCase() === id.toLowerCase());
     if (foundMock) {
       patient = foundMock;
-      cases = mockCases.filter((c) => c.patientId === id || c.patientName === foundMock.name);
+      cases = mockCases.filter((c) => c.patientId === foundMock.id || c.patientName === foundMock.name);
     }
   }
 

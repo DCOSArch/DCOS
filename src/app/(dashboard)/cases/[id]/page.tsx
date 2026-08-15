@@ -43,9 +43,10 @@ export default async function CaseDetailsPage(props: { params: Promise<{ id: str
   const { data: timelineData } = timelineResult;
   const { data: chatData } = chatResult;
 
-  // If dentist viewing case linked to a patient, redirect to unified clinical workspace
-  if (caseData?.patient_id && currentUser.role === 'DENTIST') {
-    redirect(`/patients/${caseData.patient_id}?caseId=${caseData.id}`);
+  // If dentist viewing case, redirect to unified clinical workspace for that patient
+  if (currentUser.role === 'DENTIST') {
+    const targetPatientKey = caseData?.patient_id || caseData?.id || params.id;
+    redirect(`/patients/${targetPatientKey}?caseId=${caseData?.id || params.id}`);
   }
 
   // Fallback for mock/standalone cases:
@@ -53,10 +54,10 @@ export default async function CaseDetailsPage(props: { params: Promise<{ id: str
   if (caseData) {
     mappedCase = {
       id: caseData.id,
-      patientId: caseData.patient_id || 'p1',
+      patientId: caseData.patient_id || `pat_${caseData.id}`,
       dentistId: caseData.dentist_id,
       labId: caseData.lab_id,
-      patientName: caseData.patient_name || 'Rahul Sharma',
+      patientName: caseData.patient_name || 'Patient',
       requestedTreatment: caseData.requested_treatment,
       status: caseData.status,
       urgency: caseData.urgency,
@@ -89,15 +90,37 @@ export default async function CaseDetailsPage(props: { params: Promise<{ id: str
     return <div className="p-8 text-center text-muted-foreground">Case not found or you do not have access.</div>;
   }
 
-  // Find or synthesize patient
-  let patient: Patient | null = mockPatients.find(p => p.id === mappedCase?.patientId || p.name === mappedCase?.patientName) || null;
+  // Find real patient from database
+  let patient: Patient | null = null;
+  if (mappedCase.patientId) {
+    const { data: dbPat } = await supabase
+      .from('patients')
+      .select('*')
+      .or(`id.eq.${mappedCase.patientId},name.ilike.%${mappedCase.patientName}%`)
+      .maybeSingle();
+
+    if (dbPat) {
+      patient = {
+        id: dbPat.id,
+        dentistId: dbPat.dentist_id || mappedCase.dentistId,
+        name: dbPat.name,
+        age: dbPat.age || 30,
+        gender: dbPat.gender || 'FEMALE',
+        phone: dbPat.phone || dbPat.contact_info || '+91 98765 43210',
+        createdAt: dbPat.created_at,
+        medicalAlerts: dbPat.medical_alerts || [],
+        medicalHistory: dbPat.medical_history || 'Standard clinical record.',
+      };
+    }
+  }
+
   if (!patient) {
     patient = {
-      id: mappedCase.patientId || 'p1',
-      dentistId: mappedCase.dentistId || 'u1',
+      id: mappedCase.patientId || `pat_${mappedCase.id}`,
+      dentistId: mappedCase.dentistId || currentUser.id,
       name: mappedCase.patientName || 'Patient',
-      age: mappedCase.patientAge || 35,
-      gender: mappedCase.patientGender || 'MALE',
+      age: mappedCase.patientAge || 30,
+      gender: mappedCase.patientGender || 'FEMALE',
       phone: '+91 98765 43210',
       email: 'patient@example.com',
       createdAt: mappedCase.createdAt || new Date().toISOString(),
