@@ -385,14 +385,14 @@ export function UnifiedClinicalWorkspace({
       {/* ========================================================================= */}
       {/* 1. MASTER PATIENT HEADER                                                  */}
       {/* ========================================================================= */}
-      <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-5 pb-5 border-b border-border">
-        <div className="flex items-start gap-3">
+      <div className="flex items-center justify-between pb-4 border-b border-border">
+        <div className="flex items-center gap-3">
           <Link href="/patients">
-            <Button variant="ghost" size="icon" className="hover:bg-muted mt-1">
+            <Button variant="ghost" size="icon" className="hover:bg-muted">
               <ArrowLeft className="w-5 h-5" />
             </Button>
           </Link>
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
                 {patient.name}
@@ -413,89 +413,59 @@ export function UnifiedClinicalWorkspace({
               <span className="text-border">|</span>
               <span>Since {new Date(patient.createdAt).toLocaleDateString()}</span>
             </p>
-            {/* Tenant org context — compact inline */}
-            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-              <span>{currentUser?.organizationName || 'Main Practice Clinic'}</span>
-              <Badge
-                variant="outline"
-                className={`text-[9px] font-mono font-bold uppercase px-1.5 py-0 h-4 ${
-                  currentTier === 'ENTERPRISE' ? 'border-purple-500/50 text-purple-400 bg-purple-950/20' :
-                  currentTier === 'PRO_LAB' ? 'border-emerald-500/50 text-emerald-400 bg-emerald-950/20' :
-                  'border-cyan-500/50 text-cyan-400 bg-cyan-950/20'
-                }`}
-              >
-                {currentTier === 'ENTERPRISE' ? 'Enterprise' : currentTier === 'PRO_LAB' ? 'Pro Lab' : 'Starter'}
-              </Badge>
-              {!quota.isUnlimited && (
-                <span className="text-[10px] font-mono text-muted-foreground">
-                  {quota.used}/{quota.limit} cases
-                </span>
-              )}
-            </div>
           </div>
         </div>
 
-        {/* Vertical action stack */}
-        <div className="flex flex-col items-end gap-2">
-          <div className="flex items-center gap-2">
-            {currentTier === 'STARTER' && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-9 text-xs rounded-full bg-primary/10 border-primary/40 text-primary hover:bg-primary/20 font-bold px-4"
-                onClick={() => {
-                  setUpgradeFeatureKey(undefined);
-                  setShowUpgradeModal(true);
-                }}
-              >
-                <Zap className="w-3.5 h-3.5 mr-1" /> Upgrade Plan
-              </Button>
-            )}
-            <Link href={`/patients/${patient.id}/capture`}>
-              <Button variant="outline" size="sm" className="h-9 text-xs rounded-full px-4">
-                Scan
-              </Button>
-            </Link>
-            <Link href={`/visits/new?patientId=${patient.id}`}>
-              <Button size="sm" variant="secondary" className="h-9 text-xs rounded-full font-semibold px-4">
-                New Visit
-              </Button>
-            </Link>
-            <Link href="/?action=create">
-              <Button size="sm" className="h-9 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs shadow-sm px-5">
-                New Order
-              </Button>
-            </Link>
-          </div>
+        {/* Tenant org & subscription indicator */}
+        <div className="hidden sm:flex items-center gap-2 p-2 px-3 rounded-2xl bg-card border border-border text-xs">
+          <span className="font-semibold text-foreground">{currentUser?.organizationName || 'Main Practice Clinic'}</span>
+          <Badge
+            variant="outline"
+            className={`text-[9px] font-mono font-bold uppercase px-1.5 py-0 h-4 ${
+              currentTier === 'ENTERPRISE' ? 'border-purple-500/50 text-purple-400 bg-purple-950/20' :
+              currentTier === 'PRO_LAB' ? 'border-emerald-500/50 text-emerald-400 bg-emerald-950/20' :
+              'border-cyan-500/50 text-cyan-400 bg-cyan-950/20'
+            }`}
+          >
+            {currentTier === 'ENTERPRISE' ? 'Enterprise' : currentTier === 'PRO_LAB' ? 'Pro Lab' : 'Starter'}
+          </Badge>
+          {!quota.isUnlimited && (
+            <span className="text-[10px] font-mono text-muted-foreground pl-1 border-l border-border">
+              {quota.used}/{quota.limit} cases
+            </span>
+          )}
         </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. MASTER SPACIOUS TABS NAVIGATION                                        */}
+      {/* 2. 2-COLUMN OPERATORY WORKSPACE (MAIN CONTENT + RIGHT VERTICAL RAIL)     */}
       {/* ========================================================================= */}
-      <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val || 'overview')} className="w-full space-y-6">
-        <TabsList className="bg-muted/60 border border-border p-1 rounded-xl inline-flex w-fit max-w-full overflow-x-auto gap-0.5">
-          <TabsTrigger value="overview" className="text-xs sm:text-sm px-4 py-2 font-medium">
-            Clinical Overview
-          </TabsTrigger>
-          {cases.length > 0 && (
-            <TabsTrigger value="lab-cases" className="text-xs sm:text-sm px-4 py-2 font-medium">
-              Lab Orders ({cases.length})
-            </TabsTrigger>
-          )}
-          <TabsTrigger value="visits" className="text-xs sm:text-sm px-4 py-2 font-medium">
-            Visits ({visits.length})
-          </TabsTrigger>
-          <TabsTrigger value="prescriptions" className="text-xs sm:text-sm px-4 py-2 font-medium">
-            Prescriptions
-          </TabsTrigger>
-          <TabsTrigger value="billing" className="text-xs sm:text-sm px-4 py-2 font-medium">
-            Invoices
-          </TabsTrigger>
-          <TabsTrigger value="whatsapp" className="text-xs sm:text-sm px-4 py-2 font-medium">
-            WhatsApp
-          </TabsTrigger>
-        </TabsList>
+      <div className="flex flex-col lg:flex-row items-start gap-6 w-full">
+        {/* Main Clinical Content Column */}
+        <div className="flex-1 w-full min-w-0">
+          <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val || 'overview')} className="w-full space-y-6">
+            <TabsList className="bg-muted/60 border border-border p-1 rounded-xl inline-flex w-fit max-w-full overflow-x-auto gap-0.5">
+              <TabsTrigger value="overview" className="text-xs sm:text-sm px-4 py-2 font-medium">
+                Clinical Overview
+              </TabsTrigger>
+              {cases.length > 0 && (
+                <TabsTrigger value="lab-cases" className="text-xs sm:text-sm px-4 py-2 font-medium">
+                  Lab Orders ({cases.length})
+                </TabsTrigger>
+              )}
+              <TabsTrigger value="visits" className="text-xs sm:text-sm px-4 py-2 font-medium">
+                Visits ({visits.length})
+              </TabsTrigger>
+              <TabsTrigger value="prescriptions" className="text-xs sm:text-sm px-4 py-2 font-medium">
+                Prescriptions
+              </TabsTrigger>
+              <TabsTrigger value="billing" className="text-xs sm:text-sm px-4 py-2 font-medium">
+                Invoices
+              </TabsTrigger>
+              <TabsTrigger value="whatsapp" className="text-xs sm:text-sm px-4 py-2 font-medium">
+                WhatsApp
+              </TabsTrigger>
+            </TabsList>
 
         {/* ======================================================================= */}
         {/* TAB 1: CLINICAL OVERVIEW & EXPANSIVE 32-TOOTH ODONTOGRAM                */}
@@ -1153,6 +1123,78 @@ export function UnifiedClinicalWorkspace({
           </Card>
         </TabsContent>
       </Tabs>
+    </div>
+
+    {/* Right Persistent Vertical Operatory Action Dock */}
+    <div className="w-full lg:w-56 shrink-0 space-y-3">
+      {/* Primary Operatory Actions */}
+      <div className="p-3 rounded-2xl bg-card border border-border shadow-xs space-y-2">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-1 block">
+          Operatory Actions
+        </span>
+        <Link href="/?action=create" className="block w-full">
+          <Button size="sm" className="w-full h-9 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs shadow-sm flex items-center justify-center gap-1.5">
+            <Plus className="w-4 h-4" /> New Lab Order
+          </Button>
+        </Link>
+        <Link href={`/visits/new?patientId=${patient.id}`} className="block w-full">
+          <Button size="sm" variant="secondary" className="w-full h-9 rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5">
+            New Visit
+          </Button>
+        </Link>
+        <Link href={`/patients/${patient.id}/capture`} className="block w-full">
+          <Button variant="outline" size="sm" className="w-full h-9 rounded-xl text-xs flex items-center justify-center gap-1.5">
+            <Camera className="w-3.5 h-3.5 mr-1 text-primary" /> IOS Scan Body
+          </Button>
+        </Link>
+        {currentTier === 'STARTER' && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="w-full h-9 text-xs rounded-xl bg-primary/10 border-primary/40 text-primary hover:bg-primary/20 font-bold flex items-center justify-center"
+            onClick={() => {
+              setUpgradeFeatureKey(undefined);
+              setShowUpgradeModal(true);
+            }}
+          >
+            <Zap className="w-3.5 h-3.5 mr-1" /> Upgrade Plan
+          </Button>
+        )}
+      </div>
+
+      {/* Patient Quick Tools Card */}
+      <div className="p-3 rounded-2xl bg-card border border-border shadow-xs space-y-1.5 text-xs">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-1 block">
+          Patient Tools
+        </span>
+        <button
+          type="button"
+          onClick={() => setShowPatientLinkModal(true)}
+          className="w-full py-2 px-3 rounded-xl bg-muted/30 hover:bg-muted border border-border/60 text-foreground font-medium flex items-center gap-2 transition-colors text-left cursor-pointer"
+        >
+          <Share2 className="w-3.5 h-3.5 text-primary shrink-0" />
+          <span className="truncate">Share 3D Smile</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowTryInModal(true)}
+          className="w-full py-2 px-3 rounded-xl bg-muted/30 hover:bg-muted border border-border/60 text-foreground font-medium flex items-center gap-2 transition-colors text-left cursor-pointer"
+        >
+          <RefreshCw className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+          <span className="truncate">Request Try-In</span>
+        </button>
+        <a
+          href={generateWhatsAppLink('reminder')}
+          target="_blank"
+          rel="noreferrer"
+          className="w-full py-2 px-3 rounded-xl bg-muted/30 hover:bg-muted border border-border/60 text-foreground font-medium flex items-center gap-2 transition-colors text-left block"
+        >
+          <MessageSquare className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+          <span className="truncate">WhatsApp Notice</span>
+        </a>
+      </div>
+    </div>
+  </div>
 
       {/* ========================================================================= */}
       {/* 3. MODALS (PATIENT 3D LINK & TRY-IN REQUEST)                              */}

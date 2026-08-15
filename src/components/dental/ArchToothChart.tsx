@@ -177,26 +177,24 @@ export function ArchToothChart({
   const panStartRef = useRef({ x: 0, y: 0 });
   const isPanningRef = useRef(false);
   const svgContainerRef = useRef<HTMLDivElement>(null);
-  const cardRef = useRef<HTMLDivElement>(null);
   const [isPanMode, setIsPanMode] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Native Fullscreen API toggle
+  // In-App Fullscreen Studio toggle (pure React overlay, not browser F11)
   const toggleFullscreen = useCallback(() => {
-    if (!cardRef.current) return;
-    if (!document.fullscreenElement) {
-      cardRef.current.requestFullscreen().catch(() => {});
-    } else {
-      document.exitFullscreen().catch(() => {});
-    }
+    setIsFullscreen(prev => !prev);
   }, []);
 
-  // Sync isFullscreen state with browser fullscreen changes
+  // Escape key listener for in-app fullscreen
   useEffect(() => {
-    const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
-    document.addEventListener('fullscreenchange', onFsChange);
-    return () => document.removeEventListener('fullscreenchange', onFsChange);
-  }, []);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isFullscreen) {
+        setIsFullscreen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isFullscreen]);
 
   const [isPaintDragging, setIsPaintDragging] = useState(false);
   const [paintMode, setPaintMode] = useState<'ADD' | 'REMOVE' | null>(null);
@@ -756,8 +754,114 @@ export function ArchToothChart({
     </div>
   );
 
+  // Shared tooth details modal
+  const toothDetailsModal = activeTooth != null && !readOnly && (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+      <div className="bg-card border border-border rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4 text-card-foreground">
+        <div className="flex items-start justify-between pb-3 border-b border-border">
+          <div>
+            <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <Edit3 className="w-5 h-5 text-primary" />
+              Tooth #{displayNum(activeTooth)}
+            </h3>
+            <p className="text-xs text-primary font-medium mt-0.5">{getToothAnatomicalName(activeTooth)}</p>
+            <Badge variant="secondary" className="mt-1 text-[10px]">{getToothQuadrantName(activeTooth)}</Badge>
+          </div>
+          <Button variant="ghost" size="icon" onClick={() => setActiveTooth(null)}>
+            <X className="w-5 h-5" />
+          </Button>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Diagnosis / condition</label>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-60 overflow-y-auto pr-1">
+            {(Object.keys(CLINICAL_CONDITIONS) as ToothCondition[]).map(key => {
+              const info = CLINICAL_CONDITIONS[key];
+              return (
+                <button
+                  key={key} type="button" onClick={() => applyConditionFromModal(key)}
+                  className="flex flex-col items-start p-2.5 rounded-xl border border-border hover:border-primary text-left transition-all hover:scale-[1.02] active:scale-95 bg-muted/30"
+                >
+                  <span className="text-xs font-bold flex items-center gap-1.5 text-foreground">
+                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: info.hex }} />
+                    {info.label}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">{info.description}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Clinical notes</label>
+          <input
+            type="text" value={toothNote} onChange={(e) => setToothNote(e.target.value)}
+            placeholder="e.g. Deep mesial pocket, cold sensitivity, shade A2"
+            className="w-full px-3 py-2 text-sm rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+        </div>
+
+        <div className="flex items-center justify-between pt-3 border-t border-border">
+          <Button variant="destructive" size="sm" onClick={clearActiveTooth} className="text-xs">
+            <RotateCcw className="w-3.5 h-3.5 mr-1" />
+            Clear
+          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setActiveTooth(null)} className="text-xs">Cancel</Button>
+            <Button
+              size="sm"
+              onClick={() => applyConditionFromModal(chartData[activeTooth]?.condition ?? 'healthy')}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold"
+            >
+              <Check className="w-3.5 h-3.5 mr-1" />
+              Save note
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // In-App Fullscreen Studio Mode
+  if (isFullscreen) {
+    return (
+      <div className="fixed inset-0 z-[150] bg-background/98 backdrop-blur-2xl p-4 sm:p-6 flex flex-col animate-fade-in overflow-hidden">
+        {/* Fullscreen Studio Top Bar */}
+        <div className="flex items-center justify-between pb-3 mb-3 border-b border-border">
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-foreground">
+              <Layers className="w-5 h-5 text-primary" />
+              {title}
+            </h2>
+            <Badge variant="outline" className="text-xs font-mono border-primary/40 text-primary">In-App Fullscreen Studio</Badge>
+          </div>
+          <Button
+            onClick={() => setIsFullscreen(false)}
+            variant="outline"
+            size="sm"
+            className="rounded-full px-4 text-xs font-semibold hover:bg-muted"
+          >
+            <Minimize2 className="w-3.5 h-3.5 mr-1.5" /> Exit Fullscreen (Esc)
+          </Button>
+        </div>
+
+        {/* 3-Column Studio Flanks filling the entire viewport */}
+        <div className="flex-1 flex flex-col lg:flex-row items-stretch justify-center gap-4 w-full min-h-0 overflow-hidden">
+          {leftPalette}
+          <div className="flex-1 w-full min-w-0 flex items-center justify-center bg-slate-950 rounded-2xl border border-slate-800 p-2 overflow-hidden h-full">
+            {chart}
+          </div>
+          {rightControls}
+        </div>
+
+        {toothDetailsModal}
+      </div>
+    );
+  }
+
   return (
-    <Card ref={cardRef} className={`w-full border-border bg-card text-card-foreground shadow-xs overflow-hidden ${isFullscreen ? 'rounded-none h-screen flex flex-col' : ''}`}>
+    <Card className="w-full border-border bg-card text-card-foreground shadow-xs overflow-hidden">
       <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-border gap-3 bg-muted/20">
         <div className="min-w-0">
           <CardTitle className="text-base sm:text-lg font-bold flex items-center gap-2 text-foreground">
@@ -768,7 +872,7 @@ export function ArchToothChart({
         </div>
       </CardHeader>
 
-      <CardContent className={`p-4 sm:p-5 ${isFullscreen ? 'flex-1 overflow-hidden' : ''}`}>
+      <CardContent className="p-4 sm:p-5">
         {/* Modern 3-Column Vertical Flanking Layout */}
         <div className="flex flex-col lg:flex-row items-start justify-center gap-4 w-full">
           {/* Left: Vertical Diagnosis Palette */}
@@ -784,74 +888,7 @@ export function ArchToothChart({
         </div>
       </CardContent>
 
-      {/* Tooth details modal */}
-      {activeTooth != null && !readOnly && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-card border border-border rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4 text-card-foreground">
-            <div className="flex items-start justify-between pb-3 border-b border-border">
-              <div>
-                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-                  <Edit3 className="w-5 h-5 text-primary" />
-                  Tooth #{displayNum(activeTooth)}
-                </h3>
-                <p className="text-xs text-primary font-medium mt-0.5">{getToothAnatomicalName(activeTooth)}</p>
-                <Badge variant="secondary" className="mt-1 text-[10px]">{getToothQuadrantName(activeTooth)}</Badge>
-              </div>
-              <Button variant="ghost" size="icon" onClick={() => setActiveTooth(null)}>
-                <X className="w-5 h-5" />
-              </Button>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Diagnosis / condition</label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-60 overflow-y-auto pr-1">
-                {(Object.keys(CLINICAL_CONDITIONS) as ToothCondition[]).map(key => {
-                  const info = CLINICAL_CONDITIONS[key];
-                  return (
-                    <button
-                      key={key} type="button" onClick={() => applyConditionFromModal(key)}
-                      className="flex flex-col items-start p-2.5 rounded-xl border border-border hover:border-primary text-left transition-all hover:scale-[1.02] active:scale-95 bg-muted/30"
-                    >
-                      <span className="text-xs font-bold flex items-center gap-1.5 text-foreground">
-                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: info.hex }} />
-                        {info.label}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">{info.description}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Clinical notes</label>
-              <input
-                type="text" value={toothNote} onChange={(e) => setToothNote(e.target.value)}
-                placeholder="e.g. Deep mesial pocket, cold sensitivity, shade A2"
-                className="w-full px-3 py-2 text-sm rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-              />
-            </div>
-
-            <div className="flex items-center justify-between pt-3 border-t border-border">
-              <Button variant="destructive" size="sm" onClick={clearActiveTooth} className="text-xs">
-                <RotateCcw className="w-3.5 h-3.5 mr-1" />
-                Clear
-              </Button>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => setActiveTooth(null)} className="text-xs">Cancel</Button>
-                <Button
-                  size="sm"
-                  onClick={() => applyConditionFromModal(chartData[activeTooth]?.condition ?? 'healthy')}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold"
-                >
-                  <Check className="w-3.5 h-3.5 mr-1" />
-                  Save note
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {toothDetailsModal}
     </Card>
   );
 }
