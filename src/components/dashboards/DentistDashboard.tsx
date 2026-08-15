@@ -1350,16 +1350,34 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
         analog_logistics: treatmentType.includes('Implant') ? analogLogistics : null
       };
 
-      const { data: insertedCase, error: insertError } = await supabase
+      let insertedCase: any = null;
+      let { data: caseRes, error: insertError } = await supabase
         .from('cases')
         .insert([dbCase])
         .select()
         .single();
 
+      if (insertError && insertError.message?.includes('patient_id')) {
+        // Fallback without patient_id for schema resilience
+        const { patient_id, ...fallbackCase } = dbCase;
+        const retryRes = await supabase
+          .from('cases')
+          .insert([fallbackCase])
+          .select()
+          .single();
+        caseRes = retryRes.data;
+        insertError = retryRes.error;
+      }
+
       if (insertError) {
         console.error('DB Insert Error:', insertError);
-        alert('Error inserting case: ' + insertError.message);
-      } else if (insertedCase) {
+        toast.error('Error creating case: ' + insertError.message);
+      } else {
+        insertedCase = caseRes;
+        toast.success(isDraft ? 'Draft saved successfully' : 'Case submitted to laboratory successfully');
+      }
+
+      if (insertedCase) {
         await supabase.from('timeline_events').insert({
           case_id: insertedCase.id,
           status_update: isDraft ? 'Draft Saved' : 'Case Created',
