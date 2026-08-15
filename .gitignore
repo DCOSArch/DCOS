@@ -1,32 +1,49 @@
+# Dependencies
 node_modules/
+.pnp
+.pnp.js
+
+# Production builds
 build/
 dist/
+.next/
+out/
 coverage/
-.DS_Store
-*.log
+
+# Environment Variables & Sensitive Credentials (Zero Leak Protocol)
 .env*
 !.env.example
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.p12
+service-account*.json
+credentials.json
 
-.vercel
-.env*
-.next/
+# Operating System & IDE
+.DS_Store
+*.log
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
 
-# AutoClaw KDream data
+# Internal Knowledge Base & Proprietary Agent Memory (Company Secrets Protocol)
+agent_memory/
 .autoclaw/
-
-# Obsidian settings
 .obsidian/
+.smart-env/
 
-# Plan files and documents (Excel, PDF, lock files)
+# Binary & Office artifacts
 *plan*
 *.xlsx
+*.xls
 *.pdf
 .~lock.*
+*.tmp
 
-
-
-
-
-
-# Ignore Smart Environment folder
-.smart-env
+# Vercel & Deployment metadata
+.vercel
