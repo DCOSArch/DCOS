@@ -49,3 +49,6 @@ agent_memory/
 
 # Vercel & Deployment metadata
 .vercel
+
+# Sales lead data — confidential, never commit (see AGENTS.md)
+sales_ops/leads/

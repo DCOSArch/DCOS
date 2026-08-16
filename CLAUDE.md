@@ -6,11 +6,12 @@ This repo is a **hybrid**: a Next.js app (`next-app`) *and* an Obsidian vault li
 the same root (`C:\Users\bentn\OneDrive\Desktop\DEs`). Product = **Dental ConnectOS (DCOS)**.
 
 ## How search / "indexing" works here
-- Obsidian indexes these notes with **Omnisearch** (full-text) and **Smart Connections**
-  (semantic embeddings, stored in `.smart-env/`). Those indexes power Obsidian's own UI.
-- Claude Code cannot query those indexes directly. It reaches the same source files via
-  `Grep` (content), `Glob` (filenames), and `Read` (full notes). This map is the shortcut
-  that tells Claude where to look — treat it as the entry point every session.
+
+See **Vault Search Protocol** in [[AGENTS]] (auto-loaded via `@AGENTS.md` above) — it is the
+single source of truth for both Claude Code and Antigravity. Summary: prefer the `obsidian`
+MCP tools (`search_query` for metadata, `search_simple` for text, `vault_get_document_map`
+for structure) over `Grep`, which is fallback only. Semantic search is unavailable to agents;
+Smart Connections is Obsidian-UI-only.
 
 ## Knowledge / notes (read these for project context)
 - `agent_memory/` — strategic brain of the project (renamed from `.agent_memory/` so Obsidian can
