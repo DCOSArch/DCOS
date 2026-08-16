@@ -13,6 +13,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { FileBox, Search, ChevronRight, User as UserIcon, Filter } from 'lucide-react';
+import { formatDate } from '@/lib/datetime';
 
 interface CasesIndexClientProps {
   initialCases: Case[];
@@ -181,11 +182,11 @@ export default function CasesIndexClient({ initialCases, currentUser }: CasesInd
                       </TableCell>
                       <TableCell>
                         <span className="text-xs text-foreground">
-                          {c.dueDate ? new Date(c.dueDate).toLocaleDateString() : '—'}
+                          {c.dueDate ? formatDate(c.dueDate) : '—'}
                         </span>
                         {c.proposedDueDate && c.proposedDueDate !== c.dueDate && (
                           <span className="block text-[10px] text-amber-600 dark:text-amber-400">
-                            proposed: {new Date(c.proposedDueDate).toLocaleDateString()}
+                            proposed: {formatDate(c.proposedDueDate)}
                           </span>
                         )}
                       </TableCell>

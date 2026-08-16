@@ -15,6 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ExocadProjectMetadata } from '@/lib/cad/exocad-parser';
+import { formatDate } from '@/lib/datetime';
 
 interface ExocadProjectCardProps {
   project: ExocadProjectMetadata;
@@ -74,7 +75,7 @@ export function ExocadProjectCard({
         </div>
 
         <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono">
-          <Clock className="w-3.5 h-3.5" /> {new Date(project.createdAt).toLocaleDateString()}
+          <Clock className="w-3.5 h-3.5" /> {formatDate(project.createdAt)}
         </div>
       </div>
 

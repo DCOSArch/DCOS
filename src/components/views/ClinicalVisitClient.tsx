@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArchToothChart as ToothChart } from '@/components/dental/ArchToothChart';
 import { VisitVoiceRecorder } from '@/components/dentos/VisitVoiceRecorder';
+import { formatDate } from '@/lib/datetime';
 import {
   Patient,
   ClinicalVisit,
@@ -109,6 +110,12 @@ export function ClinicalVisitClient({ visitId }: { visitId: string }) {
     }
   };
 
+  // Today's date, resolved after mount. Computing it during render evaluates at
+  // a different instant on the server than in the browser, which is the exact
+  // hydration mismatch this formatter pass exists to remove.
+  const [today, setToday] = useState('');
+  useEffect(() => setToday(formatDate(Date.now())), []);
+
   const handleSaveVisit = () => {
     setIsSaving(true);
 
@@ -157,7 +164,7 @@ export function ClinicalVisitClient({ visitId }: { visitId: string }) {
               Clinical Encounter & SOAP Notes
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-              Patient: <strong className="text-primary">{patient.name}</strong> ({patient.id.toUpperCase()}) &bull; Date: {new Date().toLocaleDateString()}
+              Patient: <strong className="text-primary">{patient.name}</strong> ({patient.id.toUpperCase()}) &bull; Date: {today || '—'}
             </p>
           </div>
         </div>

@@ -23,7 +23,7 @@ export type FlowStep = {
 export const PIPELINE_STEPS: FlowStep[] = [
   { status: 'PENDING', label: 'Incoming', desc: 'Awaiting lab approval' },
   { status: 'IN_PROGRESS', label: 'Production', desc: 'CAD/CAM milling' },
-  { status: 'QUALITY_CHECK', label: 'QC & Finishing', desc: 'Precision inspection' },
+  { status: 'QUALITY_CHECK', label: 'Checks', desc: 'Being inspected' },
   { status: 'DISPATCHED', label: 'Dispatched', desc: 'In transit to clinic' },
   { status: 'DELIVERED', label: 'Delivered', desc: 'Delivered to clinic' },
   { status: 'COMPLETED', label: 'Completed', desc: 'Fitted & finalized' },

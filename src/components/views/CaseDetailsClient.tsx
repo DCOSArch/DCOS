@@ -16,6 +16,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { getR2PublicUrl } from '@/lib/r2';
 import Link from 'next/link';
+import { formatDate, formatTime } from '@/lib/datetime';
 
 // ThreeDViewer uses WebGL/canvas APIs — must be loaded client-side only
 const ThreeDViewer = dynamic(() => import('@/components/ThreeDViewer'), {
@@ -404,7 +405,7 @@ export default function CaseDetailsClient({
       await supabase.from('timeline_events').insert({
         case_id: caseItem.id,
         status_update: 'Timeline proposed update',
-        notes: `Lab proposed new delivery due date: ${new Date(tempProposalDate).toLocaleDateString()} (proposal #${(caseItem.dueDateProposalsCount || 0) + 1})`,
+        notes: `Lab proposed new delivery due date: ${formatDate(tempProposalDate)} (proposal #${(caseItem.dueDateProposalsCount || 0) + 1})`,
         visibility: 'BOTH'
       });
 
@@ -435,7 +436,7 @@ export default function CaseDetailsClient({
         await supabase.from('timeline_events').insert({
           case_id: caseItem.id,
           status_update: 'Due date updated',
-          notes: `Dentist approved due date adjustment to ${new Date(caseItem.proposedDueDate!).toLocaleDateString()}`,
+          notes: `Dentist approved due date adjustment to ${formatDate(caseItem.proposedDueDate!)}`,
           visibility: 'BOTH'
         });
 
@@ -457,7 +458,7 @@ export default function CaseDetailsClient({
         await supabase.from('timeline_events').insert({
           case_id: caseItem.id,
           status_update: 'Timeline proposal rejected',
-          notes: `Dentist rejected due date adjustment to ${new Date(caseItem.proposedDueDate!).toLocaleDateString()}`,
+          notes: `Dentist rejected due date adjustment to ${formatDate(caseItem.proposedDueDate!)}`,
           visibility: 'BOTH'
         });
 
@@ -596,7 +597,7 @@ export default function CaseDetailsClient({
               Proposed Timeline Adjustment (Proposal #{caseItem.dueDateProposalsCount})
             </h3>
             <p className="text-xs text-muted-foreground mt-1">
-              The laboratory has proposed adjusting the delivery due date to <span className="font-semibold text-foreground">{new Date(caseItem.proposedDueDate).toLocaleDateString()}</span>. Please approve or reject this adjustment.
+              The laboratory has proposed adjusting the delivery due date to <span className="font-semibold text-foreground">{formatDate(caseItem.proposedDueDate)}</span>. Please approve or reject this adjustment.
             </p>
           </div>
           <div className="flex gap-2 shrink-0">
@@ -646,7 +647,7 @@ export default function CaseDetailsClient({
           <p className="text-muted-foreground text-sm flex items-center gap-2 mt-1">
             <span className="font-mono">#{caseItem.id.slice(-8).toUpperCase()}</span>
             <span>•</span>
-            <span>Created {new Date(caseItem.createdAt).toLocaleDateString()}</span>
+            <span>Created {formatDate(caseItem.createdAt)}</span>
             {caseItem.patientId && (
               <>
                 <span>•</span>
@@ -790,11 +791,11 @@ export default function CaseDetailsClient({
                   <p className="text-sm text-muted-foreground font-medium flex items-center gap-2"><Calendar className="w-4 h-4" /> Due Date</p>
                   <div className="flex flex-col gap-1">
                     <p className="font-medium text-foreground text-red-700 bg-red-50 dark:text-red-400 dark:bg-red-950/50 border border-red-100 dark:border-red-900 inline-block px-2 rounded self-start">
-                      {new Date(caseItem.dueDate).toLocaleDateString()}
+                      {formatDate(caseItem.dueDate)}
                     </p>
                     {caseItem.proposedDueDate && (
                       <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-800 dark:bg-amber-950/30 dark:text-amber-400 self-start text-[10px] py-0">
-                        Proposed: {new Date(caseItem.proposedDueDate).toLocaleDateString()} (Awaiting doctor approval)
+                        Proposed: {formatDate(caseItem.proposedDueDate)} (Awaiting doctor approval)
                       </Badge>
                     )}
                     {currentUser.role === 'LAB_ADMIN' && (
@@ -1220,7 +1221,7 @@ export default function CaseDetailsClient({
                           {msg.content}
                         </div>
                         <span className="text-[10px] text-muted-foreground mt-1 mx-1">
-                          {senderName} • {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {senderName} • {formatTime(msg.timestamp, { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
                     );

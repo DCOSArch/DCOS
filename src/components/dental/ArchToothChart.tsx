@@ -161,7 +161,7 @@ export function ArchToothChart({
   readOnly = false,
   selectedTeeth = [],
   onToothSelect,
-  title = 'Interactive Odontogram & Dental Chart',
+  title = 'Dental Chart',
   description = 'Click a tooth to diagnose. Drag between adjacent teeth to link a bridge.',
   compact = false,
 }: ArchToothChartProps) {
@@ -854,7 +854,7 @@ export function ArchToothChart({
               <Layers className="w-5 h-5 text-primary" />
               {title}
             </h2>
-            <Badge variant="outline" className="text-xs font-mono border-primary/40 text-primary">In-App Fullscreen Studio</Badge>
+            <Badge variant="outline" className="text-xs border-primary/40 text-primary">Full screen</Badge>
           </div>
           <Button
             onClick={() => setIsFullscreen(false)}

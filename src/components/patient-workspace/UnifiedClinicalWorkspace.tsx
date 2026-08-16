@@ -62,6 +62,7 @@ import { CaseFlowRail, STATUS_ORDER } from './CaseFlowRail';
 import { WorkspaceNavRail, type NavSection } from './WorkspaceNavRail';
 import { panelVariants, staggerParent, staggerItem, TACTILE_SPRING } from './workspace-motion';
 import { Stethoscope, CalendarDays, Pill, Receipt, MessageCircle } from 'lucide-react';
+import { formatDate, formatTime } from '@/lib/datetime';
 
 // Dynamic import for WebGL ThreeDViewer (client-side only)
 const ThreeDViewer = dynamic(() => import('@/components/ThreeDViewer'), {
@@ -428,7 +429,7 @@ export function UnifiedClinicalWorkspace({
               <span className="text-border">|</span>
               <span>{patient.phone || patient.contactInfo || 'No Phone'}</span>
               <span className="text-border">|</span>
-              <span>Since {new Date(patient.createdAt).toLocaleDateString()}</span>
+              <span>Since {formatDate(patient.createdAt)}</span>
             </p>
           </div>
         </div>
@@ -537,7 +538,7 @@ export function UnifiedClinicalWorkspace({
               <dd className="text-xs font-bold text-foreground mt-1">
                 <span className="font-mono tabular-nums">{visits.length}</span> Visits
                 <span className="text-[10px] font-normal text-muted-foreground ml-1.5">
-                  Last {visits.length > 0 ? new Date(visits[0].visitDate).toLocaleDateString() : '—'}
+                  Last {visits.length > 0 ? formatDate(visits[0].visitDate) : '—'}
                 </span>
               </dd>
             </motion.div>
@@ -806,7 +807,7 @@ export function UnifiedClinicalWorkspace({
                                 {m.content}
                               </div>
                               <span className="text-[9px] text-muted-foreground font-mono mt-0.5 px-1">
-                                {new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                {formatTime(m.timestamp, { hour: '2-digit', minute: '2-digit' })}
                               </span>
                             </div>
                           );
@@ -910,7 +911,7 @@ export function UnifiedClinicalWorkspace({
                         {visit.diagnosis || 'Clinical Consultation'}
                       </CardTitle>
                       <CardDescription className="text-xs text-muted-foreground">
-                        {new Date(visit.visitDate).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' })}
+                        {formatDate(visit.visitDate, { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' })}
                       </CardDescription>
                     </div>
                     <Badge variant="outline" className="text-xs border-primary/40 text-primary">
@@ -974,7 +975,7 @@ export function UnifiedClinicalWorkspace({
                         </p>
                       </div>
                       <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                        Prescribed: {new Date(v.visitDate).toLocaleDateString()}
+                        Prescribed: {formatDate(v.visitDate)}
                       </span>
                     </div>
                   ))
@@ -990,12 +991,12 @@ export function UnifiedClinicalWorkspace({
         <TabsContent value="billing" className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-bold text-foreground">Invoices & Clinical Ledger</h3>
-              <p className="text-xs text-muted-foreground">Comprehensive billing ledger with itemized treatment breakdown.</p>
+              <h3 className="text-lg font-bold text-foreground">Invoices</h3>
+              <p className="text-xs text-muted-foreground">Every bill for this patient, itemised by treatment.</p>
             </div>
             <Link href="/billing">
               <Button size="sm" variant="outline" className="text-xs text-primary">
-                Open Billing Hub
+                Open billing
               </Button>
             </Link>
           </div>
@@ -1017,7 +1018,7 @@ export function UnifiedClinicalWorkspace({
                         {inv.invoiceNumber}
                       </CardTitle>
                       <CardDescription className="text-xs text-muted-foreground">
-                        Issued: {new Date(inv.createdAt).toLocaleDateString()}
+                        Issued: {formatDate(inv.createdAt)}
                       </CardDescription>
                     </div>
                     <Badge variant={inv.paymentStatus === 'PAID' ? 'secondary' : 'destructive'} className="text-xs">
@@ -1120,7 +1121,7 @@ export function UnifiedClinicalWorkspace({
           <DialogHeader>
             <DialogTitle>Share 3D Model with Patient</DialogTitle>
             <DialogDescription>
-              A tokenized, HIPAA-isolated link allowing the patient to view and rotate their custom restoration on their phone.
+              A private link that lets the patient view and rotate their restoration on their phone. Only they can open it.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">

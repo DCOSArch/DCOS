@@ -11,6 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Box, ShoppingBag, Plus, CreditCard, Sparkles, Smartphone, Layers, Package, CheckCircle2, ShieldCheck, ArrowRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { purchaseDoctorInventoryAction } from '@/actions/inventory';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { User, DoctorInventoryItem } from '@/types';
@@ -84,73 +85,34 @@ export default function DentistInventoryClient({
 
     setIsConfirming(true);
     try {
-      const lockedPricePerUnit = Math.round(pricePerUnit * (1 - bulkDiscount));
+      const result = await purchaseDoctorInventoryAction({
+        labId: selectedLabId,
+        materialName: selectedMaterialData.name,
+        units,
+        basePrice: pricePerUnit,
+      });
 
-      // Update local state immediately for responsive UI
+      if (!result.success || !result.item) {
+        throw new Error(result.error || 'Server rejected allocation.');
+      }
+
+      // Update state with authenticated server response
       const existingIndex = allocations.findIndex(
         (a) => a.materialName === selectedMaterialData.name && a.labId === selectedLabId
       );
 
       let updatedAllocations: DoctorInventoryItem[];
-
       if (existingIndex >= 0) {
         updatedAllocations = [...allocations];
-        updatedAllocations[existingIndex] = {
-          ...updatedAllocations[existingIndex],
-          totalUnits: updatedAllocations[existingIndex].totalUnits + units,
-          remainingUnits: updatedAllocations[existingIndex].remainingUnits + units,
-          lockedPrice: `₹${lockedPricePerUnit.toLocaleString('en-IN')} / unit`,
-        };
+        updatedAllocations[existingIndex] = result.item;
       } else {
-        const newAllocation: DoctorInventoryItem = {
-          id: `di-${Date.now()}`,
-          dentistId: currentUser.id,
-          labId: selectedLabId,
-          materialName: selectedMaterialData.name,
-          totalUnits: units,
-          remainingUnits: units,
-          lockedPrice: `₹${lockedPricePerUnit.toLocaleString('en-IN')} / unit`,
-        };
-        updatedAllocations = [newAllocation, ...allocations];
+        updatedAllocations = [result.item, ...allocations];
       }
 
       setAllocations(updatedAllocations);
-
-      // Attempt Supabase persistence in background
-      try {
-        const { data: existing } = await supabase
-          .from('doctor_inventory')
-          .select('*')
-          .eq('dentist_id', currentUser.id)
-          .eq('lab_id', selectedLabId)
-          .eq('material_name', selectedMaterialData.name)
-          .maybeSingle();
-
-        if (existing) {
-          await supabase
-            .from('doctor_inventory')
-            .update({
-              total_units: existing.total_units + units,
-              remaining_units: existing.remaining_units + units,
-              locked_price: lockedPricePerUnit,
-            })
-            .eq('id', existing.id);
-        } else {
-          await supabase.from('doctor_inventory').insert({
-            dentist_id: currentUser.id,
-            lab_id: selectedLabId,
-            material_name: selectedMaterialData.name,
-            total_units: units,
-            remaining_units: units,
-            locked_price: lockedPricePerUnit,
-          });
-        }
-      } catch (dbErr) {
-        console.warn('Database save note (persisted locally):', dbErr);
-      }
-
       toast.success(`Successfully allocated ${units} units of ${selectedMaterialData.name}!`);
       setIsPurchaseModalOpen(false);
+      router.refresh();
     } catch (error: any) {
       console.error('Purchase error:', error);
       toast.error('Failed to allocate inventory: ' + error.message);

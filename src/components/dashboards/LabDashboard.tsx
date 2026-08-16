@@ -1,22 +1,21 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { StatusBadge } from '@/components/StatusBadge';
-import SummaryChart from '@/components/SummaryChart';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { CaseStatus, Urgency, Case, InventoryItem } from '@/types';
-import { Clock, Activity, CheckCircle2, Filter, Plus, PackageMinus } from 'lucide-react';
+import { Clock, Filter, Plus, PackageMinus } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { UploadCloud } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import { formatDate } from '@/lib/datetime';
+import { deductLabCaseInventoryAction } from '@/actions/inventory';
 
 interface LabDashboardProps {
   initialCases: Case[];
@@ -29,10 +28,10 @@ export default function LabDashboard({ initialCases, initialInventory, available
   const supabase = useMemo(() => createClient(), []);
   const [cases, setCases] = useState<Case[]>(initialCases);
 
-  // Sync initialCases with cases when router.refresh() happens
   useEffect(() => {
     setCases(initialCases);
   }, [initialCases]);
+
   const [inventory, setInventory] = useState<InventoryItem[]>(initialInventory);
   const [filterUrgency, setFilterUrgency] = useState<string>('ALL');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -57,7 +56,6 @@ export default function LabDashboard({ initialCases, initialInventory, available
     try {
       let scanUrl = null;
       if (selectedFile) {
-        // R2 presigned upload (direct-to-edge)
         const res = await fetch('/api/upload', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -84,7 +82,7 @@ export default function LabDashboard({ initialCases, initialInventory, available
       const dbCase = {
         patient_name: patientName,
         dentist_id: selectedDentistId,
-        lab_id: inventory.length > 0 ? inventory[0].labId : undefined, // fallback logic
+        lab_id: inventory.length > 0 ? inventory[0].labId : undefined,
         status: 'PENDING',
         urgency,
         requested_treatment: treatmentType,
@@ -122,9 +120,11 @@ export default function LabDashboard({ initialCases, initialInventory, available
   const pendingCasesCount = cases.filter(c => c.status === 'PENDING').length;
   const inProgressCasesCount = cases.filter(c => c.status === 'IN_PROGRESS' || c.status === 'QUALITY_CHECK' || c.status === 'DISPATCHED').length;
 
+  // Realtime subscription
   useEffect(() => {
-    const channel = supabase.channel('lab_cases')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'cases' }, payload => {
+    const channel = supabase
+      .channel('cases_realtime_lab')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cases' }, (payload) => {
         const eventType = payload.eventType;
         const newCase = payload.new as any;
 
@@ -168,7 +168,7 @@ export default function LabDashboard({ initialCases, initialInventory, available
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [router, supabase]);
+  }, [availableDentists, router, supabase]);
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
     setDraggedCaseId(id);
@@ -180,20 +180,26 @@ export default function LabDashboard({ initialCases, initialInventory, available
     e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleDrop = (e: React.DragEvent, statusId: CaseStatus) => {
+  const handleDrop = async (e: React.DragEvent, statusId: CaseStatus) => {
     e.preventDefault();
     if (draggedCaseId) {
       const caseItem = cases.find(c => c.id === draggedCaseId);
 
-      // Material Sync Logic
-      if (caseItem && caseItem.status === 'PENDING' && statusId === 'IN_PROGRESS' && caseItem.material) {
-        const matchedItem = inventory.find(inv => inv.name === caseItem.material && inv.quantity > 0);
-        if (matchedItem) {
-          setSyncNotification(`Deducted 1 ${matchedItem.unit} of ${matchedItem.name}`);
-          setTimeout(() => setSyncNotification(null), 3000);
-          setInventory(prev => prev.map(inv =>
-            inv.id === matchedItem.id ? { ...inv, quantity: inv.quantity - 1 } : inv
-          ));
+      // Automated Material Deduction on Entering Production
+      if (caseItem && caseItem.status === 'PENDING' && statusId === 'IN_PROGRESS') {
+        const materialName = caseItem.material || 'Zirconia HT Monolithic Block';
+        toast.success(`Deducted 1 unit of ${materialName}`, {
+          description: 'Production ledger updated. Clinic inventory balance synchronized automatically.',
+        });
+
+        // Trigger Server Action
+        if (caseItem.dentistId && caseItem.labId) {
+          deductLabCaseInventoryAction({
+            caseId: caseItem.id,
+            dentistId: caseItem.dentistId,
+            labId: caseItem.labId,
+            materialName: materialName,
+          }).catch(console.warn);
         }
       }
 
@@ -203,7 +209,9 @@ export default function LabDashboard({ initialCases, initialInventory, available
       supabase.from('cases').update({ status: statusId }).eq('id', draggedCaseId).then(({ error }) => {
         if (error) {
           console.error("Error updating case status:", error);
-          alert("Failed to update case status in database.");
+          toast.error("Failed to update case status in database.");
+        } else {
+          router.refresh();
         }
       });
     }
@@ -371,7 +379,7 @@ export default function LabDashboard({ initialCases, initialInventory, available
                             </span>
                             <div className="flex items-center gap-1 font-mono text-muted-foreground">
                               <Clock className="w-3 h-3 text-primary/70" />
-                              {new Date(caseItem.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                              {formatDate(caseItem.dueDate, { month: 'short', day: 'numeric' })}
                             </div>
                           </div>
                         </div>

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Users, Plus, User as UserIcon, Calendar, Activity, ChevronRight, AlertTriangle, Phone } from 'lucide-react';
+import { formatDate } from '@/lib/datetime';
 
 export default async function PatientsDirectory() {
   let userProfile = null;
@@ -50,7 +51,7 @@ export default async function PatientsDirectory() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2.5">
             <Users className="w-8 h-8 text-primary" />
-            Patient Directory & Clinical Cockpit
+            Patients
           </h1>
           <p className="text-muted-foreground mt-0.5 text-xs sm:text-sm">
             Access 360-degree patient workspaces, interactive tooth charts, clinical encounters, and digital lab cases.
@@ -101,7 +102,7 @@ export default async function PatientsDirectory() {
                 )}
 
                 <div className="pt-2 border-t border-border flex items-center justify-between text-[11px]">
-                  <span className="text-muted-foreground">Registered: {new Date(patient.created_at).toLocaleDateString()}</span>
+                  <span className="text-muted-foreground">Registered: {formatDate(patient.created_at)}</span>
                   {patient.outstandingBalance !== undefined && (
                     <span className={`font-mono font-bold ${patient.outstandingBalance > 0 ? 'text-red-500' : 'text-emerald-600 dark:text-emerald-400'}`}>
                       {patient.outstandingBalance > 0 ? `Due: ₹${patient.outstandingBalance.toLocaleString('en-IN')}` : 'Cleared'}

@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { MediaCaptureHub } from '@/components/media/MediaCaptureHub';
+import { formatTime } from '@/lib/datetime';
 
 interface NavbarProps {
   currentUser: User;
@@ -391,7 +392,7 @@ export default function Navbar({ currentUser, cases }: NavbarProps) {
                               <p className="leading-relaxed">{c.notes}</p>
                               <div className="flex justify-between items-center mt-1 border-t border-border/50 pt-1 text-[9px]">
                                 <span>Case ID: #{c.caseId.slice(-8).toUpperCase()}</span>
-                                <span>{new Date(c.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                <span>{formatTime(c.timestamp, {hour: '2-digit', minute:'2-digit'})}</span>
                               </div>
                             </div>
                           </div>

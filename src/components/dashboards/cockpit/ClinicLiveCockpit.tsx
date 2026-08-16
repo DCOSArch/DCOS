@@ -457,15 +457,14 @@ export function ClinicLiveCockpit() {
       {/* ── A · STATUS LEDGER ────────────────────────────────────────────── */}
       <div className="flex items-center gap-3 px-4 h-11">
         <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-success)] shrink-0" aria-hidden />
-        <span className="text-[13px] font-semibold tracking-tight text-foreground">Clinic Live</span>
-        <span className={`${NUM} text-[10px] uppercase tracking-[0.14em] text-muted-foreground`}>Cockpit</span>
+        <span className="text-[13px] font-semibold tracking-tight text-foreground">Today</span>
 
         <div className="ml-auto flex items-stretch divide-x divide-border/50 text-right">
-          <Metric label="In" value={inClinic} />
-          <Metric label="Chair" value={inChair} />
-          <Metric label="Wait" value={waitingEntries.length} />
+          <Metric label="In clinic" value={inClinic} />
+          <Metric label="In chair" value={inChair} />
+          <Metric label="Waiting" value={waitingEntries.length} />
           <Metric
-            label="Longest"
+            label="Longest wait"
             value={longestWait}
             suffix="m"
             tone={waitTone(longestWait)}
@@ -501,7 +500,7 @@ export function ClinicLiveCockpit() {
                 : null;
             const planned = seatPlan.get(chair.id);
 
-            const statusWord = occupied ? 'In use' : cleaning ? 'Turnover' : blocked ? 'Blocked' : 'Ready';
+            const statusWord = occupied ? 'In use' : cleaning ? 'Cleaning' : blocked ? 'Closed' : 'Free';
             const statusToken = occupied
               ? 'var(--color-primary)'
               : cleaning
@@ -545,7 +544,7 @@ export function ClinicLiveCockpit() {
                     )
                   ) : (
                     <span className="text-[12px] text-muted-foreground">
-                      {cleaning ? 'Turnover' : blocked ? 'Out of service' : 'Idle'}
+                      {cleaning ? 'Being cleaned' : blocked ? 'Closed' : 'Empty'}
                     </span>
                   )}
                 </div>
@@ -582,7 +581,7 @@ export function ClinicLiveCockpit() {
                       primary
                     />
                   ) : (
-                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Open</span>
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Free</span>
                   )}
                 </div>
               </div>
@@ -593,7 +592,7 @@ export function ClinicLiveCockpit() {
         {/* On deck — the single clinic queue, rendered once. */}
         <div className="px-3 py-2">
           <div className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground mb-1.5 px-1">
-            On deck · <span className={NUM}>{onDeck.length}</span>
+            Waiting · <span className={NUM}>{onDeck.length}</span>
           </div>
           <AnimatePresence initial={false}>
             {onDeck.slice(0, 5).map((e) => {
@@ -643,7 +642,7 @@ export function ClinicLiveCockpit() {
       <div className="px-4 py-3">
         <div className="flex items-center gap-2 mb-2">
           <Activity className="w-3.5 h-3.5 text-muted-foreground" />
-          <span className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Today&apos;s flow</span>
+          <span className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Schedule</span>
           <span className={`${NUM} text-[10px] text-muted-foreground/70`}>{lanes.length}</span>
         </div>
 

@@ -39,6 +39,7 @@ import { LabWarrantyCard } from '@/components/lab/LabWarrantyCard';
 import dynamic from 'next/dynamic';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
+import { formatDate, formatTime } from '@/lib/datetime';
 
 const ThreeDViewer = dynamic(() => import('@/components/ThreeDViewer'), {
   ssr: false,
@@ -197,7 +198,7 @@ export function LabWorkstationStudio({
               <span className="text-border">•</span>
               <span>{caseData.requestedTreatment}</span>
               <span className="text-border">•</span>
-              <span>Due: <strong className="text-foreground">{caseData.dueDate ? new Date(caseData.dueDate).toLocaleDateString() : '7 Days'}</strong></span>
+              <span>Due: <strong className="text-foreground">{caseData.dueDate ? formatDate(caseData.dueDate) : '7 Days'}</strong></span>
             </div>
           </div>
         </div>
@@ -562,7 +563,7 @@ export function LabWorkstationStudio({
                       >
                         <p className="leading-tight">{m.content}</p>
                         <span className="text-[9px] text-muted-foreground mt-1 block text-right font-mono">
-                          {new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {formatTime(m.timestamp, { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
                     ))

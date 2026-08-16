@@ -237,7 +237,7 @@ export default function HeroSection({ onRequestDemo }: HeroSectionProps) {
     animate();
   }, []);
 
-  const headline = 'Send a complete lab case. Know exactly what happens next.';
+  const headline = 'The portal your dental lab needs. Owned by you.';
   const words = headline.split(' ');
 
   return (
@@ -260,14 +260,14 @@ export default function HeroSection({ onRequestDemo }: HeroSectionProps) {
           <div className="hero-text-side">
             {/* Refined Minimalist Clinical Eyebrow */}
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] backdrop-blur-xl text-neutral-300 text-xs font-medium tracking-wide mb-6">
-              <span className="w-1.5 h-1.5 rounded-full bg-teal-400" />
-              Built for dentists and labs who ship digital
+              <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
+              The portal your dental lab needs. Owned by you, not rented from Dandy.
             </div>
 
             <h1 ref={headlineRef} className="landing-display">
               {words.map((word, i) => (
                 <span key={i} className="hero-word" style={{ marginRight: '0.25em' }}>
-                  {word.includes('complete') || word.includes('next.') ? (
+                  {word.includes('portal') || word.includes('Owned') || word.includes('you.') ? (
                     <span className="gradient-text">{word}</span>
                   ) : (
                     word
@@ -277,34 +277,31 @@ export default function HeroSection({ onRequestDemo }: HeroSectionProps) {
             </h1>
 
             <p ref={subtitleRef} className="landing-subheading text-neutral-300" style={{ opacity: 0, margin: 0, lineHeight: 1.6 }}>
-              Scans, prescriptions, shade details, chat, and live production updates — every case, one workspace. Stop chasing your lab on WhatsApp.
+              Full source code. Deployed to your cloud. Your brand. From $6,000 one-time perpetual license — zero monthly per-case fees forever.
             </p>
 
             <div ref={ctaRef} className="hero-ctas" style={{ opacity: 0 }}>
-              <Link href="/login" className="landing-btn landing-btn-primary shadow-lg shadow-cyan-500/20">
-                Start free — up to 20 cases/month
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-              </Link>
-              <button onClick={onRequestDemo} className="landing-btn landing-btn-outline">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                Watch a 60-second demo
+              <button onClick={onRequestDemo} className="landing-btn landing-btn-primary shadow-lg shadow-cyan-500/20">
+                Book a 30-min discovery demo →
               </button>
+              <Link href="/login" className="landing-btn landing-btn-outline">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                Explore Live Demo Staging
+              </Link>
             </div>
 
-            {/* Clean, Understated Verified Capabilities Strip */}
-            <div className="flex items-center gap-6 text-xs text-neutral-400 pt-3 border-t border-neutral-800/50">
-              <div className="flex items-center gap-2">
-                <svg className="w-3.5 h-3.5 text-teal-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
-                <span>Structured Rx</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <svg className="w-3.5 h-3.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
-                <span>Any scanner, verified</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <svg className="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
-                <span>Live status, no chasing</span>
-              </div>
+            {/* Verified Capabilities & Tech Stack Trust Bar */}
+            <div className="flex flex-wrap items-center gap-4 text-xs text-neutral-400 pt-4 border-t border-neutral-800/60 font-mono">
+              <span className="text-neutral-500">Built on:</span>
+              <span className="text-neutral-300">Next.js 16</span>
+              <span className="text-neutral-600">•</span>
+              <span className="text-neutral-300">Supabase RLS</span>
+              <span className="text-neutral-600">•</span>
+              <span className="text-neutral-300">Cloudflare R2</span>
+              <span className="text-neutral-600">•</span>
+              <span className="text-neutral-300">Three.js CAD</span>
+              <span className="text-neutral-600">•</span>
+              <span className="text-emerald-400 font-semibold">HIPAA & DPDP Compliant</span>
             </div>
           </div>
 

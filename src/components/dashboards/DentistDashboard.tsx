@@ -19,6 +19,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { validateSTLFile } from '@/lib/utils/stlValidator';
+import { formatDate, formatTime } from '@/lib/datetime';
 
 const VITA_SHADES: { code: string; hex: string; group: string }[] = [
   { code: 'A1', hex: '#f4ebe1', group: 'A' },
@@ -1633,7 +1634,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                       <div className="flex justify-between items-center gap-2">
                         <span className="font-semibold text-foreground text-xs truncate max-w-[120px]">{n.patientName}</span>
                         <span className="text-[9px] text-muted-foreground font-mono whitespace-nowrap">
-                          {new Date(n.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {formatTime(n.timestamp, { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
                       <p className="text-[10px] text-muted-foreground leading-normal">{n.notes}</p>
@@ -1702,7 +1703,7 @@ export default function DentistDashboard({ initialCases, currentUser, availableL
                       </div>
                     </TableCell>
                     <TableCell className="text-muted-foreground">{caseItem.requestedTreatment}</TableCell>
-                    <TableCell className="text-muted-foreground">{new Date(caseItem.dueDate).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-muted-foreground">{formatDate(caseItem.dueDate)}</TableCell>
                     <TableCell>
                       <div className="flex gap-2 items-center">
                         <StatusBadge status={caseItem.status} />

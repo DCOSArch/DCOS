@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Check, Sparkles, Zap, Shield, Building2 } from 'lucide-react';
+import { Check, Sparkles, Zap, Shield, Building2, Code2, Database, Rocket } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
@@ -10,8 +10,25 @@ interface PricingSectionProps {
   onRequestDemo: () => void;
 }
 
+interface PricingTier {
+  name: string;
+  badge: string;
+  description: string;
+  price: string;
+  period: string;
+  highlight: boolean;
+  icon: React.ReactNode;
+  features: string[];
+  ctaText: string;
+  ctaHref?: string;
+  onRequest?: boolean;
+  isCustom?: boolean;
+  savings?: string;
+}
+
 export default function PricingSection({ onRequestDemo }: PricingSectionProps) {
   const sectionRef = useRef<HTMLDivElement>(null);
+  const [modelType, setModelType] = useState<'perpetual' | 'cloud'>('perpetual');
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('annual');
 
   useEffect(() => {
@@ -25,16 +42,16 @@ export default function PricingSection({ onRequestDemo }: PricingSectionProps) {
         if (cards) {
           gsap.fromTo(
             cards,
-            { opacity: 0, y: 50 },
+            { opacity: 0, y: 40 },
             {
               opacity: 1,
               y: 0,
-              duration: 0.8,
-              stagger: 0.15,
+              duration: 0.7,
+              stagger: 0.12,
               ease: 'power3.out',
               scrollTrigger: {
                 trigger: sectionRef.current,
-                start: 'top 65%',
+                start: 'top 70%',
                 toggleActions: 'play none none reverse',
               },
             }
@@ -48,9 +65,77 @@ export default function PricingSection({ onRequestDemo }: PricingSectionProps) {
     animate();
   }, []);
 
-  const tiers = [
+  const perpetualTiers: PricingTier[] = [
     {
-      name: 'Free Starter',
+      name: 'Starter License',
+      badge: 'Independent Labs (5–15 staff)',
+      description: 'Own your complete lab portal. Full Next.js & Supabase source code deployed to your own AWS/Cloudflare account.',
+      price: '$6,000',
+      period: 'one-time perpetual buyout',
+      highlight: false,
+      icon: <Code2 className="w-5 h-5 text-teal-400" />,
+      features: [
+        'Full source-code repository (Next.js 16 + React 19 + Supabase)',
+        'Deploy on your own infrastructure (Zero per-case cloud tax)',
+        'Unlimited clinic connections & intraoral scan intake',
+        '3D STL/PLY WebGL interactive CAD viewer with spatial pins',
+        'Real-time production Kanban with automated inventory deduction',
+        'Standard deployment manual & environment setup guide',
+        '10 hours dedicated engineering deployment assistance',
+      ],
+      ctaText: 'Book Buyout Walkthrough',
+      onRequest: true,
+      isCustom: false,
+    },
+    {
+      name: 'Standard License',
+      badge: '★ Most Popular for Commercial Labs',
+      description: 'The complete turnkey package. White-labeled under your brand with custom CAD integration and 20 hours hands-on setup.',
+      price: '$12,000',
+      period: 'one-time perpetual buyout',
+      savings: 'Zero monthly fees — ROI in <6 months',
+      highlight: true,
+      icon: <Rocket className="w-5 h-5 text-cyan-400" />,
+      features: [
+        'Complete source code + white-label rebranding assets',
+        'Exocad & 3Shape .constructionInfo CAD bridge integration',
+        'Direct Cloudflare R2 scanner watcher & streaming intake',
+        'Multi-stage QC certification with digital holographic stamps',
+        'Doctor prepaid credit wallets & automated UPI checkout flows',
+        'Full bi-temporal Merkle audit ledger & compliance logs',
+        '20 hours hands-on white-glove cloud onboarding & DNS setup',
+        '12 months security patch upgrades included',
+      ],
+      ctaText: 'Claim Standard License',
+      onRequest: true,
+      isCustom: false,
+    },
+    {
+      name: 'Enterprise Rollup',
+      badge: 'For DSOs & Lab Consolidators',
+      description: 'Multi-tenant architecture designed for dental private equity rollups, multi-location lab networks, and hospital chains.',
+      price: '$25,000',
+      period: 'one-time multi-lab license',
+      highlight: false,
+      icon: <Building2 className="w-5 h-5 text-purple-400" />,
+      features: [
+        'Multi-tenant DSO architecture with centralized analytics cockpit',
+        'Custom EMR / EHR & ABDM M1–M3 National Gateway connectors',
+        'Tri-planar CBCT DICOM MPR viewer with IAN nerve tracing',
+        'Autonomous CDT prior-authorization & dynamic queue reshaper',
+        'Dedicated solutions architect & custom CAD pipeline plugins',
+        'Custom SSO (SAML 2.0 / Okta / Azure AD)',
+        'Lifetime perpetual multi-entity deployment rights',
+      ],
+      ctaText: 'Schedule Executive Review',
+      onRequest: true,
+      isCustom: true,
+    },
+  ];
+
+  const cloudTiers: PricingTier[] = [
+    {
+      name: 'Free Clinic Starter',
       badge: 'For Dentists & Clinics',
       description: 'For dentists who want scans, prescriptions, and lab status in one place — with nothing to pay, ever.',
       price: '$0',
@@ -64,7 +149,6 @@ export default function PricingSection({ onRequestDemo }: PricingSectionProps) {
         '32-tooth odontogram & 6-point perio charting',
         'Chairside QR smartphone capture bridge',
         'Controlled case messaging & live status timeline',
-        'Standard email & community support',
       ],
       ctaText: 'Start Free Workspace',
       ctaHref: '/login',
@@ -72,8 +156,8 @@ export default function PricingSection({ onRequestDemo }: PricingSectionProps) {
     },
     {
       name: 'Pro Lab Center',
-      badge: 'Most Popular for Labs',
-      description: 'For labs and milling centers routing dozens of cases a day — with CAD bridges, kanban production, and automated clinic alerts.',
+      badge: 'Cloud Managed for Labs',
+      description: 'Hosted on DCOS ultra-fast edge infrastructure with automated backups, monitoring, and zero dev maintenance.',
       price: billingCycle === 'annual' ? '$149' : '$199',
       period: 'per month, billed ' + (billingCycle === 'annual' ? 'annually' : 'monthly'),
       savings: billingCycle === 'annual' ? 'Save 25% with annual billing' : undefined,
@@ -84,33 +168,27 @@ export default function PricingSection({ onRequestDemo }: PricingSectionProps) {
         'Exocad & 3Shape .constructionInfo CAD bridge',
         'Real-time Kanban staging (Milling, Sintering, QC, Dispatch)',
         'Automated WhatsApp & push notification alerts',
-        'Consumable inventory tracking (Zirconia discs, milling burs)',
+        'Consumable inventory tracking (Zirconia discs, burs)',
         'Permanent soft-copy design archiving & 1-click remakes',
-        'Bulk purchase restoration credit wallets',
-        'Frictionless 1-tap UPI deep-linking & expense analytics',
-        'Priority 24/7 technician support',
       ],
-      ctaText: 'Launch Pro Lab Center',
+      ctaText: 'Launch Cloud Lab',
       ctaHref: '/login',
       isCustom: false,
     },
     {
-      name: 'Enterprise Pipeline',
-      badge: 'For DSOs & Hospital Networks',
-      description: 'For DSOs, hospital networks, and enterprise lab groups — dedicated infra, SSO, EMR connectors, and a solutions architect on call.',
+      name: 'Enterprise Cloud',
+      badge: 'Dedicated Network Node',
+      description: 'Dedicated isolated infrastructure, custom SSO, EMR connectors, and a solutions architect on call.',
       price: 'Custom',
       period: 'tailored annual retainer',
       highlight: false,
       icon: <Building2 className="w-5 h-5 text-purple-400" />,
       features: [
         'Dedicated Cloudflare R2 storage isolation & custom buckets',
-        'Native background hardware bridge (Foot-pedal & USB camera WS)',
-        'ABDM M1–M3 National Gateway & HL7 FHIR R5 EMR connectors',
+        'ABDM M1–M3 National Gateway & HL7 FHIR R5 connectors',
         'Bi-temporal Merkle audit ledger with cryptographic proofs',
-        'Tri-planar CBCT DICOM MPR viewer with IAN nerve tracing',
-        'Autonomous CDT Prior-Auth & Fatigue dynamic scheduler',
         'Custom SSO (SAML / Okta) & role-based permissions',
-        'Dedicated enterprise solutions architect & custom SLAs',
+        '24/7 dedicated engineering support & 99.99% uptime SLA',
       ],
       ctaText: 'Contact Enterprise Sales',
       onRequest: true,
@@ -118,150 +196,156 @@ export default function PricingSection({ onRequestDemo }: PricingSectionProps) {
     },
   ];
 
+  const activeTiers = modelType === 'perpetual' ? perpetualTiers : cloudTiers;
+
   return (
     <section ref={sectionRef} className="landing-section dark-section" id="pricing" style={{ paddingTop: 100, paddingBottom: 100 }}>
       <div className="section-inner">
-        <div className="text-center max-w-3xl mx-auto mb-16">
+        <div className="text-center max-w-3xl mx-auto mb-14">
           <span className="landing-label" style={{ color: 'var(--landing-cyan)', marginBottom: 16, display: 'block' }}>
-            Transparent Pricing
+            Ownership vs SaaS
           </span>
 
           <h2 className="landing-heading" style={{ margin: '0 auto 16px' }}>
-            Predictable plans for <span className="gradient-text">every scale of dentistry.</span>
+            Own the portal. <span className="gradient-text">Stop paying monthly rents.</span>
           </h2>
 
           <p className="landing-subheading mx-auto mb-8 text-neutral-300">
-            Free forever for clinics. Paid tiers where labs and networks scale.
+            Buy the full source code once and deploy on your own infrastructure, or choose fully-managed cloud hosting.
           </p>
 
-          {/* Billing Cycle Toggle */}
-          <div className="inline-flex items-center gap-3 p-1.5 rounded-full bg-neutral-900/80 border border-neutral-800 backdrop-blur-md">
+          {/* Model Switcher */}
+          <div className="inline-flex items-center gap-2 p-1.5 rounded-full bg-neutral-900/90 border border-neutral-800 backdrop-blur-xl mb-4">
             <button
-              onClick={() => setBillingCycle('monthly')}
-              className={`px-5 py-2 rounded-full text-xs font-semibold transition-all ${
-                billingCycle === 'monthly'
+              onClick={() => setModelType('perpetual')}
+              className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${
+                modelType === 'perpetual'
+                  ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-black shadow-md shadow-cyan-500/25'
+                  : 'text-neutral-400 hover:text-neutral-200'
+              }`}
+            >
+              <Code2 className="w-3.5 h-3.5" />
+              Source Code Buyout (Perpetual)
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/20 font-extrabold">NEW</span>
+            </button>
+            <button
+              onClick={() => setModelType('cloud')}
+              className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${
+                modelType === 'cloud'
                   ? 'bg-neutral-800 text-white shadow-xs'
                   : 'text-neutral-400 hover:text-neutral-200'
               }`}
             >
-              Monthly Billing
-            </button>
-            <button
-              onClick={() => setBillingCycle('annual')}
-              className={`px-5 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                billingCycle === 'annual'
-                  ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-md shadow-cyan-500/20'
-                  : 'text-neutral-400 hover:text-neutral-200'
-              }`}
-            >
-              Annual Billing
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/30 font-bold">25% OFF</span>
+              <Database className="w-3.5 h-3.5" />
+              Cloud Hosted SaaS
             </button>
           </div>
+
+          {modelType === 'cloud' && (
+            <div className="flex items-center justify-center gap-3 mt-4 text-xs">
+              <button
+                onClick={() => setBillingCycle('monthly')}
+                className={`px-3 py-1 rounded-full ${billingCycle === 'monthly' ? 'bg-neutral-800 text-white' : 'text-neutral-400'}`}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setBillingCycle('annual')}
+                className={`px-3 py-1 rounded-full flex items-center gap-1 ${billingCycle === 'annual' ? 'bg-teal-500/20 border border-teal-500/40 text-teal-300' : 'text-neutral-400'}`}
+              >
+                Annual (25% off)
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Pricing Cards Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch">
-          {tiers.map((tier, idx) => (
+          {activeTiers.map((tier, idx) => (
             <div
               key={idx}
               className={`pricing-card relative rounded-3xl p-8 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 ${
                 tier.highlight
-                  ? 'bg-gradient-to-b from-neutral-900/95 to-neutral-950/95 border-2 border-cyan-500/50 shadow-[0_0_50px_rgba(6,182,212,0.2)] ring-1 ring-cyan-500/30'
+                  ? 'bg-gradient-to-b from-neutral-900/95 to-neutral-950/95 border-2 border-cyan-500/60 shadow-[0_0_50px_rgba(6,182,212,0.25)] ring-1 ring-cyan-500/30'
                   : 'bg-neutral-900/50 border border-neutral-800/80 hover:border-neutral-700/90 backdrop-blur-xl shadow-lg'
               }`}
             >
               {tier.highlight && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-cyan-500 to-emerald-500 text-black text-xs font-extrabold uppercase tracking-wider shadow-md z-30">
-                  ★ MOST POPULAR
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-cyan-400 to-teal-400 text-black text-[11px] font-extrabold uppercase tracking-wider shadow-md z-30">
+                  {tier.badge.includes('★') ? tier.badge : '★ RECOMMENDED'}
                 </div>
               )}
 
               <div>
-                {/* Header */}
                 <div className="flex items-center justify-between mb-4">
-                  <div className="p-2.5 rounded-2xl bg-neutral-800/80 border border-neutral-700/50 shadow-inner">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
+                    {tier.name}
+                  </span>
+                  <div className="p-2 rounded-xl bg-white/[0.05] border border-white/[0.08]">
                     {tier.icon}
                   </div>
-                  <Badge variant="outline" className="text-xs border-neutral-700 text-neutral-300 font-medium">
-                    {tier.badge}
-                  </Badge>
                 </div>
 
-                <h3 className="text-2xl font-bold text-white mb-2">{tier.name}</h3>
-                <p className="text-xs text-neutral-400 leading-relaxed mb-6">{tier.description}</p>
+                <p className="text-xs text-neutral-400 mb-6 leading-relaxed min-h-[36px]">
+                  {tier.description}
+                </p>
 
-                {/* Price Display */}
                 <div className="mb-6 pb-6 border-b border-neutral-800/80">
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-4xl lg:text-5xl font-extrabold tracking-tight text-white font-mono">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-extrabold tracking-tight text-white">
                       {tier.price}
                     </span>
-                    {!tier.isCustom && <span className="text-xs text-neutral-400">/ mo</span>}
+                    <span className="text-xs text-neutral-400 font-mono">
+                      /{tier.period}
+                    </span>
                   </div>
-                  <div className="text-xs text-neutral-500 mt-1">{tier.period}</div>
                   {tier.savings && (
-                    <div className="text-xs text-emerald-400 font-semibold mt-1.5 flex items-center gap-1">
-                      <Check className="w-3.5 h-3.5" />
+                    <span className="inline-block mt-2 text-xs font-semibold text-emerald-400">
                       {tier.savings}
-                    </div>
+                    </span>
                   )}
                 </div>
 
-                {/* Feature List */}
                 <div className="space-y-3 mb-8">
-                  <div className="text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
-                    Included Features:
-                  </div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 block">
+                    Deliverables & Capabilities:
+                  </span>
                   {tier.features.map((feat, fIdx) => (
                     <div key={fIdx} className="flex items-start gap-2.5 text-xs text-neutral-300">
-                      <div className="mt-0.5 w-4 h-4 rounded-full bg-cyan-500/10 text-cyan-400 flex items-center justify-center shrink-0 border border-cyan-500/20">
-                        <Check className="w-2.5 h-2.5" />
-                      </div>
-                      <span className="leading-tight">{feat}</span>
+                      <Check className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" />
+                      <span className="leading-snug">{feat}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Action Button */}
-              <div className="pt-2">
+              <div>
                 {tier.onRequest ? (
-                  <Button
+                  <button
                     onClick={onRequestDemo}
-                    className="w-full h-12 rounded-xl text-sm font-bold bg-neutral-800 hover:bg-neutral-700 text-white border border-neutral-700 transition-all hover:shadow-lg"
+                    className={`w-full py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 ${
+                      tier.highlight
+                        ? 'bg-gradient-to-r from-teal-400 to-cyan-400 text-black hover:opacity-90 shadow-lg shadow-cyan-500/25'
+                        : 'bg-neutral-800 hover:bg-neutral-700 text-white border border-neutral-700'
+                    }`}
                   >
                     {tier.ctaText}
-                  </Button>
+                  </button>
                 ) : (
-                  <Link href={tier.ctaHref || '/login'} className="block w-full">
-                    <Button
-                      className={`w-full h-12 rounded-xl text-sm font-bold transition-all ${
-                        tier.highlight
-                          ? 'bg-gradient-to-r from-teal-500 via-cyan-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-black shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40'
-                          : 'bg-white hover:bg-neutral-200 text-black shadow-sm'
-                      }`}
-                    >
-                      {tier.ctaText}
-                    </Button>
+                  <Link
+                    href={tier.ctaHref || '/login'}
+                    className={`w-full py-3 rounded-xl font-bold text-xs uppercase tracking-wider text-center block transition-all duration-300 ${
+                      tier.highlight
+                        ? 'bg-gradient-to-r from-teal-400 to-cyan-400 text-black hover:opacity-90 shadow-lg shadow-cyan-500/25'
+                        : 'bg-neutral-800 hover:bg-neutral-700 text-white border border-neutral-700'
+                    }`}
+                  >
+                    {tier.ctaText}
                   </Link>
                 )}
               </div>
             </div>
           ))}
-        </div>
-
-        {/* Value Reassurance */}
-        <div className="mt-16 text-center text-xs text-neutral-500 max-w-xl mx-auto flex items-center justify-center gap-6 flex-wrap">
-          <span className="flex items-center gap-1.5">
-            <Shield className="w-3.5 h-3.5 text-emerald-400" />
-            No credit card required for clinic accounts
-          </span>
-          <span>•</span>
-          <span className="flex items-center gap-1.5">
-            <Zap className="w-3.5 h-3.5 text-cyan-400" />
-            Instant automated setup in &lt; 3 minutes
-          </span>
         </div>
       </div>
     </section>

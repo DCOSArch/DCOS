@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { ClinicalInvoice, InvoiceLineItem, Patient } from '@/types';
 import { mockPatients } from '@/mockData';
 import { getInvoices, saveInvoice } from '@/lib/services';
+import { formatDate } from '@/lib/datetime';
 import {
   DollarSign,
   Plus,
@@ -203,7 +204,7 @@ export function BillingHub() {
                     </Link>
                   </div>
                   <CardDescription className="text-xs text-muted-foreground">
-                    Date: {new Date(inv.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                    Date: {formatDate(inv.createdAt, { year: 'numeric', month: 'short', day: 'numeric' })}
                   </CardDescription>
                 </div>
               </div>

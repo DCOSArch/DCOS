@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import { getCachedSession, getCachedUserProfile, getCachedCases } from '@/lib/data'
+import { WhiteLabelSwitcher } from '@/components/demo/WhiteLabelSwitcher'
 
 export default async function DashboardLayout({
   children,
@@ -47,6 +48,7 @@ export default async function DashboardLayout({
       <main className="flex-1 w-full px-4 py-4 md:px-6 md:py-5 xl:px-8 2xl:px-10">
         {children}
       </main>
+      <WhiteLabelSwitcher />
     </>
   )
 }

@@ -156,12 +156,12 @@ export const OperatoryRail = memo(function OperatoryRail({
       initial="hidden"
       animate="show"
       className="w-full lg:w-56 shrink-0 lg:sticky lg:top-6"
-      aria-label="Operatory actions"
+      aria-label="Patient actions"
     >
       <div className="rounded-2xl bg-card border border-border overflow-hidden">
         <motion.div variants={staggerItem} className="px-3 pt-3 pb-2">
           <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-            Operatory
+            Actions
           </span>
         </motion.div>
 
