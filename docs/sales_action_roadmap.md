@@ -32,7 +32,7 @@ graph TD
 
 | Task ID | Task Description | Target File(s) | Status |
 |---|---|---|---|
-| **SEC-01** | Replace direct client-side inventory writes in `DentistInventoryClient.tsx` with authenticated Server Actions (`purchaseDoctorInventoryAction`). | [`src/components/views/DentistInventoryClient.tsx`](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/components/views/DentistInventoryClient.tsx), `src/actions/inventory.ts` | 🟡 Ready for Execution |
+| **SEC-01** | Replace direct client-side inventory writes in `DentistInventoryClient.tsx` with authenticated Server Actions (`purchaseDoctorInventoryAction`). | [`src/components/views/DentistInventoryClient.tsx`](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/components/views/DentistInventoryClient.tsx), [`src/actions/inventory.ts`](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/actions/inventory.ts) | 🟢 Completed |
 | **SEC-02** | Verify zero `getSession()` calls across all server/API routes in favor of cryptographically verified `getUser()`. | `src/lib/data.ts`, `src/app/api/` | 🟢 Completed |
 | **SEC-03** | Ensure all patient scan bucket access is routed through authenticated `/api/files/[...key]` streaming handlers with CORS headers. | [`src/app/api/files/[...key]/route.ts`](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/app/api/files/[...key]/route.ts), [`src/lib/r2.ts`](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/lib/r2.ts) | 🟢 Completed |
 | **SEC-04** | Enforce strict clinical data isolation: lab workstation views tokenized case manufacturing parameters with zero access to patient PII/clinical history. | [`src/components/lab/LabWorkstationStudio.tsx`](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/components/lab/LabWorkstationStudio.tsx) | 🟢 Completed |
@@ -42,13 +42,13 @@ graph TD
 ### Phase 2: The 90-Second Loom & 10-Minute Live Demo Suite
 *Engineered specifically to support the 5 core beats of the demo storyboard ([`sales_ops/04_Demo_Storyboard.md`](file:///c:/Users/bentn/OneDrive/Desktop/DEs/sales_ops/04_Demo_Storyboard.md)).*
 
-| Task ID | Task Description | Target File(s) | Impact / Demo Beat |
-|---|---|---|---|
-| **DEMO-01** | **Seed Data Automation Script**: Automated CLI script (`scripts/seed-demo-lab.ts`) provisioning clean demo accounts (*"Precision Dental Lab"*, *"Dr. Alex Morgan"*, sample molar STL scans). | `scripts/seed-demo-lab.ts` | Beat 1: Frictionless case intake setup |
-| **DEMO-02** | **Automated Inventory Deduction Toast**: Trigger real-time inventory deduction (`"Deducted 1 unit of Zirconia Block"`) upon dragging a card into production on `LabDashboard`. | [`src/components/dashboards/LabDashboard.tsx`](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/components/dashboards/LabDashboard.tsx) | Beat 2: Automated lab inventory sync |
-| **DEMO-03** | **Interactive 3D Spatial Pin Polish**: Enhance pin drop on STL mesh with instant coordinate anchoring, model rotation tracking, and live toast notification to the clinic. | [`src/components/ThreeDViewerInner.tsx`](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/components/ThreeDViewerInner.tsx) | Beat 3: The 3D closing moment |
-| **DEMO-04** | **Per-Case Chat Gating & Realtime Unlock**: Chat unlocks automatically when case status changes to `IN_PRODUCTION`, appending events to the case audit timeline. | [`src/components/lab/LabWorkstationStudio.tsx`](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/components/lab/LabWorkstationStudio.tsx) | Beat 4: Integrated case communication |
-| **DEMO-05** | **Live Prospect White-Label Switcher**: Add a discreet prospect branding bar allowing the sales presenter to switch the primary theme color (`--primary`) and lab logo live during calls. | `src/components/demo/WhiteLabelSwitcher.tsx` | Beat 5: Live white-label showcase |
+| Task ID | Task Description | Target File(s) | Impact / Demo Beat | Status |
+|---|---|---|---|---|
+| **DEMO-01** | **Seed Data Automation Script**: Automated CLI script (`scripts/seed-demo-lab.ts`) provisioning clean demo accounts (*"Precision Dental Lab"*, *"Dr. Alex Morgan"*, sample molar STL scans). | [`scripts/seed-demo-lab.ts`](file:///c:/Users/bentn/OneDrive/Desktop/DEs/scripts/seed-demo-lab.ts) | Beat 1: Frictionless case intake setup | 🟢 Completed |
+| **DEMO-02** | **Automated Inventory Deduction Toast**: Trigger real-time inventory deduction (`"Deducted 1 unit of Zirconia Block"`) upon dragging a card into production on `LabDashboard`. | [`src/components/dashboards/LabDashboard.tsx`](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/components/dashboards/LabDashboard.tsx) | Beat 2: Automated lab inventory sync | 🟢 Completed |
+| **DEMO-03** | **Interactive 3D Spatial Pin Polish**: Enhance pin drop on STL mesh with instant coordinate anchoring, model rotation tracking, and live toast notification to the clinic. | [`src/components/ThreeDViewerInner.tsx`](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/components/ThreeDViewerInner.tsx) | Beat 3: The 3D closing moment | 🟢 Completed |
+| **DEMO-04** | **Per-Case Chat Gating & Realtime Unlock**: Chat unlocks automatically when case status changes to `IN_PRODUCTION`, appending events to the case audit timeline. | [`src/components/lab/LabWorkstationStudio.tsx`](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/components/lab/LabWorkstationStudio.tsx) | Beat 4: Integrated case communication | 🟢 Completed |
+| **DEMO-05** | **Live Prospect White-Label Switcher**: Add a discreet prospect branding bar allowing the sales presenter to switch the primary theme color (`--primary`) and lab logo live during calls. | [`src/components/demo/WhiteLabelSwitcher.tsx`](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/components/demo/WhiteLabelSwitcher.tsx) | Beat 5: Live white-label showcase | 🟢 Completed |
 
 ---
 
@@ -57,10 +57,10 @@ graph TD
 
 | Task ID | Task Description | Target File(s) | Status |
 |---|---|---|---|
-| **LAND-01** | **Hero & Trust Bar Overhaul**: Implement copy *"The portal your dental lab needs. Owned by you, not rented from Dandy"* with dual CTA (`Book a 30-min demo`, `See 90-sec walkthrough`). | [`src/components/landing/LandingPage.tsx`](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/components/landing/LandingPage.tsx) | 🟡 Ready for Alignment |
-| **LAND-02** | **Two-Column Problem vs Solution Grid**: Side-by-side comparison of manual lab operations (WhatsApp/PDFs) vs DCOS automated pipeline. | [`src/components/landing/LandingPage.tsx`](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/components/landing/LandingPage.tsx) | 🟡 Ready for Alignment |
-| **LAND-03** | **Interactive 3-Panel Product Tour**: Interactive tabs demonstrating Kanban auto-deduct, 3D Spatial Pins, and Real-time Operatory Chat. | [`src/components/landing/LandingPage.tsx`](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/components/landing/LandingPage.tsx) | 🟡 Ready for Alignment |
-| **LAND-04** | **Perpetual License Pricing Matrix**: Display Starter ($6,000), Standard ($12,000), and Enterprise ($25,000) one-time buyout tiers with source code deliverables. | [`src/components/landing/LandingPage.tsx`](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/components/landing/LandingPage.tsx) | 🟡 Ready for Alignment |
+| **LAND-01** | **Hero & Trust Bar Overhaul**: Implement copy *"The portal your dental lab needs. Owned by you, not rented from Dandy"* with dual CTA (`Book a 30-min demo`, `See 90-sec walkthrough`). | [`src/components/landing/sections/HeroSection.tsx`](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/components/landing/sections/HeroSection.tsx) | 🟢 Completed |
+| **LAND-02** | **Two-Column Problem vs Solution Grid**: Side-by-side comparison of manual lab operations (WhatsApp/PDFs) vs DCOS automated pipeline. | [`src/components/landing/sections/ProblemSection.tsx`](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/components/landing/sections/ProblemSection.tsx) | 🟢 Completed |
+| **LAND-03** | **Interactive 3-Panel Product Tour**: Interactive tabs demonstrating Kanban auto-deduct, 3D Spatial Pins, and Real-time Operatory Chat. | [`src/components/landing/sections/FeatureOrbit.tsx`](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/components/landing/sections/FeatureOrbit.tsx) | 🟢 Completed |
+| **LAND-04** | **Perpetual License Pricing Matrix**: Display Starter ($6,000), Standard ($12,000), and Enterprise ($25,000) one-time buyout tiers with source code deliverables. | [`src/components/landing/sections/PricingSection.tsx`](file:///c:/Users/bentn/OneDrive/Desktop/DEs/src/components/landing/sections/PricingSection.tsx) | 🟢 Completed |
 
 ---
 
