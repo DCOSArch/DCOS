@@ -37,7 +37,7 @@ export default async function LabsMarketplacePage() {
   try {
     const supabase = await createClient();
     const { data: dbLabs, error } = await supabase
-      .from('profiles')
+      .from('users')
       .select(`
         id,
         name,

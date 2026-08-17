@@ -58,6 +58,9 @@ export async function fetchLabServices(labId: string): Promise<LabService[]> {
 }
 
 // ----------------- TOOTH CHART SERVICE -----------------
+/**
+ * Synchronous tooth chart reader (reads local cache with mock fallback).
+ */
 export function getPatientToothChart(patientId: string): ToothChartData {
   if (typeof window !== 'undefined') {
     const saved = localStorage.getItem(`dcos_tooth_chart_${patientId}`);
@@ -72,9 +75,50 @@ export function getPatientToothChart(patientId: string): ToothChartData {
   return mockToothCharts[patientId] || {};
 }
 
-export function savePatientToothChart(patientId: string, chart: ToothChartData): void {
+/**
+ * Asynchronously loads patient tooth chart from Supabase Postgres with local storage cache sync.
+ */
+export async function fetchPatientToothChart(patientId: string): Promise<ToothChartData> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('tooth_charts')
+      .select('chart_data')
+      .eq('patient_id', patientId)
+      .maybeSingle();
+
+    if (!error && data?.chart_data) {
+      const chart = data.chart_data as ToothChartData;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`dcos_tooth_chart_${patientId}`, JSON.stringify(chart));
+      }
+      return chart;
+    }
+  } catch (err) {
+    console.warn('Supabase tooth chart query failed, falling back to local cache', err);
+  }
+
+  return getPatientToothChart(patientId);
+}
+
+/**
+ * Saves patient tooth chart to both local cache and Supabase Postgres database.
+ */
+export async function savePatientToothChart(patientId: string, chart: ToothChartData, organizationId?: string): Promise<void> {
   if (typeof window !== 'undefined') {
     localStorage.setItem(`dcos_tooth_chart_${patientId}`, JSON.stringify(chart));
+  }
+
+  try {
+    const supabase = createClient();
+    await supabase.from('tooth_charts').upsert({
+      patient_id: patientId,
+      chart_data: chart,
+      organization_id: organizationId || null,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'patient_id' });
+  } catch (err) {
+    console.warn('Could not sync tooth chart to Supabase:', err);
   }
 }
 
