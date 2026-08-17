@@ -3,7 +3,7 @@
 
 CREATE TABLE IF NOT EXISTS public.tooth_charts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+  patient_id TEXT NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
   organization_id UUID REFERENCES public.organizations(id) ON DELETE SET NULL,
   chart_data JSONB NOT NULL DEFAULT '{}'::jsonb,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS public.tooth_charts (
 
 ALTER TABLE public.tooth_charts ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view tooth charts for accessible patients" ON public.tooth_charts;
 CREATE POLICY "Users can view tooth charts for accessible patients"
 ON public.tooth_charts FOR SELECT
 TO authenticated
@@ -29,6 +30,7 @@ USING (
   )
 );
 
+DROP POLICY IF EXISTS "Users can insert/update tooth charts for accessible patients" ON public.tooth_charts;
 CREATE POLICY "Users can insert/update tooth charts for accessible patients"
 ON public.tooth_charts FOR ALL
 TO authenticated
