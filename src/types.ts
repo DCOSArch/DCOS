@@ -122,6 +122,37 @@ export interface ToothChartRecord {
   updatedBy?: string;
 }
 
+
+// ----------------- APPOINTMENTS & SCHEDULING (P10) -----------------
+export type AppointmentStatus =
+  | 'SCHEDULED'
+  | 'CONFIRMED'
+  | 'CHECKED_IN'
+  | 'IN_CHAIR'
+  | 'IN_TREATMENT'
+  | 'BILLING'
+  | 'COMPLETED'
+  | 'CANCELLED'
+  | 'NO_SHOW';
+
+export interface Appointment {
+  id: string;
+  organizationId: string;
+  dentistId: string;
+  patientId: string;
+  patientName?: string;
+  patientPhone?: string;
+  startTime: string;
+  endTime: string;
+  chairId: string;
+  chairName?: string;
+  procedureType: string;
+  status: AppointmentStatus;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ----------------- CLINICAL VISITS & SOAP NOTES -----------------
 export interface PrescriptionItem {
   id: string;

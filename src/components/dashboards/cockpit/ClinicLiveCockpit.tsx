@@ -9,6 +9,8 @@ import {
   saveOperatoryChairs,
   getQueueEntries,
   saveQueueEntries,
+  fetchLiveOperatoryChairs,
+  saveLiveOperatoryChair,
 } from '@/lib/services';
 import { Card } from '@/components/ui/card';
 import { Activity, MessageSquare, Undo2, AlertTriangle } from 'lucide-react';
@@ -157,6 +159,9 @@ export function ClinicLiveCockpit() {
   useEffect(() => {
     setChairs(getOperatoryChairs());
     setQueue(getQueueEntries());
+    fetchLiveOperatoryChairs().then((liveChairs) => {
+      if (liveChairs && liveChairs.length > 0) setChairs(liveChairs);
+    });
     const tick = () => {
       const d = new Date();
       setNowMinutes(d.getHours() * 60 + d.getMinutes());

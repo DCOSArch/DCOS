@@ -67,13 +67,25 @@ async function main() {
   const cases = await queryTable('cases', 'select=id,status,patient_name,dentist_id,lab_id&limit=3');
   console.log('4. Cases Table:', { ok: cases.ok, status: cases.status, sample: cases.data });
 
-  // 5. Check tooth_charts
-  const charts = await queryTable('tooth_charts', 'select=id,patient_id&limit=3');
-  console.log('5. Tooth Charts Table:', { ok: charts.ok, status: charts.status, result: charts.data });
+  // 5. Check patients
+  const patients = await queryTable('patients', 'select=id,name,phone&limit=3');
+  console.log('5. Patients Table:', { ok: patients.ok, status: patients.status, sample: patients.data });
 
-  // 6. Check profiles
+  // 6. Check tooth_charts
+  const charts = await queryTable('tooth_charts', 'select=id,patient_id&limit=3');
+  console.log('6. Tooth Charts Table:', { ok: charts.ok, status: charts.status, result: charts.data });
+
+  // 7. Check appointments (P10)
+  const appointments = await queryTable('appointments', 'select=id,patient_id,chair_id,status,procedure_type&limit=3');
+  console.log('7. Appointments Table (P10):', { ok: appointments.ok, status: appointments.status, result: appointments.data });
+
+  // 8. Check operatory_chairs (P10)
+  const chairs = await queryTable('operatory_chairs', 'select=id,name,room_number,status&limit=5');
+  console.log('8. Operatory Chairs Table (P10):', { ok: chairs.ok, status: chairs.status, sample: chairs.data });
+
+  // 9. Check profiles view
   const profiles = await queryTable('profiles', 'select=id,name,role&limit=3');
-  console.log('6. Profiles Entity:', { ok: profiles.ok, status: profiles.status, sample: profiles.data });
+  console.log('9. Profiles View:', { ok: profiles.ok, status: profiles.status, sample: profiles.data });
   
   console.log('----------------------------------------------------');
   console.log('🏁 LIVE SUPABASE VERIFICATION COMPLETE.');
