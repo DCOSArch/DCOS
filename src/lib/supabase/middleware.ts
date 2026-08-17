@@ -61,11 +61,22 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Root always sends unauthenticated users to /landing
+  // Serve the landing page CONTENT at the root URL for unauthenticated visitors
+  // using a rewrite (HTTP 200), not a redirect. The homepage is the highest-authority
+  // URL on the domain; a redirect makes it show up in Search Console as "Page with
+  // redirect" and forces an extra hop. A rewrite keeps `/` a real 200 page whose
+  // canonical tag (emitted by the /landing route) points to /landing, so authority
+  // consolidates cleanly with no redirect. Authenticated users fall through to the
+  // dashboard, so this guard is scoped strictly to `!user`.
   if (pathname === '/' && !user) {
     const url = request.nextUrl.clone()
     url.pathname = '/landing'
-    return NextResponse.redirect(url)
+    const rewriteResponse = NextResponse.rewrite(url, { request })
+    // Preserve any auth cookies Supabase refreshed while resolving the session.
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      rewriteResponse.cookies.set(cookie)
+    })
+    return rewriteResponse
   }
 
   return supabaseResponse

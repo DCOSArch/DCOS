@@ -8,18 +8,21 @@ export const metadata: Metadata = {
   title: 'Dental Lab Management & Clinic Collaboration Software',
   description:
     'DentalConnect OS (DCOS) connects dental clinics and laboratories on one real-time cloud platform — 3D case routing, digital prescriptions, instant messaging, inventory tracking, and automated turnaround. The operating system for modern dentistry, built for clinics and labs worldwide.',
+  // The landing content is served at the bare root `/` (via a middleware rewrite for
+  // signed-out visitors), so the root is the canonical homepage. Direct hits on
+  // `/landing` consolidate into `/` via this canonical.
   alternates: {
-    canonical: '/landing',
+    canonical: '/',
     languages: {
-      en: '/landing',
-      'x-default': '/landing',
+      en: '/',
+      'x-default': '/',
     },
   },
   openGraph: {
     title: 'DentalConnect OS — Dental Lab Management & Clinic Collaboration Software',
     description:
       'Connect dental clinics and labs on one real-time platform. 3D case routing, digital prescriptions, and automated turnaround tracking.',
-    url: `${SITE_URL}/landing`,
+    url: SITE_URL,
     type: 'website',
     // A page-level openGraph block replaces the parent's entirely, so `images`
     // must be restated here or social shares render with no preview image.
@@ -137,19 +140,12 @@ const jsonLd = {
     },
     {
       '@type': 'FAQPage',
-      '@id': `${SITE_URL}/landing#faq`,
+      '@id': `${SITE_URL}/#faq`,
       mainEntity: faqs.map((f) => ({
         '@type': 'Question',
         name: f.q,
         acceptedAnswer: { '@type': 'Answer', text: f.a },
       })),
-    },
-    {
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
-        { '@type': 'ListItem', position: 2, name: 'DentalConnect OS', item: `${SITE_URL}/landing` },
-      ],
     },
   ],
 };
