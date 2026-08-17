@@ -13,8 +13,8 @@ const trustPillars = [
   },
   {
     icon: <Server className="w-6 h-6" />,
-    title: 'SHA-256 Cryptographic Merkle Ledger',
-    desc: 'Immutable append-only domain event chaining from GENESIS. Every clinical chart mutation is cryptographically sealed, guaranteeing zero silent tampering.',
+    title: 'Cryptographic Audit Architecture',
+    desc: 'Immutable append-only audit event chaining architecture designed for enterprise compliance, guaranteeing zero silent tampering across clinical records.',
     color: '#A6E22E',
     badge: 'Bi-Temporal Proofs',
   },

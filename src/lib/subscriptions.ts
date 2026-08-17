@@ -61,12 +61,12 @@ export const FEATURE_METADATA: Record<FeatureKey, { name: string; description: s
     requiredTier: 'PRO_LAB',
   },
   ai_margin_detection: {
-    name: 'Autonomous AI Margin Detection',
+    name: 'Autonomous AI Margin Detection (Enterprise Preview)',
     description: 'Computer-vision auto-segmentation of gingival margins and undercut warnings on 3D meshes.',
     requiredTier: 'ENTERPRISE',
   },
   merkle_audit: {
-    name: 'Cryptographic Merkle Audit Ledger',
+    name: 'Cryptographic Merkle Audit Ledger (Enterprise Preview)',
     description: 'Bi-temporal immutable audit chain guaranteeing tamper-proof clinical records for compliance & medico-legal safety.',
     requiredTier: 'ENTERPRISE',
   },
