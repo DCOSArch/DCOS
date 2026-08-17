@@ -29,7 +29,10 @@ export const getCachedUserProfile = cache(async () => {
 
     const supabase = await createClient();
 
-    // 1. Try fetching from 'users' table
+    // public.users is the single canonical identity table (populated by the
+    // handle_new_user auth trigger). The former dual-read against public.profiles
+    // was removed 2026-08-18 — see supabase/migrations/20260818010000_reconcile_identity_retire_profiles.sql
+    // and docs/map/objects/identity-tenancy/user-identity.md.
     const { data: userProfile, error: userError } = await supabase
       .from('users')
       .select('*')
@@ -46,24 +49,7 @@ export const getCachedUserProfile = cache(async () => {
       };
     }
 
-    // 2. Try fetching from 'profiles' table
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .maybeSingle();
-
-    if (profile) {
-      return {
-        id: profile.id,
-        name: profile.name || profile.full_name || 'Dr. Aryan Sharma',
-        role: profile.role || 'DENTIST',
-        labId: profile.lab_id,
-        avatarUrl: profile.avatar_url || `https://i.pravatar.cc/150?u=${user.id}`,
-      };
-    }
-
-    // 3. Fallback to user metadata
+    // Fallback to user metadata
     const meta = user.user_metadata || {};
     return {
       id: user.id,

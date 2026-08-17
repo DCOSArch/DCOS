@@ -558,16 +558,16 @@ export default function CaseDetailsClient({
     })
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
-  if (!caseItem) return <div>Case not found</div>;
-
   // Determine the public base URL for patient preview links
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://dcos-ntw0f0d0w-dcosv1.vercel.app';
-  const patientPreviewUrl = `${baseUrl}/preview/${caseItem.id}`;
+  const patientPreviewUrl = caseItem ? `${baseUrl}/preview/${caseItem.id}` : '';
 
   const scanFileUrl = useMemo(() => {
-    if (!caseItem.scanUrl) return undefined;
+    if (!caseItem?.scanUrl) return undefined;
     return getR2PublicUrl(caseItem.scanUrl);
-  }, [caseItem.scanUrl, supabase]);
+  }, [caseItem?.scanUrl, supabase]);
+
+  if (!caseItem) return <div>Case not found</div>;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(patientPreviewUrl);

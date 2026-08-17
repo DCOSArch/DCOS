@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { Star, Clock, ShieldCheck, ArrowRight, Building2, CheckCircle2, Search, Sparkles, MapPin, Phone, Mail } from 'lucide-react';

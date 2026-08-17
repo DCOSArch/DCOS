@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { redirect } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import { getCachedSession, getCachedUserProfile, getCachedCases } from '@/lib/data'

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
@@ -9,11 +11,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No audio file provided' }, { status: 400 });
     }
 
-    // In a production setup with GROQ_API_KEY / OPENAI_API_KEY / Whisper configured,
-    // we forward the audio blob to OpenAI/Groq Whisper.
     const groqKey = process.env.GROQ_API_KEY;
-    const openaiKey = process.env.OPENAI_API_KEY;
-
     let transcript = '';
 
     if (groqKey) {
@@ -42,24 +40,19 @@ export async function POST(req: NextRequest) {
     }
 
     if (!transcript) {
-      // High-quality clinical dental dictation template for demonstration / mock
-      transcript =
-        'Patient presents with sharp sensitivity to cold on tooth 36. Intraoral inspection reveals fractured disto-occlusal composite restoration with recurrent caries. Tooth is vital on cold testing. Restored with shade A3 nano-hybrid composite, etched and bonded with 7th gen adhesive. Occlusion cleared in centric and lateral excursions.';
+      return NextResponse.json({
+        success: true,
+        transcript: '',
+        message: 'No voice transcription captured. Please ensure audio is recorded clearly.',
+        extracted: null,
+      });
     }
 
-    // Extract clinical SOAP components
-    const extracted = {
-      chiefComplaint: 'Sharp sensitivity to cold on mandibular left molar',
-      clinicalFindings: 'Fractured DO composite restoration with secondary caries on tooth #36',
-      diagnosis: 'Recurrent Dental Caries & Defective Restoration #36',
-      treatmentRendered: 'Cavity preparation, 37% phosphoric acid etch, bonding, and shade A3 nano-hybrid composite resin restoration',
-      prescriptionsDraft: 'Paracetamol 650mg SOS for post-operative mild discomfort',
-    };
-
+    // Return the actual transcription derived from audio without hardcoded static fabrication
     return NextResponse.json({
       success: true,
       transcript,
-      extracted,
+      extracted: null,
     });
   } catch (error: any) {
     console.error('Voice transcribe error:', error);

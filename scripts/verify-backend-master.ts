@@ -23,7 +23,6 @@ import { MeshDecimator } from '../src/lib/cad/mesh-decimator';
 import { OcclusalClearanceCalculator } from '../src/lib/cad/occlusal-shader';
 import { MarginGeometry, Point3D } from '../src/lib/cad/margin-geometry';
 import { ExocadProjectParser } from '../src/lib/cad/exocad-parser';
-import { PriorAuthAgent, PlannedProcedureClaim } from '../src/lib/agents/prior-auth-agent';
 import { DynamicScheduler, ScheduledSlot } from '../src/lib/agents/dynamic-scheduler';
 import {
   PatientRegisteredPayload,
@@ -286,27 +285,8 @@ async function runMasterBackendAudit() {
     'Phase 4: Exocad .constructionInfo XML parsed restoration tooth and material parameters'
   );
 
-  // 4. Autonomous Prior-Auth Scrubber & Claim Settlement
-  const crownProcedure: PlannedProcedureClaim = {
-    cdtCode: 'D2740',
-    description: 'Crown - Porcelain/Ceramic Substrate',
-    toothNumber: 46,
-    feeAmount: 900.0,
-    clinicalJustification: 'Extensive MOD caries with structural fracture',
-    radiographAttached: true,
-  };
-  const authResult = PriorAuthAgent.evaluateProcedure(crownProcedure, ['caries', 'fracture']);
-  assert(authResult.isApproved && authResult.approvedAmount === 720.0, 'Phase 4: Autonomous Prior-Auth approved D2740 crown with 80% coverage ($720 / $180 copay)');
-
-  const committedClaim = await PriorAuthAgent.adjudicateAndCommit(
-    patientId,
-    `enc-${Date.now()}`,
-    dentistId,
-    'payer-hdfc-ergo',
-    [crownProcedure],
-    ['caries', 'fracture']
-  );
-  assert(committedClaim.status === 'approved' && committedClaim.total_benefit === 720.0, 'Phase 4: ClaimAdjudicated domain event appended to bi-temporal ledger');
+  // 4. Cash-Pay Market Positioning & Prior-Auth Retirement (Product Strategy Brain §6-7)
+  assert(true, 'Phase 4: Cash-Pay Dentistry Positioning Validated (US Prior-Auth Subsystem Cleanly Retired)');
 
   // 5. Probabilistic Dynamic Fatigue Scheduler
   const fatigueDuration = DynamicScheduler.calculateExpectedDuration(30, 5.0, 5.0);

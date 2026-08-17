@@ -312,6 +312,19 @@ export interface OrderChat {
   messages: ChatMessage[];
 }
 
+// ----------------- PROTECTED HEALTH INFORMATION (ISOLATED) -----------------
+// Mirrors public.patient_phi. No app code writes here yet — see
+// docs/map/objects/clinical-record/patient-phi.md. FKs to `users`, not `profiles`,
+// as of supabase/migrations/20260818010000_reconcile_identity_retire_profiles.sql.
+export interface PatientPhi {
+  id: string;
+  caseId: string;
+  dentistId: string;
+  realName: string;
+  encryptedDob?: string;
+  createdAt: string;
+}
+
 // ----------------- MULTI-TENANCY & ORGANIZATIONS -----------------
 export type OrganizationType = 'CLINIC' | 'LAB' | 'DSO_NETWORK';
 export type OrgMemberRole = 'OWNER' | 'ADMIN' | 'DENTIST' | 'TECHNICIAN' | 'RECEPTIONIST';

@@ -119,8 +119,11 @@ export function ClinicalVisitClient({ visitId }: { visitId: string }) {
   // Today's date, resolved after mount. Computing it during render evaluates at
   // a different instant on the server than in the browser, which is the exact
   // hydration mismatch this formatter pass exists to remove.
-  const [today, setToday] = useState('');
-  useEffect(() => setToday(formatDate(Date.now())), []);
+  const [today, setToday] = useState<string>('');
+  useEffect(() => {
+    const formatted = formatDate(Date.now());
+    setToday(formatted);
+  }, []);
 
   const handleSaveVisit = () => {
     setIsSaving(true);
