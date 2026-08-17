@@ -20,6 +20,7 @@ import {
 } from '@/mockData';
 import {
   getPatientToothChart,
+  fetchPatientToothChart,
   savePatientToothChart,
   saveClinicalVisit,
 } from '@/lib/services';
@@ -71,6 +72,11 @@ export function ClinicalVisitClient({ visitId }: { visitId: string }) {
   useEffect(() => {
     if (patient?.id) {
       setToothChart(getPatientToothChart(patient.id));
+      fetchPatientToothChart(patient.id).then((cloudChart) => {
+        if (cloudChart && Object.keys(cloudChart).length > 0) {
+          setToothChart(cloudChart);
+        }
+      });
     }
   }, [patient?.id]);
 

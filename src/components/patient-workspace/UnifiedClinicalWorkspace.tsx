@@ -26,6 +26,7 @@ import {
 } from '@/types';
 import {
   getPatientToothChart,
+  fetchPatientToothChart,
   savePatientToothChart,
   getPatientVisits,
   getInvoices,
@@ -156,6 +157,11 @@ export function UnifiedClinicalWorkspace({
   useEffect(() => {
     if (patient?.id) {
       setToothChart(getPatientToothChart(patient.id));
+      fetchPatientToothChart(patient.id).then((cloudChart) => {
+        if (cloudChart && Object.keys(cloudChart).length > 0) {
+          setToothChart(cloudChart);
+        }
+      });
       setVisits(getPatientVisits(patient.id));
       setInvoices(getInvoices(patient.id));
     }

@@ -37,17 +37,25 @@ export default async function LabsMarketplacePage() {
   try {
     const supabase = await createClient();
     const { data: dbLabs, error } = await supabase
-      .from('users')
+      .from('lab_profiles')
       .select(`
         id,
         name,
+        rating,
+        reviews_count,
+        services,
+        pricing,
+        turnaround_time,
+        contact_email,
+        contact_phone,
         lab_services (
+          id,
           category,
+          service_name,
           price,
           turnaround_days
         )
-      `)
-      .eq('role', 'LAB_ADMIN');
+      `);
 
     if (dbLabs && dbLabs.length > 0) {
       labs = dbLabs;
