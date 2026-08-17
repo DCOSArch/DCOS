@@ -42,8 +42,8 @@ export const metadata: Metadata = {
     "DentalConnect OS",
     "DCOS",
   ],
-  authors: [{ name: "DentalConnect OS" }],
-  creator: "DentalConnect OS",
+  authors: [{ name: "DentalConnect OS" }, { name: "Suryanshu Chaturvedi", url: "https://suryanshu.space" }],
+  creator: "Suryanshu Chaturvedi",
   publisher: "DentalConnect OS",
   category: "Dental Software",
   // NOTE: deliberately no `alternates.canonical` here. A root-level canonical is

@@ -372,3 +372,8 @@ DentalConnect OS is developed under a dual **Open-Core & Commercial Enterprise L
 - **Enterprise Retainer**: Multi-location hospital chains, national milling centers, and commercial white-label deployments include dedicated Cloudflare R2 isolation, hardware agent bridges, ABDM M1–M3 gateways, and custom SLAs.
 
 *Maintained by the DentalConnect OS Architecture Team.*
+
+## 👨‍💻 Architecture & Engineering
+
+Architected and developed by **[Suryanshu Chaturvedi](https://suryanshu.space)** — Policy Researcher & Full-Stack Product Engineer.
+
