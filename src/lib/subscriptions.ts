@@ -92,9 +92,22 @@ export const DEFAULT_STARTER_SUBSCRIPTION: Subscription = {
 };
 
 /**
+ * Unwired / ghost subsystems documented in docs/map/objects/_ghosts/.
+ * Gated to return false across all tiers until fully wired to active runtime engines.
+ */
+export const GHOST_FEATURES: ReadonlySet<FeatureKey> = new Set([
+  'merkle_audit',
+  'ai_margin_detection',
+]);
+
+/**
  * Checks if a given tier has access to a specific feature.
+ * Ghost features return false across all tiers until their runtime subsystems are connected.
  */
 export function hasFeatureAccess(tier: SubscriptionTier = 'STARTER', feature: FeatureKey): boolean {
+  if (GHOST_FEATURES.has(feature)) {
+    return false;
+  }
   const entitlements = TIER_ENTITLEMENTS[tier] || TIER_ENTITLEMENTS.STARTER;
   return entitlements[feature] === true;
 }
