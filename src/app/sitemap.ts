@@ -11,9 +11,12 @@ const blogSlugs = [
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const lastModified = new Date();
 
+  // NOTE: `/` is deliberately NOT listed. For signed-out visitors it 307-redirects
+  // to /landing, and for signed-in users it serves the dashboard — so it is never a
+  // stable indexable URL. Submitting a redirecting URL is what produces Search
+  // Console's "Page with redirect" status. /landing is the canonical public homepage.
   const staticRoutes: MetadataRoute.Sitemap = [
-    { url: `${SITE_URL}/`, lastModified, changeFrequency: 'daily', priority: 1.0 },
-    { url: `${SITE_URL}/landing`, lastModified, changeFrequency: 'weekly', priority: 0.9 },
+    { url: `${SITE_URL}/landing`, lastModified, changeFrequency: 'weekly', priority: 1.0 },
     { url: `${SITE_URL}/labs`, lastModified, changeFrequency: 'daily', priority: 0.8 },
     { url: `${SITE_URL}/blog`, lastModified, changeFrequency: 'weekly', priority: 0.8 },
   ];
