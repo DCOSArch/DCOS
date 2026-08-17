@@ -53,6 +53,3 @@ agent_memory/
 # Sales lead data — confidential, never commit (see AGENTS.md)
 sales_ops/leads/
 
-# Internal Documentation & Architecture Maps — confidential, never commit
-docs/
-agent_memory/
