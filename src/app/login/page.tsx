@@ -10,6 +10,7 @@ import { Stethoscope, ArrowRight, Loader2, Sparkles, Building2, User } from 'luc
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { animate, stagger } from 'animejs';
+import { trackEvent } from '@/lib/analytics';
 
 // Custom UI Components
 import { AuroraBackground } from '@/components/ui/aceternity/aurora-background';
@@ -90,6 +91,7 @@ export default function Login() {
           },
         });
         if (error) throw error;
+        trackEvent('sign_up', { role });
         alert('Sign up successful! You can now log in.');
         setAuthMode('signin');
       } else if (authMode === 'forgot') {

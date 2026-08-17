@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import { trackEvent } from '@/lib/analytics';
 
 /* ---- Section imports (dynamic for code-splitting 3D sections) ---- */
 const HeroSection = dynamic(() => import('./sections/HeroSection'), { ssr: false });
@@ -125,6 +126,7 @@ export default function LandingPage() {
           body: JSON.stringify({ fullName, email, practiceType, scannerType, message })
         });
         if (res.ok) {
+          trackEvent('demo_request', { practiceType, scannerType });
           setIsSubmitted(true);
         } else {
           console.error('Failed to submit demo request');
@@ -162,7 +164,11 @@ export default function LandingPage() {
           <Link href="/blog" className="landing-nav-link">Blog</Link>
         </div>
 
-        <Link href="/login" className="landing-nav-cta">
+        <Link
+          href="/login"
+          className="landing-nav-cta"
+          onClick={() => trackEvent('cta_click', { location: 'nav' })}
+        >
           Get Started
         </Link>
       </nav>
@@ -180,7 +186,7 @@ export default function LandingPage() {
       </div>
 
       {/* ---- Sections ---- */}
-      <HeroSection onRequestDemo={() => { setIsSubmitted(false); setIsDemoOpen(true); }} />
+      <HeroSection onRequestDemo={() => { trackEvent('demo_open', { location: 'hero' }); setIsSubmitted(false); setIsDemoOpen(true); }} />
       <ProblemSection />
       <SolutionReveal />
       <FeatureOrbit />
@@ -190,7 +196,7 @@ export default function LandingPage() {
       <SecurityVault />
       <PricingSection onRequestDemo={() => { setIsSubmitted(false); setIsDemoOpen(true); }} />
       <CTASection
-        onRequestDemo={() => { setIsSubmitted(false); setIsDemoOpen(true); }}
+        onRequestDemo={() => { trackEvent('demo_open', { location: 'cta_section' }); setIsSubmitted(false); setIsDemoOpen(true); }}
         onOpenPrivacy={() => setIsPrivacyOpen(true)}
         onOpenTerms={() => setIsTermsOpen(true)}
         onOpenDocs={() => setIsDocsOpen(true)}
